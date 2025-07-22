@@ -33,7 +33,7 @@ struct PersistenceTrace {
   PersistenceTrace(
       array_ref<float> const min_size, array_ref<float> const persistence
   )
-      : min_size(min_size), persistence(persistence){};
+      : min_size(min_size), persistence(persistence){}
 
   // C++ side constructor that converts buffers to potentially smaller arrays.
   PersistenceTrace(

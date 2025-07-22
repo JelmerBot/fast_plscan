@@ -9,14 +9,14 @@
 #include "_spanning_tree.h"
 
 struct RowInfo {
-  uint64_t const parent;
+  uint32_t const parent;
   float distance;
   float const size;
-  uint64_t const left;
-  uint64_t const left_count;
+  uint32_t const left;
+  uint32_t const left_count;
   float const left_size;
-  uint64_t const right;
-  uint64_t const right_count;
+  uint32_t const right;
+  uint32_t const right_count;
   float const right_size;
 };
 
@@ -24,7 +24,7 @@ struct CondenseState {
   CondensedTreeView condensed_tree;
   LinkageTreeView const linkage_tree;
   SpanningTreeView const spanning_tree;
-  std::vector<uint64_t> parent_of;
+  std::vector<uint32_t> parent_of;
   std::vector<size_t> pending_idx;
   std::vector<float> pending_distance;
 
@@ -45,12 +45,12 @@ struct CondenseState {
       function_t get_row
   ) {
     size_t const num_edges = linkage_tree.size();
-    size_t next_label = num_points;
+    auto next_label = static_cast<uint32_t>(num_points);
     size_t cluster_count = 0u;
     size_t idx = 0u;
 
     // Iterate over the rows in reverse order.
-    for (size_t _i = 1u; _i <= num_edges; ++_i) {
+    for (size_t _i = 1ull; _i <= num_edges; ++_i) {
       size_t const node_idx = num_edges - _i;
       RowInfo row = get_row(node_idx, num_points);
 
@@ -70,18 +70,17 @@ struct CondenseState {
 
   [[nodiscard]] RowInfo get_row(size_t const node_idx, size_t const num_points)
       const {
-    uint64_t const left = linkage_tree.parent[node_idx];
-    uint64_t const right = linkage_tree.child[node_idx];
+    uint32_t const left = linkage_tree.parent[node_idx];
+    uint32_t const right = linkage_tree.child[node_idx];
     return {
         parent_of[node_idx],
         spanning_tree.distance[node_idx],
         linkage_tree.child_size[node_idx],
         left,
-        left < num_points ? 1ull : linkage_tree.child_count[left - num_points],
+        left < num_points ? 1u : linkage_tree.child_count[left - num_points],
         left < num_points ? 1.0f : linkage_tree.child_size[left - num_points],
         right,
-        right < num_points ? 1ull
-                           : linkage_tree.child_count[right - num_points],
+        right < num_points ? 1u : linkage_tree.child_count[right - num_points],
         right < num_points ? 1.0f : linkage_tree.child_size[right - num_points]
     };
   }
@@ -90,19 +89,18 @@ struct CondenseState {
       size_t const node_idx, size_t const num_points,
       std::span<float> const weights
   ) const {
-    uint64_t const left = linkage_tree.parent[node_idx];
-    uint64_t const right = linkage_tree.child[node_idx];
+    uint32_t const left = linkage_tree.parent[node_idx];
+    uint32_t const right = linkage_tree.child[node_idx];
     return {
         parent_of[node_idx],
         spanning_tree.distance[node_idx],
         linkage_tree.child_size[node_idx],
         left,
-        left < num_points ? 1ull : linkage_tree.child_count[left - num_points],
+        left < num_points ? 1u : linkage_tree.child_count[left - num_points],
         left < num_points ? weights[left]
                           : linkage_tree.child_size[left - num_points],
         right,
-        right < num_points ? 1ull
-                           : linkage_tree.child_count[right - num_points],
+        right < num_points ? 1u : linkage_tree.child_count[right - num_points],
         right < num_points ? weights[right]
                            : linkage_tree.child_size[right - num_points]
     };
@@ -151,8 +149,8 @@ struct CondenseState {
   }
 
   void write_row(
-      size_t &out_idx, uint64_t const parent, float const distance,
-      uint64_t const child, float const child_size
+      size_t &out_idx, uint32_t const parent, float const distance,
+      uint32_t const child, float const child_size
   ) const {
     condensed_tree.parent[out_idx] = parent;
     condensed_tree.child[out_idx] = child;
@@ -162,11 +160,11 @@ struct CondenseState {
   }
 
   void delay_row(
-      size_t &out_idx, uint64_t const parent, float const distance,
-      uint64_t const child, uint64_t const child_count, float const child_size,
+      size_t &out_idx, uint32_t const parent, float const distance,
+      uint32_t const child, uint32_t const child_count, float const child_size,
       size_t const num_points, float const min_cluster_size
   ) {
-    uint64_t const child_idx = child - num_points;
+    uint32_t const child_idx = child - num_points;
     // Propagate the parent
     parent_of[child_idx] = parent;
     if (child_size < min_cluster_size) {
@@ -179,10 +177,10 @@ struct CondenseState {
 
   void write_merge(
       RowInfo const &row, size_t &idx, size_t &cluster_count,
-      size_t &next_label, size_t const num_points
+      uint32_t &next_label, size_t const num_points
   ) {
     // Adjust numbering for phantom root and real roots
-    uint64_t const parent = row.parent == num_points ? ++next_label
+    uint32_t const parent = row.parent == num_points ? ++next_label
                                                      : row.parent;
     // Introduces new parent labels and appends rows for the merge
     parent_of[row.left - num_points] = ++next_label;
@@ -237,8 +235,8 @@ NB_MODULE(_condense_tree, m) {
   nb::class_<CondensedTree>(m, "CondensedTree")
       .def(
           nb::init<
-              array_ref<uint64_t>, array_ref<uint64_t>, array_ref<float>,
-              array_ref<float>, array_ref<uint64_t>>(),
+              array_ref<uint32_t>, array_ref<uint32_t>, array_ref<float>,
+              array_ref<float>, array_ref<uint32_t>>(),
           nb::arg("parent").noconvert(), nb::arg("child").noconvert(),
           nb::arg("distance").noconvert(), nb::arg("child_size").noconvert(),
           nb::arg("cluster_rows").noconvert()
@@ -267,17 +265,17 @@ NB_MODULE(_condense_tree, m) {
 
         Parameters
         ----------
-        parent : numpy.ndarray[tuple[int], np.dtype[np.uint64]]
+        parent : numpy.ndarray[tuple[int], np.dtype[np.uint32]]
             An array of parent cluster indices. Clusters are labelled
             with indices starting from the number of points.
-        child : numpy.ndarray[tuple[int], np.dtype[np.uint64]]
+        child : numpy.ndarray[tuple[int], np.dtype[np.uint32]]
             An array of child node and cluster indices. Clusters are labelled
             with indices starting from the number of points.
         distance : numpy.ndarray[tuple[int], np.dtype[np.float32]]
             The distance at which the child side connects to the parent side.
         child_size : numpy.ndarray[tuple[int], np.dtype[np.float32]]
             The (weighted) size in the child side of the link.
-        cluster_rows : numpy.ndarray[tuple[int], np.dtype[np.uint64]]
+        cluster_rows : numpy.ndarray[tuple[int], np.dtype[np.uint32]]
             The row indices with a cluster as child.
       )";
 

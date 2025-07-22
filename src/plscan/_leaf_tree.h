@@ -7,7 +7,7 @@
 
 // Non-owning view of a leaf tree
 struct LeafTreeView {
-  std::span<uint64_t> parent;
+  std::span<uint32_t> parent;
   std::span<float> min_distance;
   std::span<float> max_distance;
   std::span<float> min_size;
@@ -19,7 +19,7 @@ struct LeafTreeView {
 };
 
 struct LeafTree {
-  array_ref<uint64_t> const parent;
+  array_ref<uint32_t> const parent;
   // [min_dist, max_dist)
   array_ref<float> const min_distance;
   array_ref<float> const max_distance;
@@ -33,7 +33,7 @@ struct LeafTree {
 
   // Python side constructor.
   LeafTree(
-      array_ref<uint64_t> const parent, array_ref<float> const min_distance,
+      array_ref<uint32_t> const parent, array_ref<float> const min_distance,
       array_ref<float> const max_distance, array_ref<float> const min_size,
       array_ref<float> const max_size
   )
@@ -41,11 +41,11 @@ struct LeafTree {
         min_distance(min_distance),
         max_distance(max_distance),
         min_size(min_size),
-        max_size(max_size){};
+        max_size(max_size){}
 
   // C++ side constructor.
   explicit LeafTree(size_t const num_cluster_ids)
-      : parent(new_array<uint64_t>(num_cluster_ids)),
+      : parent(new_array<uint32_t>(num_cluster_ids)),
         min_distance(new_array<float>(num_cluster_ids)),
         max_distance(new_array<float>(num_cluster_ids)),
         min_size(new_array<float>(num_cluster_ids)),

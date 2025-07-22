@@ -15,9 +15,9 @@ struct LinkageTreeCapsule {
 
 // Non-owning view of a leaf tree
 struct LinkageTreeView {
-  std::span<uint64_t> parent;
-  std::span<uint64_t> child;
-  std::span<uint64_t> child_count;
+  std::span<uint32_t> parent;
+  std::span<uint32_t> child;
+  std::span<uint32_t> child_count;
   std::span<float> child_size;
 
   [[nodiscard]] size_t size() const {
@@ -26,9 +26,9 @@ struct LinkageTreeView {
 };
 
 struct LinkageTree {
-  array_ref<uint64_t> const parent;
-  array_ref<uint64_t> const child;
-  array_ref<uint64_t> const child_count;
+  array_ref<uint32_t> const parent;
+  array_ref<uint32_t> const child;
+  array_ref<uint32_t> const child_count;
   array_ref<float> const child_size;
 
   LinkageTree() = default;
@@ -37,13 +37,13 @@ struct LinkageTree {
 
   // Python side constructor.
   LinkageTree(
-      array_ref<uint64_t> const parent, array_ref<uint64_t> const child,
-      array_ref<uint64_t> const child_count, array_ref<float> const child_size
+      array_ref<uint32_t> const parent, array_ref<uint32_t> const child,
+      array_ref<uint32_t> const child_count, array_ref<float> const child_size
   )
       : parent(parent),
         child(child),
         child_count(child_count),
-        child_size(child_size){};
+        child_size(child_size){}
 
   // C++ side constructor that converts buffers to potentially smaller arrays
   LinkageTree(
@@ -61,9 +61,9 @@ struct LinkageTree {
   // Allocate buffers to fill and resize later.
   static auto allocate(size_t const num_edges) {
     size_t const buffer_size = 2 * num_edges;
-    auto [parent, parent_cap] = new_buffer<uint64_t>(buffer_size);
-    auto [child, child_cap] = new_buffer<uint64_t>(buffer_size);
-    auto [count, count_cap] = new_buffer<uint64_t>(buffer_size);
+    auto [parent, parent_cap] = new_buffer<uint32_t>(buffer_size);
+    auto [child, child_cap] = new_buffer<uint32_t>(buffer_size);
+    auto [count, count_cap] = new_buffer<uint32_t>(buffer_size);
     auto [size, size_cap] = new_buffer<float>(buffer_size);
     return std::make_pair(
         LinkageTreeView{parent, child, count, size},

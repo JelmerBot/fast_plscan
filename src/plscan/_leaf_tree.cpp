@@ -52,8 +52,8 @@ void fill_sizes(
         condensed_tree.child_size[left_idx],
         condensed_tree.child_size[right_idx]
     );
-    uint64_t const out_idx = condensed_tree.child[left_idx] - num_points;
-    uint64_t const parent_idx = condensed_tree.parent[left_idx] - num_points;
+    uint32_t const out_idx = condensed_tree.child[left_idx] - num_points;
+    uint32_t const parent_idx = condensed_tree.parent[left_idx] - num_points;
     leaf_tree.max_size[out_idx] = size;
     leaf_tree.max_size[out_idx - 1u] = size;
     leaf_tree.min_size[parent_idx] = std::max(
@@ -96,15 +96,15 @@ LeafTree compute_leaf_tree(
   return tree;
 };
 
-array_ref<int64_t> apply_size_cut(
+array_ref<uint32_t> apply_size_cut(
     LeafTree const &leaf_tree, float const cut_size
 ) {
   size_t num_selected = 0;
-  auto [out_view, out_cap] = new_buffer<int64_t>(leaf_tree.size());
+  auto [out_view, out_cap] = new_buffer<uint32_t>(leaf_tree.size());
   {
     nb::gil_scoped_release guard{};
     LeafTreeView const leaf_tree_view = leaf_tree.view();
-    for (int64_t idx = 0; idx < leaf_tree_view.size(); ++idx)
+    for (uint32_t idx = 0; idx < leaf_tree_view.size(); ++idx)
       if (leaf_tree_view.min_size[idx] <= cut_size &&
           leaf_tree_view.max_size[idx] > cut_size)
         out_view[num_selected++] = idx;
@@ -112,15 +112,15 @@ array_ref<int64_t> apply_size_cut(
   return to_array(out_view, std::move(out_cap), num_selected);
 }
 
-array_ref<int64_t> apply_distance_cut(
+array_ref<uint32_t> apply_distance_cut(
     LeafTree const &leaf_tree, float const cut_distance
 ) {
   size_t num_selected = 0;
-  auto [out_view, out_cap] = new_buffer<int64_t>(leaf_tree.size());
+  auto [out_view, out_cap] = new_buffer<uint32_t>(leaf_tree.size());
   {
     nb::gil_scoped_release guard{};
     LeafTreeView const leaf_tree_view = leaf_tree.view();
-    for (int64_t idx = 0; idx < leaf_tree_view.size(); ++idx)
+    for (uint32_t idx = 0; idx < leaf_tree_view.size(); ++idx)
       if (leaf_tree_view.min_distance[idx] <= cut_distance &&
           leaf_tree_view.max_distance[idx] > cut_distance)
         out_view[num_selected++] = idx;
@@ -134,7 +134,7 @@ NB_MODULE(_leaf_tree, m) {
   nb::class_<LeafTree>(m, "LeafTree")
       .def(
           nb::init<
-              array_ref<uint64_t>, array_ref<float>, array_ref<float>,
+              array_ref<uint32_t>, array_ref<float>, array_ref<float>,
               array_ref<float>, array_ref<float>>(),
           nb::arg("parent").noconvert(), nb::arg("min_distance").noconvert(),
           nb::arg("max_distance").noconvert(), nb::arg("min_size").noconvert(),
@@ -163,7 +163,7 @@ NB_MODULE(_leaf_tree, m) {
 
         Parameters
         ----------
-        parent : numpy.ndarray[tuple[int], np.dtype[np.uint64]]
+        parent : numpy.ndarray[tuple[int], np.dtype[np.uint32]]
             The parent cluster IDs.
         min_distance : numpy.ndarray[tuple[int], np.dtype[np.float32]]
             The minimum distance at which the cluster exists.
@@ -221,7 +221,7 @@ NB_MODULE(_leaf_tree, m) {
 
         Returns
         -------
-        selected_clusters : numpy.ndarray[tuple[int], np.dtype[np.int64]]
+        selected_clusters : numpy.ndarray[tuple[int], np.dtype[np.uint32]]
             The cluster IDs for leaf-clusters that exist at the 
             given cut_size threshold. 
       )"
@@ -243,7 +243,7 @@ NB_MODULE(_leaf_tree, m) {
 
         Returns
         -------
-        selected_clusters : numpy.ndarray[tuple[int], np.dtype[np.int64]]
+        selected_clusters : numpy.ndarray[tuple[int], np.dtype[np.uint32]]
             The cluster IDs for clusters that exist at the given distance 
             threshold. 
       )"

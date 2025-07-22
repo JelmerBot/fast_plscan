@@ -14,8 +14,8 @@ struct SpanningTreeCapsule {
 
 // Non-owning view of a spanning tree
 struct SpanningTreeView {
-  std::span<uint64_t> parent;
-  std::span<uint64_t> child;
+  std::span<uint32_t> parent;
+  std::span<uint32_t> child;
   std::span<float> distance;
 
   [[nodiscard]] size_t size() const {
@@ -24,8 +24,8 @@ struct SpanningTreeView {
 };
 
 struct SpanningTree {
-  array_ref<uint64_t> const parent;
-  array_ref<uint64_t> const child;
+  array_ref<uint32_t> const parent;
+  array_ref<uint32_t> const child;
   array_ref<float> const distance;
 
   SpanningTree() = default;
@@ -34,7 +34,7 @@ struct SpanningTree {
 
   // Python side constructor.
   SpanningTree(
-      array_ref<uint64_t> const parent, array_ref<uint64_t> const child,
+      array_ref<uint32_t> const parent, array_ref<uint32_t> const child,
       array_ref<float> const distance
   )
       : parent(parent), child(child), distance(distance){};
@@ -50,8 +50,8 @@ struct SpanningTree {
 
   // Allocate buffers to fill and resize later.
   static auto allocate(size_t const num_edges) {
-    auto [parents, parent_cap] = new_buffer<uint64_t>(num_edges);
-    auto [children, child_cap] = new_buffer<uint64_t>(num_edges);
+    auto [parents, parent_cap] = new_buffer<uint32_t>(num_edges);
+    auto [children, child_cap] = new_buffer<uint32_t>(num_edges);
     auto [distances, distance_cap] = new_buffer<float>(num_edges);
     return std::make_pair(
         SpanningTreeView{parents, children, distances},

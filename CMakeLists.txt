@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.18...3.26)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_GENERATOR_PLATFORM x64)
 
 # - Warn if the user invokes CMake directly
 if (NOT SKBUILD)
@@ -34,12 +35,11 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif ()
 message(STATUS "Creating a ${CMAKE_BUILD_TYPE} build")
 
-# - Find Python
+# - Find packages
+find_package(OpenMP REQUIRED CXX)
 find_package(Python 3.8
         REQUIRED COMPONENTS Interpreter Development.Module
         OPTIONAL_COMPONENTS Development.SABIModule)
-
-# - Find NanoBind
 execute_process(
         COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
         OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
@@ -63,6 +63,7 @@ foreach (EXT_SOURCE ${EXT_SOURCES})
 
     # Add speed optimized module target
     nanobind_add_module(${EXT_NAME} NOMINSIZE STABLE_ABI LTO NB_DOMAIN ${SKBUILD_PROJECT_NAME} ${EXT_SOURCE})
+    target_link_libraries(${EXT_NAME} PRIVATE OpenMP::OpenMP_CXX)
     nanobind_add_stub(
             ${EXT_STUB}
             MODULE ${EXT_NAME}

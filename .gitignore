@@ -1,7 +1,8 @@
-build/
-*.pytest_cache/
 .idea/
+build/
 cmake-build*/
+*.pytest_cache/
+*.ipynb_checkpoints/
 
 __pycache__/
-src/plscan/_version.py
+**/_version.py

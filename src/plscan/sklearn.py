@@ -1,10 +1,12 @@
 import numpy as np
+from scipy.sparse import issparse, csr_array, coo_array
 from scipy.signal import find_peaks
+from scipy.spatial.distance import squareform
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.utils import check_array
 from sklearn.utils.validation import check_is_fitted, _check_sample_weight
 from sklearn.utils._param_validation import Interval, InvalidParameterError
-from numbers import Real
+from numbers import Real, Integral
 
 from . import api
 from . import plots
@@ -38,13 +40,20 @@ class PLSCAN(ClusterMixin, BaseEstimator):
 
     Parameters
     ----------
+    min_samples : int, default=5
+        The number of neighbors to use for computing core distances and the
+        mutual reachability distances.
     min_cluster_size : float, optional
-        The minimum size limit for clusters, by default 5.0.
+        The minimum size limit for clusters, by default 2.0.
     max_cluster_size : float, optional
         The maximum size limit for clusters, by default np.inf.
     use_bi_persistence : bool, optional
         Whether to use total bi-persistence or total size-persistence for
         selecting the optimal minimum cluster size. Default is False.
+    num_threads : int, optional
+        The number of threads to use for parallel computations, value must be
+        positive!. If None, OpenMP's default thread count is used. Default is
+        None.
 
     Attributes
     ----------
@@ -74,7 +83,11 @@ class PLSCAN(ClusterMixin, BaseEstimator):
     minimum_spanning_tree_ : np.ndarray[tuple[int, int], np.dtype[np.float64]]
         A minimum spanning tree in scipy format. The first column represents the
         edge's parent, the second column represents the edge's child, and the
-        third column represents the edge's distance.
+        third column represents the edge's distance. May be a spanning forest if
+        the input contained multiple connected components.
+    core_distances_ : np.ndarray[tuple[int], np.dtype[np.float32]]
+        The core distances for each point in the input data. These are the
+        distances to the `min_samples`-th nearest neighbor.
 
     References
     ----------
@@ -87,21 +100,27 @@ class PLSCAN(ClusterMixin, BaseEstimator):
     """
 
     _parameter_constraints = dict(
-        min_cluster_size=[Interval(Real, 2.0, None, closed="left")],
+        min_samples=[Interval(Integral, 2, None, closed="left")],
+        min_cluster_size=[None, Interval(Real, 2.0, None, closed="left")],
         max_cluster_size=[Interval(Real, 2.0, None, closed="right")],
         use_bi_persistence=["boolean"],
+        num_threads=[None, Interval(Integral, 1, None, closed="left")],
     )
 
     def __init__(
         self,
         *,
-        min_cluster_size: float = 2.0,
+        min_samples: int = 5,
+        min_cluster_size: float | None = None,
         max_cluster_size: float = np.inf,
         use_bi_persistence: bool = False,
+        num_threads: int | None = None,
     ):
+        self.min_samples = min_samples
         self.min_cluster_size = min_cluster_size
         self.max_cluster_size = max_cluster_size
         self.use_bi_persistence = use_bi_persistence
+        self.num_threads = num_threads
 
         self.labels_ = None
         self.probabilities_ = None
@@ -109,8 +128,8 @@ class PLSCAN(ClusterMixin, BaseEstimator):
 
     def fit(
         self,
-        X: np.ndarray[tuple[int, int], np.dtype[np.float64]],
-        num_points: int,
+        X,
+        y=None,
         *,
         sample_weights: np.ndarray[tuple[int], np.dtype[np.float32]] | None = None,
         **fit_params,
@@ -120,15 +139,37 @@ class PLSCAN(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : np.ndarray[tuple[int, int], np.dtype[np.float64]]
-            A sorted (partial) minimum spanning tree (MST), where the first
-            column represents the edge parents, the second column represents the
-            edge children, and the third column represents edge distances. The
-            MST may contain multiple connected components, but it must be a
-            tree/forest!
-        num_points : int, optional
-            The number of points in the input data. TODO: use a sparse input on
-            X!
+        X
+            The distances to extract clusters from. It can be one of the
+            following formats:
+
+            1. tuple of (edges, num_points)
+                A minimum spanning tree where `edges` is a 2D array of edges in
+                the format (parent, child, distance) and `num_points` is the
+                number of points in the input data. There should be at most
+                `num_points - 1` edges. Edges must be sorted by distance.
+            2. tuple of (distances, indices)
+                A k-nearest neighbors graph where `distances` is a 2D array of
+                distances and `indices` is a 2D array of child indices.
+            3. np.ndarray[tuple[int, ...], np.dtype[np.float32]]:
+                A condensed or full square distance matrix.
+            4. csr_array:
+                A sparse distance matrix in CSR format. Self-loops are removed
+                before processing.
+
+            In all cases, distance values should be non-negative. In cases 2
+            through 4, each point should have `min_samples` neighbors. Infinite
+            distances, either as input or as a result of too few neighbors, may
+            break plots and the bi-persistence computation. Negative kNN indices
+            are ignored.
+
+            The input distances do not have to form a single connected
+            component! If there are multiple connected components, the algorithm
+            will select the minimum cluster size that maximizes the total
+            persistence over all components. The components themselves are never
+            selected as clusters.
+        y : None, optional
+            Ignored, present for compatibility with scikit-learn.
         sample_weights : np.ndarray[tuple[int], np.dtype[np.float32]], optional
             Sample weights for the points in the sorted minimum spanning tree.
             If None, all samples are considered equally weighted. Default is
@@ -141,29 +182,49 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         self : PLSCAN
             The fitted PLSCAN instance.
         """
+        # Validate parameters
         self._validate_params()
+        if self.min_cluster_size is None:
+            self.min_cluster_size = self.min_samples
+        else:
+            if self.min_cluster_size < self.min_samples:
+                raise InvalidParameterError(
+                    "Minimum cluster size must be at least equal to "
+                    f"min_samples ({self.min_samples})."
+                )
         if self.max_cluster_size <= self.min_cluster_size:
             raise InvalidParameterError(
                 "Minimum cluster size must be less than maximum cluster size."
             )
+        if self.num_threads is not None:
+            default_thread_count = api.get_num_threads()
+            api.set_num_threads(self.num_threads)
 
-        check_array(
-            X,
-            dtype=np.float64,
-            ensure_min_samples=self.min_cluster_size,
-            input_name="X",
-        )
+        # Validate input
+        X, num_points, is_sorted, is_mst = self._check_input(X)
         if sample_weights is not None:
             sample_weights = _check_sample_weight(
-                sample_weights, X, dtype=np.float32, ensure_non_negative=True
+                sample_weights,
+                csr_array((num_points, num_points)),
+                dtype=np.float32,
+                ensure_non_negative=True,
             )
 
+        # Perform clustering
         self._num_points = num_points
-        self._minimum_spanning_tree = api.SpanningTree(
-            X[:, 0].astype(np.uint64),
-            X[:, 1].astype(np.uint64),
-            X[:, 2].astype(np.float32),
-        )
+        if is_mst:
+            self.core_distances = None
+            self._minimum_spanning_tree = api.SpanningTree(
+                X[:, 0].astype(np.uint32, order="C", copy=False),
+                X[:, 1].astype(np.uint32, order="C", copy=False),
+                X[:, 2].astype(np.float32, order="C", copy=False),
+            )
+        else:
+            self._minimum_spanning_tree, self.core_distances_ = (
+                api.compute_mutual_spanning_forest(
+                    X, min_samples=self.min_samples, is_sorted=is_sorted
+                )
+            )
         (
             (self.labels_, self.probabilities_),
             self.selected_clusters_,
@@ -171,12 +232,18 @@ class PLSCAN(ClusterMixin, BaseEstimator):
             self._leaf_tree,
             self._condensed_tree,
             self._linkage_tree,
-        ) = api.clusters_from_spanning_tree(
+        ) = api.clusters_from_spanning_forest(
             self._minimum_spanning_tree,
-            num_points,
+            self._num_points,
             sample_weights=sample_weights,
-            **self.get_params(),
+            min_cluster_size=self.min_cluster_size,
+            max_cluster_size=self.max_cluster_size,
+            use_bi_persistence=self.use_bi_persistence,
         )
+
+        # Reset the number of threads back to the default
+        if self.num_threads is not None:
+            api.set_num_threads(default_thread_count)
         return self
 
     @property
@@ -328,3 +395,93 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         return api.compute_cluster_labels(
             self._leaf_tree, self._condensed_tree, selected_clusters, self._num_points
         )
+
+    def _check_input(self, X):
+        """Checks and converts the input to a CSR sparse matrix."""
+        # Check kNN / MST inputs
+        if isinstance(X, tuple):
+            if isinstance(X[1], np.ndarray):
+                return api.knn_to_csr(*self._check_knn(X)), X[0].shape[0], True, False
+            else:
+                edges, num_points = self._check_mst(X)
+                return edges, num_points, True, True
+
+        # Check distance matrix input
+        X = check_array(
+            X,
+            dtype=np.float32,
+            accept_sparse="csr",
+            ensure_2d=False,
+            ensure_non_negative=True,
+            ensure_min_samples=self.min_samples,
+            input_name="X",
+        )
+
+        # Check input is square
+        if X.ndim == 1:
+            X = squareform(X)
+        elif X.shape[0] != X.shape[1]:
+            raise ValueError(
+                "Distance matrix must be square, got shape " f"{X.shape} instead."
+            )
+
+        # Convert to valid CSR format
+        if issparse(X):
+            X = api.remove_self_loops(X.tocsr())
+        else:
+            X = api.distance_matrix_to_csr(X)
+        return X, X.shape[0], False, False
+
+    def _check_knn(self, X):
+        """Checks if a kNN graph is valid."""
+        if len(X) != 2:
+            raise ValueError(
+                "kNN input must be a tuple of (distances, indices), "
+                f"got {len(X)} elements instead."
+            )
+        distances, indices = X
+        if distances.shape != indices.shape:
+            raise ValueError(
+                "kNN distances and indices must have the same shape, "
+                f"got {distances.shape} and {indices.shape}."
+            )
+        distances = check_array(
+            distances,
+            ensure_non_negative=True,
+            ensure_min_features=self.min_samples + 1,
+            ensure_min_samples=self.min_samples + 1,
+            input_name="kNN distances",
+        )
+        indices = check_array(
+            indices,
+            ensure_all_finite=True,
+            ensure_min_features=self.min_samples + 1,
+            ensure_min_samples=self.min_samples + 1,
+            input_name="kNN indices",
+        )
+        return distances, indices
+
+    def _check_mst(self, X):
+        if len(X) != 2:
+            raise ValueError(
+                "MST input must be a tuple of (edges, num_points), "
+                f"got {len(X)} elements instead."
+            )
+        edges, num_points = X
+        edges = check_array(
+            edges,
+            dtype=np.float64,
+            ensure_non_negative=True,
+            ensure_min_samples=self.min_samples + 1,
+            input_name="MST edges",
+        )
+        if edges.shape[1] != 3:
+            raise ValueError(
+                "MST edges must have shape (n_edges, 3), " f"got {edges.shape} instead."
+            )
+        if edges.shape[0] > num_points - 1:
+            raise ValueError(
+                "MST edges must not contain more than n_points - 1 edges, "
+                f"got {edges.shape[0]} edges for {num_points} points."
+            )
+        return edges, num_points

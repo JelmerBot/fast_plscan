@@ -208,7 +208,7 @@ class CondensedTree(object):
                 np.float32, order="C", copy=False
             ),
             self._tree.child_size[self._tree.cluster_rows],
-            np.array([], dtype=np.uint64),
+            np.array([], dtype=np.uint32),
         )
 
         # List segment info
@@ -413,7 +413,7 @@ class CondensedTree(object):
                 children[parent_idx] = []
             children[parent_idx].append(child_idx)
 
-        x_coords = np.empty(parents.shape[0])
+        x_coords = np.zeros(parents.shape[0])
         LeafTree._df_leaf_order(x_coords, children, 0, 0)
         return x_coords
 
@@ -830,7 +830,7 @@ class LeafTree(object):
             if parent_idx not in children:
                 children[parent_idx] = []
             children[parent_idx].append(child_idx)
-        x_coords = np.empty(parents.shape[0])
+        x_coords = np.zeros(parents.shape[0])
         self._df_leaf_order(x_coords, children, 0, 0)
         return x_coords
 

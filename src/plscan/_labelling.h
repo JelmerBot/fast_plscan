@@ -6,7 +6,7 @@
 #include "_array.h"
 
 struct LabellingView {
-  std::span<int64_t> label;
+  std::span<int32_t> label;
   std::span<float> probability;
 
   [[nodiscard]] size_t size() const {
@@ -15,7 +15,7 @@ struct LabellingView {
 };
 
 struct Labelling {
-  array_ref<int64_t> const label;
+  array_ref<int32_t> const label;
   array_ref<float> const probability;
 
   Labelling() = default;
@@ -23,12 +23,12 @@ struct Labelling {
   Labelling(Labelling const &) = default;
 
   // Python side constructor.
-  Labelling(array_ref<int64_t> const label, array_ref<float> const probability)
-      : label(label), probability(probability){};
+  Labelling(array_ref<int32_t> const label, array_ref<float> const probability)
+      : label(label), probability(probability) {}
 
   // C++ side constructor
   explicit Labelling(size_t const num_points)
-      : label(new_array<int64_t>(num_points)),
+      : label(new_array<int32_t>(num_points)),
         probability(new_array<float>(num_points)) {}
 
   [[nodiscard]] LabellingView view() const {

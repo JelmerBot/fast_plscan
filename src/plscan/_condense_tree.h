@@ -16,11 +16,11 @@ struct CondensedTreeCapsule {
 
 // Non-owning view of a condensed tree
 struct CondensedTreeView {
-  std::span<uint64_t> parent;
-  std::span<uint64_t> child;
+  std::span<uint32_t> parent;
+  std::span<uint32_t> child;
   std::span<float> distance;
   std::span<float> child_size;
-  std::span<uint64_t> cluster_rows;
+  std::span<uint32_t> cluster_rows;
 
   [[nodiscard]] size_t size() const {
     return parent.size();
@@ -28,11 +28,11 @@ struct CondensedTreeView {
 };
 
 struct CondensedTree {
-  array_ref<uint64_t> const parent;
-  array_ref<uint64_t> const child;
+  array_ref<uint32_t> const parent;
+  array_ref<uint32_t> const child;
   array_ref<float> const distance;
   array_ref<float> const child_size;
-  array_ref<uint64_t> const cluster_rows;
+  array_ref<uint32_t> const cluster_rows;
 
   CondensedTree() = default;
   CondensedTree(CondensedTree &&) = default;
@@ -40,15 +40,15 @@ struct CondensedTree {
 
   // Python side constructor.
   CondensedTree(
-      array_ref<uint64_t> const parent, array_ref<uint64_t> const child,
+      array_ref<uint32_t> const parent, array_ref<uint32_t> const child,
       array_ref<float> const distance, array_ref<float> const child_size,
-      array_ref<uint64_t> const cluster_rows
+      array_ref<uint32_t> const cluster_rows
   )
       : parent(parent),
         child(child),
         distance(distance),
         child_size(child_size),
-        cluster_rows(cluster_rows){};
+        cluster_rows(cluster_rows){}
 
   // C++ side constructor that converts buffers to potentially smaller arrays
   CondensedTree(
@@ -68,11 +68,11 @@ struct CondensedTree {
   // Allocate buffers to fill and resize later.
   static auto allocate(size_t const num_edges) {
     size_t const buffer_size = 2 * num_edges;
-    auto [parent, parent_cap] = new_buffer<uint64_t>(buffer_size);
-    auto [child, child_cap] = new_buffer<uint64_t>(buffer_size);
+    auto [parent, parent_cap] = new_buffer<uint32_t>(buffer_size);
+    auto [child, child_cap] = new_buffer<uint32_t>(buffer_size);
     auto [dist, dist_cap] = new_buffer<float>(buffer_size);
     auto [size, size_cap] = new_buffer<float>(buffer_size);
-    auto [rows, rows_cap] = new_buffer<uint64_t>(num_edges);
+    auto [rows, rows_cap] = new_buffer<uint32_t>(num_edges);
     return std::make_pair(
         CondensedTreeView{parent, child, dist, size, rows},
         CondensedTreeCapsule{

@@ -9,8 +9,8 @@
 #include "_spanning_tree.h"
 
 class LinkageState {
-  std::vector<uint64_t> parent;
-  std::vector<uint64_t> child_count;
+  std::vector<uint32_t> parent;
+  std::vector<uint32_t> child_count;
   std::vector<float> child_size;
 
  public:
@@ -31,14 +31,14 @@ class LinkageState {
       );
   }
 
-  NB_INLINE uint64_t find(uint64_t node) {
-    uint64_t relabel = node;
+  NB_INLINE uint32_t find(uint32_t node) {
+    uint32_t relabel = node;
     while (parent[node] != 0u && parent[node] != node)
       node = parent[node];
 
     parent[node] = node;
     while (parent[relabel] != node) {
-      uint64_t const next_relabel = parent[relabel];
+      uint32_t const next_relabel = parent[relabel];
       parent[relabel] = node;
       relabel = next_relabel;
     }
@@ -46,7 +46,7 @@ class LinkageState {
   }
 
   NB_INLINE auto link(
-      uint64_t const next, uint64_t const left, uint64_t const right
+      uint32_t const next, uint32_t const left, uint32_t const right
   ) {
     parent[left] = next;
     parent[right] = next;
@@ -66,8 +66,8 @@ size_t process_spanning_tree(
   size_t idx;
   for (idx = 0; idx < mst.size(); ++idx) {
     size_t const next = num_points + idx;
-    uint64_t const left = state.find(mst.parent[idx]);
-    uint64_t const right = state.find(mst.child[idx]);
+    uint32_t const left = state.find(mst.parent[idx]);
+    uint32_t const right = state.find(mst.child[idx]);
     std::tie(tree.child[idx], tree.parent[idx]) = std::minmax(left, right);
     std::tie(tree.child_count[idx], tree.child_size[idx]) = state.link(
         next, left, right
@@ -94,7 +94,7 @@ NB_MODULE(_linkage_tree, m) {
   nb::class_<LinkageTree>(m, "LinkageTree")
       .def(
           nb::init<
-              array_ref<uint64_t>, array_ref<uint64_t>, array_ref<uint64_t>,
+              array_ref<uint32_t>, array_ref<uint32_t>, array_ref<uint32_t>,
               array_ref<float>>(),
           nb::arg("parent").noconvert(), nb::arg("child").noconvert(),
           nb::arg("child_count").noconvert(), nb::arg("child_size").noconvert()
@@ -120,13 +120,13 @@ NB_MODULE(_linkage_tree, m) {
 
         Parameters
         ----------
-        parent : numpy.ndarray[tuple[int], np.dtype[np.uint64]]
+        parent : numpy.ndarray[tuple[int], np.dtype[np.uint32]]
             An array of parent node and cluster indices. Clusters are
             labelled with indices starting from the number of points.
-        child : numpy.ndarray[tuple[int], np.dtype[np.uint64]]
+        child : numpy.ndarray[tuple[int], np.dtype[np.uint32]]
             An array of child node and cluster indices. Clusters are labelled
             with indices starting from the number of points.
-        child_count : numpy.ndarray[tuple[int], np.dtype[np.uint64]]
+        child_count : numpy.ndarray[tuple[int], np.dtype[np.uint32]]
             The number of points contained in the child side of the link.
         child_size : numpy.ndarray[tuple[int], np.dtype[np.float32]]
             The (weighted) size in the child side of the link.
