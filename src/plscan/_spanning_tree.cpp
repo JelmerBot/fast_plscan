@@ -422,7 +422,41 @@ size_t space_tree_boruvka(
   return num_edges;
 }
 
+using space_tree_boruvka_fun_t = size_t (*)(
+    SpanningTreeWriteView, SpaceTreeView, SparseGraphView, std::span<float>,
+    nb::dict
+);
+
 // --- Spanning forest from kdtree
+
+template <Metric metric>
+size_t run_kdtree_boruvka(
+    SpanningTreeWriteView mst, SpaceTreeView const tree,
+    SparseGraphView const knn, std::span<float> const core_distances,
+    nb::dict const metric_kws
+) {
+  return space_tree_boruvka(
+      mst, tree, knn, core_distances, get_rdist<metric>(metric_kws),
+      get_kdtree_min_rdist<metric>(metric_kws),
+      get_rdist_to_dist<metric>(metric_kws)
+  );
+}
+
+space_tree_boruvka_fun_t get_kdtree_executor(char const *const metric) {
+  static std::map<Metric, space_tree_boruvka_fun_t> lookup = {
+      {Metric::Euclidean, run_kdtree_boruvka<Metric::Euclidean>},
+      {Metric::Cityblock, run_kdtree_boruvka<Metric::Cityblock>},
+      {Metric::Chebyshev, run_kdtree_boruvka<Metric::Chebyshev>},
+      {Metric::Minkowski, run_kdtree_boruvka<Metric::Minkowski>},
+  };
+
+  if (auto const it = lookup.find(parse_metric(metric)); it != lookup.end())
+    return it->second;
+
+  throw std::invalid_argument(
+      "Unsupported metric for KDTree query: " + std::string(metric)
+  );
+}
 
 SpanningTree compute_spanning_tree_kdtree(
     SpaceTree const tree, SparseGraph const knn,
@@ -430,44 +464,54 @@ SpanningTree compute_spanning_tree_kdtree(
     nb::dict const metric_kws
 ) {
   // Build the spanning tree structure
-  size_t num_edges = 0ull;
-
-  // OpenMP does not yet support capturing from structured bindings.
-  auto result = SpanningTree::allocate(knn.size() - 1u);
-  SpanningTreeWriteView mst_view = result.first;
-  SpanningTreeCapsule mst_cap = std::move(result.second);
-
-  // Avoid code duplication by defining a parameterless templated function
-  auto run = [metric_kws, mst_view, tree = tree.view(), knn = knn.view(),
-              core_distances = to_view(core_distances)]<Metric metric>() {
-    return space_tree_boruvka(
-        mst_view, tree, knn, core_distances, get_rdist<metric>(metric_kws),
-        get_kdtree_min_rdist<metric>(metric_kws),
-        get_rdist_to_dist<metric>(metric_kws)
-    );
-  };
-
-  // Select the appropriate metric and run the spanning tree algorithm
-  switch (parse_metric(metric)) {
-    case Metric::Euclidean:
-      num_edges = run.operator()<Metric::Euclidean>();
-      break;
-    case Metric::Cityblock:
-      num_edges = run.operator()<Metric::Cityblock>();
-      break;
-    case Metric::Chebyshev:
-      num_edges = run.operator()<Metric::Chebyshev>();
-      break;
-    case Metric::Minkowski:
-      num_edges = run.operator()<Metric::Minkowski>();
-      break;
-    default:
-      throw std::invalid_argument("Unsupported metric for KDTrees");
-  }
+  auto [mst_view, mst_cap] = SpanningTree::allocate(knn.size() - 1u);
+  size_t num_edges = get_kdtree_executor(metric)(
+      mst_view, tree.view(), knn.view(), to_view(core_distances), metric_kws
+  );
   return {mst_view, std::move(mst_cap), num_edges};
 }
 
 // --- Spanning forest from balltree
+
+template <Metric metric>
+size_t run_balltree_boruvka(
+    SpanningTreeWriteView mst, SpaceTreeView const tree,
+    SparseGraphView const knn, std::span<float> const core_distances,
+    nb::dict const metric_kws
+) {
+  return space_tree_boruvka(
+      mst, tree, knn, core_distances, get_rdist<metric>(metric_kws),
+      get_balltree_min_rdist<metric>(metric_kws),
+      get_rdist_to_dist<metric>(metric_kws)
+  );
+}
+
+space_tree_boruvka_fun_t get_balltree_executor(char const *const metric) {
+  static std::map<Metric, space_tree_boruvka_fun_t> lookup = {
+      {Metric::Euclidean, run_balltree_boruvka<Metric::Euclidean>},
+      {Metric::Cityblock, run_balltree_boruvka<Metric::Cityblock>},
+      {Metric::Chebyshev, run_balltree_boruvka<Metric::Chebyshev>},
+      {Metric::Minkowski, run_balltree_boruvka<Metric::Minkowski>},
+      {Metric::Hamming, run_balltree_boruvka<Metric::Hamming>},
+      {Metric::Braycurtis, run_balltree_boruvka<Metric::Braycurtis>},
+      {Metric::Canberra, run_balltree_boruvka<Metric::Canberra>},
+      {Metric::Haversine, run_balltree_boruvka<Metric::Haversine>},
+      {Metric::SEuclidean, run_balltree_boruvka<Metric::SEuclidean>},
+      {Metric::Mahalanobis, run_balltree_boruvka<Metric::Mahalanobis>},
+      {Metric::Dice, run_balltree_boruvka<Metric::Dice>},
+      {Metric::Jaccard, run_balltree_boruvka<Metric::Jaccard>},
+      {Metric::Russellrao, run_balltree_boruvka<Metric::Russellrao>},
+      {Metric::Rogerstanimoto, run_balltree_boruvka<Metric::Rogerstanimoto>},
+      {Metric::Sokalsneath, run_balltree_boruvka<Metric::Sokalsneath>}
+  };
+
+  if (auto const it = lookup.find(parse_metric(metric)); it != lookup.end())
+    return it->second;
+
+  throw std::invalid_argument(
+      "Unsupported metric for BallTree query: " + std::string(metric)
+  );
+}
 
 SpanningTree compute_spanning_tree_balltree(
     SpaceTree const tree, SparseGraph const knn,
@@ -475,74 +519,10 @@ SpanningTree compute_spanning_tree_balltree(
     nb::dict const metric_kws
 ) {
   // Build the spanning tree structure
-  size_t num_edges = 0ull;
-
-  // OpenMP does not yet support capturing from structured bindings.
-  auto result = SpanningTree::allocate(knn.size() - 1u);
-  SpanningTreeWriteView mst_view = result.first;
-  SpanningTreeCapsule mst_cap = std::move(result.second);
-
-  // Avoid code duplication by defining a parameterless templated function
-  auto run = [metric_kws, mst_view, tree = tree.view(), knn = knn.view(),
-              core_distances = to_view(core_distances)]<Metric metric>() {
-    return space_tree_boruvka(
-        mst_view, tree, knn, core_distances, get_rdist<metric>(metric_kws),
-        get_balltree_min_rdist<metric>(metric_kws),
-        get_rdist_to_dist<metric>(metric_kws)
-    );
-  };
-
-  // Select the appropriate metric and run the spanning tree algorithm
-  switch (parse_metric(metric)) {
-    case Metric::Euclidean:
-      num_edges = run.operator()<Metric::Euclidean>();
-      break;
-    case Metric::Cityblock:
-      num_edges = run.operator()<Metric::Cityblock>();
-      break;
-    case Metric::Chebyshev:
-      num_edges = run.operator()<Metric::Chebyshev>();
-      break;
-    case Metric::Minkowski:
-      num_edges = run.operator()<Metric::Minkowski>();
-      break;
-    case Metric::Hamming:
-      num_edges = run.operator()<Metric::Hamming>();
-      break;
-    case Metric::Braycurtis:
-      num_edges = run.operator()<Metric::Braycurtis>();
-      break;
-    case Metric::Canberra:
-      num_edges = run.operator()<Metric::Canberra>();
-      break;
-    case Metric::Haversine:
-      num_edges = run.operator()<Metric::Haversine>();
-      break;
-    case Metric::SEuclidean:
-      num_edges = run.operator()<Metric::SEuclidean>();
-      break;
-    case Metric::Mahalanobis:
-      num_edges = run.operator()<Metric::Mahalanobis>();
-      break;
-    case Metric::Dice:
-      num_edges = run.operator()<Metric::Dice>();
-      break;
-    case Metric::Jaccard:
-      num_edges = run.operator()<Metric::Jaccard>();
-      break;
-    case Metric::Russellrao:
-      num_edges = run.operator()<Metric::Russellrao>();
-      break;
-    case Metric::Rogerstanimoto:
-      num_edges = run.operator()<Metric::Rogerstanimoto>();
-      break;
-    case Metric::Sokalsneath:
-      num_edges = run.operator()<Metric::Sokalsneath>();
-      break;
-    default:
-      throw std::invalid_argument("Unsupported metric for BallTrees");
-  }
-
+  auto [mst_view, mst_cap] = SpanningTree::allocate(knn.size() - 1u);
+  size_t num_edges = get_balltree_executor(metric)(
+      mst_view, tree.view(), knn.view(), to_view(core_distances), metric_kws
+  );
   return {mst_view, std::move(mst_cap), num_edges};
 }
 

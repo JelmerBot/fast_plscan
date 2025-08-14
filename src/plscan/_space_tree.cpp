@@ -163,120 +163,98 @@ void parallel_query(
   }
 }
 
+using parallel_query_fun_t =
+    void (*)(SparseGraphWriteView, SpaceTreeView, nb::dict);
+
 // --- KDTree specific query
+
+template <Metric metric>
+void run_parallel_kdtree_query(
+    SparseGraphWriteView const knn, SpaceTreeView const tree,
+    nb::dict const metric_kws
+) {
+  parallel_query(
+      knn, tree, get_rdist<metric>(metric_kws),
+      get_kdtree_min_rdist<metric>(metric_kws)
+  );
+}
+
+parallel_query_fun_t get_kdtree_executor(char const *const metric) {
+  static std::map<Metric, parallel_query_fun_t> lookup = {
+      {Metric::Euclidean, run_parallel_kdtree_query<Metric::Euclidean>},
+      {Metric::Cityblock, run_parallel_kdtree_query<Metric::Cityblock>},
+      {Metric::Chebyshev, run_parallel_kdtree_query<Metric::Chebyshev>},
+      {Metric::Minkowski, run_parallel_kdtree_query<Metric::Minkowski>},
+  };
+
+  if (auto const it = lookup.find(parse_metric(metric)); it != lookup.end())
+    return it->second;
+
+  throw std::invalid_argument(
+      "Unsupported metric for KDTree query: " + std::string(metric)
+  );
+}
 
 SparseGraph kdtree_query(
     SpaceTree const tree, uint32_t const num_neighbors,
     char const *const metric, nb::dict const metric_kws
 ) {
-  // OpenMP does not yet support capturing from structured bindings.
-  std::pair result = SparseGraph::allocate_knn(
+  auto [knn_view, knn_cap] = SparseGraph::allocate_knn(
       tree.data.shape(0), num_neighbors
   );
-  SparseGraphWriteView knn_view = result.first;
-  SparseGraphCapsule knn_cap = std::move(result.second);
-
-  // Avoid code duplication by defining a parameterless templated function
-  auto run = [metric_kws, knn_view, tree = tree.view()]<Metric metric>() {
-    return parallel_query(
-        knn_view, tree, get_rdist<metric>(metric_kws),
-        get_kdtree_min_rdist<metric>(metric_kws)
-    );
-  };
-
-  // Select the appropriate metric and run the query
-  switch (parse_metric(metric)) {
-    case Metric::Euclidean:
-      run.operator()<Metric::Euclidean>();
-      break;
-    case Metric::Cityblock:
-      run.operator()<Metric::Cityblock>();
-      break;
-    case Metric::Chebyshev:
-      run.operator()<Metric::Chebyshev>();
-      break;
-    case Metric::Minkowski:
-      run.operator()<Metric::Minkowski>();
-      break;
-    default:
-      throw std::invalid_argument(
-          "Unsupported metric for KDTree query: " + std::string(metric)
-      );
-  }
+  get_kdtree_executor(metric)(knn_view, tree.view(), metric_kws);
   return {knn_view, knn_cap};
 }
 
 // --- Ball specific query
 
+template <Metric metric>
+void run_parallel_balltree_query(
+    SparseGraphWriteView const knn, SpaceTreeView const tree,
+    nb::dict const metric_kws
+) {
+  parallel_query(
+      knn, tree, get_rdist<metric>(metric_kws),
+      get_balltree_min_rdist<metric>(metric_kws)
+  );
+}
+
+parallel_query_fun_t get_balltree_executor(char const *const metric) {
+  static std::map<Metric, parallel_query_fun_t> lookup = {
+      {Metric::Euclidean, run_parallel_balltree_query<Metric::Euclidean>},
+      {Metric::Cityblock, run_parallel_balltree_query<Metric::Cityblock>},
+      {Metric::Chebyshev, run_parallel_balltree_query<Metric::Chebyshev>},
+      {Metric::Minkowski, run_parallel_balltree_query<Metric::Minkowski>},
+      {Metric::Hamming, run_parallel_balltree_query<Metric::Hamming>},
+      {Metric::Braycurtis, run_parallel_balltree_query<Metric::Braycurtis>},
+      {Metric::Canberra, run_parallel_balltree_query<Metric::Canberra>},
+      {Metric::Haversine, run_parallel_balltree_query<Metric::Haversine>},
+      {Metric::SEuclidean, run_parallel_balltree_query<Metric::SEuclidean>},
+      {Metric::Mahalanobis, run_parallel_balltree_query<Metric::Mahalanobis>},
+      {Metric::Dice, run_parallel_balltree_query<Metric::Dice>},
+      {Metric::Jaccard, run_parallel_balltree_query<Metric::Jaccard>},
+      {Metric::Russellrao, run_parallel_balltree_query<Metric::Russellrao>},
+      {Metric::Rogerstanimoto,
+       run_parallel_balltree_query<Metric::Rogerstanimoto>},
+      {Metric::Sokalsneath, run_parallel_balltree_query<Metric::Sokalsneath>}
+  };
+
+  if (auto const it = lookup.find(parse_metric(metric)); it != lookup.end())
+    return it->second;
+
+  throw std::invalid_argument(
+      "Unsupported metric for BallTree query: " + std::string(metric)
+  );
+}
+
 SparseGraph balltree_query(
     SpaceTree const tree, uint32_t const num_neighbors,
     char const *const metric, nb::dict const metric_kws
 ) {
-  // OpenMP does not yet support capturing from structured bindings.
-  auto result = SparseGraph::allocate_knn(tree.data.shape(0), num_neighbors);
-  SparseGraphWriteView knn_view = result.first;
-  SparseGraphCapsule knn_cap = std::move(result.second);
-
-  // Avoid code duplication by defining a parameterless templated function
-  auto run = [metric_kws, knn_view, tree = tree.view()]<Metric metric>() {
-    return parallel_query(
-        knn_view, tree, get_rdist<metric>(metric_kws),
-        get_balltree_min_rdist<metric>(metric_kws)
-    );
-  };
-
-  // Select the appropriate metric and run the query
-  switch (parse_metric(metric)) {
-    case Metric::Euclidean:
-      run.operator()<Metric::Euclidean>();
-      break;
-    case Metric::Cityblock:
-      run.operator()<Metric::Cityblock>();
-      break;
-    case Metric::Chebyshev:
-      run.operator()<Metric::Chebyshev>();
-      break;
-    case Metric::Minkowski:
-      run.operator()<Metric::Minkowski>();
-      break;
-    case Metric::Hamming:
-      run.operator()<Metric::Hamming>();
-      break;
-    case Metric::Braycurtis:
-      run.operator()<Metric::Braycurtis>();
-      break;
-    case Metric::Canberra:
-      run.operator()<Metric::Canberra>();
-      break;
-    case Metric::Haversine:
-      run.operator()<Metric::Haversine>();
-      break;
-    case Metric::SEuclidean:
-      run.operator()<Metric::SEuclidean>();
-      break;
-    case Metric::Mahalanobis:
-      run.operator()<Metric::Mahalanobis>();
-      break;
-    case Metric::Dice:
-      run.operator()<Metric::Dice>();
-      break;
-    case Metric::Jaccard:
-      run.operator()<Metric::Jaccard>();
-      break;
-    case Metric::Russellrao:
-      run.operator()<Metric::Russellrao>();
-      break;
-    case Metric::Rogerstanimoto:
-      run.operator()<Metric::Rogerstanimoto>();
-      break;
-    case Metric::Sokalsneath:
-      run.operator()<Metric::Sokalsneath>();
-      break;
-    default:
-      throw std::invalid_argument(
-          "Unsupported metric for Balltree query: " + std::string(metric)
-      );
-  }
+  auto [knn_view, knn_cap] = SparseGraph::allocate_knn(
+      tree.data.shape(0), num_neighbors
+  );
+  get_balltree_executor(metric)(knn_view, tree.view(), metric_kws);
   return {knn_view, knn_cap};
 }
 

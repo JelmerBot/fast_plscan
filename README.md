@@ -15,6 +15,8 @@ pip install --no-deps --no-build-isolation --config-settings=cmake.build-type=De
 
 ## TODO
 
+- [ ] ci/cd pipeline.
 - [ ] missing values in feature vectors.
+- [ ] prediction module??
 - [ ] sample weight core distances??
-- [ ] core graph / subcluster clustering??
+- [ ] core graph / sub-cluster clustering??
