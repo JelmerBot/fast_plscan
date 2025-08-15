@@ -15,8 +15,8 @@ Persistent Leaf Spatial Clustering for Applications with Noise
     - [x] macos-arm
     - [ ] windows-arm (only available on public repos)
     - [ ] ubuntu-arm (only available on public repos)
-- [ ] update branch protection rule
-- [ ] setup readthedocs config
+- [x] update branch protection rule
+- [ ] setup docs config
 - [ ] support missing values in feature vectors.
 - [ ] compute core distances based on sample weights.
 - [ ] support core graph / sub-cluster clustering.
@@ -24,7 +24,8 @@ Persistent Leaf Spatial Clustering for Applications with Noise
 
 ## Development
 
-The development workflow works best by pre-installing python dependencies with `pip` (or alternatives):
+The development workflow works best by pre-installing python dependencies with
+`pip` (or alternatives):
 
 ```bash
 pip install numpy scipy matplotlib scikit-learn scikit-build-core nanobind setuptools_scm
@@ -85,8 +86,8 @@ $devddl = "$iloc/Common7/Tools/Microsoft.VisualStudio.DevShell.dll"
 Import-Module $devddl; Enter-VsDevShell -Arch amd64 -VsInstallPath $iloc -SkipAutomaticLocation
 ```
 
-In addition, select the MSVC Clang compiler using `-C cmake.args="-T
-ClangCL"` the first time the package is installed:
+In addition, select the MSVC Clang compiler using `-C cmake.args="-T ClangCL"`
+the first time the package is installed:
 
 ```powershell
 pip install --no-deps --no-build-isolation -C cmake.args="-T ClangCL" -ve . 
