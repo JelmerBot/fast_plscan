@@ -8,23 +8,17 @@ on:
   pull_request:
     branches:
       - main
-    paths: 
+    paths:
       - 'src/**'
       - 'tests/**'
       - 'LICENSE'
+      - 'README.md'
       - 'CMakeLists.txt'
       - 'pyproject.toml'
       - '.github/workflows/build_wheels.yml'
   push:
-    branches:
-      - main
-    paths: 
-      - 'src/**'
-      - 'tests/**'
-      - 'LICENSE'
-      - 'CMakeLists.txt'
-      - 'pyproject.toml'
-      - '.github/workflows/build_wheels.yml'
+    tags:
+      - v*
 
 jobs:
   build_wheels:
