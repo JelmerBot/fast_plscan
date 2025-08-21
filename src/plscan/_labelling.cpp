@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "_condense_tree.h"
+#include "_condensed_tree.h"
 #include "_leaf_tree.h"
 
 [[nodiscard]] std::vector<int32_t> compute_segment_labels(
@@ -117,7 +117,6 @@ NB_MODULE(_labelling, m) {
             );
           },
           nb::arg("label"), nb::arg("probability"),
-          nb::sig("def __init__(self, label: np.ndarray, probability: np.ndarray) -> None"),
           R"(
             Parameters
             ----------
@@ -129,13 +128,11 @@ NB_MODULE(_labelling, m) {
       )
       .def_ro(
           "label", &Labelling::label, nb::rv_policy::reference,
-          nb::sig("def label(self) -> np.ndarray"),
-          "A 1D array with cluster labels (np.int32)."
+          "A 1D array with cluster labels."
       )
       .def_ro(
           "probability", &Labelling::probability, nb::rv_policy::reference,
-          nb::sig("def probability(self) -> np.ndarray"),
-          "A 1D array with cluster membership probabilities (np.float32)."
+          "A 1D array with cluster membership probabilities."
       )
       .def(
           "__iter__",
@@ -159,7 +156,6 @@ NB_MODULE(_labelling, m) {
       "compute_cluster_labels", &compute_cluster_labels, nb::arg("leaf_tree"),
       nb::arg("condensed_tree"), nb::arg("selected_clusters").noconvert(),
       nb::arg("num_points"),
-      nb::sig("def compute_cluster_labels(leaf_tree: plscan.leaf_tree.LeafTree, condensed_tree: plscan.condense_tree.CondensedTree, selected_clusters: np.ndarray, num_points: int) -> Labelling"),
       R"(
         Computes cluster labels and membership probabilities for the points.
 

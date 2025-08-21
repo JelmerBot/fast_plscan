@@ -12,16 +12,15 @@ NB_MODULE(_distances, m) {
         return get_dist<Metric::Euclidean>(metric_kws)(to_view(u), to_view(v));
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def euclidean(u: np.ndarray, v: np.ndarray) -> float"),
       R"(
         Euclidean distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32).
+            The first input vector.
         v
-            The second input vector (1D, c-contig, np.float32).
+            The second input vector.
 
         Returns
         -------
@@ -37,16 +36,15 @@ NB_MODULE(_distances, m) {
         return get_dist<Metric::Cityblock>(metric_kws)(to_view(u), to_view(v));
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def cityblock(u: np.ndarray, v: np.ndarray) -> float"),
       R"(
         Cityblock distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32).
+            The first input vector.
         v
-            The second input vector (1D, c-contig, np.float32).
+            The second input vector.
 
         Returns
         -------
@@ -62,16 +60,15 @@ NB_MODULE(_distances, m) {
         return get_dist<Metric::Chebyshev>(metric_kws)(to_view(u), to_view(v));
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def chebyshev(u: np.ndarray, v: np.ndarray) -> float"),
       R"(
         Chebyshev distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32).
+            The first input vector.
         v
-            The second input vector (1D, c-contig, np.float32).
+            The second input vector.
 
         Returns
         -------
@@ -87,16 +84,15 @@ NB_MODULE(_distances, m) {
         return get_dist<Metric::Minkowski>(metric_kws)(to_view(u), to_view(v));
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def minkowski(u: np.ndarray, v: np.ndarray, *, p: float) -> float"),
       R"(
         Minkowski distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32).
+            The first input vector.
         v
-            The second input vector (1D, c-contig, np.float32).
+            The second input vector.
         p
             The order of the Minkowski distance. Keyword only!
 
@@ -114,16 +110,15 @@ NB_MODULE(_distances, m) {
         return get_dist<Metric::Hamming>(metric_kws)(to_view(u), to_view(v));
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def hamming(u: np.ndarray, v: np.ndarray) -> float"),
       R"(
         Hamming distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32).
+            The first input vector.
         v
-            The second input vector (1D, c-contig, np.float32).
+            The second input vector.
 
         Returns
         -------
@@ -139,16 +134,15 @@ NB_MODULE(_distances, m) {
         return get_dist<Metric::Braycurtis>(metric_kws)(to_view(u), to_view(v));
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def braycurtis(u: np.ndarray, v: np.ndarray) -> float"),
       R"(
         Braycurtis distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32).
+            The first input vector.
         v
-            The second input vector (1D, c-contig, np.float32).
+            The second input vector.
 
         Returns
         -------
@@ -164,16 +158,15 @@ NB_MODULE(_distances, m) {
         return get_dist<Metric::Canberra>(metric_kws)(to_view(u), to_view(v));
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def canberra(u: np.ndarray, v: np.ndarray) -> float"),
       R"(
         Canberra distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32).
+            The first input vector.
         v
-            The second input vector (1D, c-contig, np.float32).
+            The second input vector.
 
         Returns
         -------
@@ -188,18 +181,17 @@ NB_MODULE(_distances, m) {
         return get_dist<Metric::Haversine>(metric_kws)(to_view(u), to_view(v));
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def haversine(u: np.ndarray, v: np.ndarray) -> float"),
       R"(
         Haversine distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32). Only the first
+            The first input vector. Only the first
             two values are used, which must be latitude and longitude in
             radians.
         v
-            The second input vector (1D, c-contig, np.float32).Only the first
+            The second input vector.Only the first
             two values are used, which must be latitude and longitude in
             radians.
 
@@ -217,20 +209,18 @@ NB_MODULE(_distances, m) {
         return get_dist<Metric::SEuclidean>(metric_kws)(to_view(u), to_view(v));
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def seuclidean(u: np.ndarray, v: np.ndarray, *, V: np.ndarray) -> float"),
       R"(
         SEuclidean distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32).
+            The first input vector.
         v
-            The second input vector (1D, c-contig, np.float32).
+            The second input vector.
         V
-            The variance vector for the SEuclidean distance (1D, c-contig,
-            np.float32). This is used to scale the distance based on the
-            variance of the coordinates.
+            The variance vector for the SEuclidean distance. This is used to scale 
+            the distance based on the variance of the coordinates.
 
         Returns
         -------
@@ -248,19 +238,17 @@ NB_MODULE(_distances, m) {
         );
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def mahalanobis(u: np.ndarray, v: np.ndarray, *, VI: np.ndarray) -> float"),
       R"(
         Mahalanobis distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32).
+            The first input vector.
         v
-            The second input vector (1D, c-contig, np.float32).
+            The second input vector.
         VI
-            The inverse covariance matrix for the Mahalanobis distance (1D,
-            c-contig, np.float32).
+            The inverse covariance matrix for the Mahalanobis distance.
 
         Returns
         -------
@@ -276,16 +264,15 @@ NB_MODULE(_distances, m) {
         return get_dist<Metric::Dice>(metric_kws)(to_view(u), to_view(v));
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def dice(u: np.ndarray, v: np.ndarray) -> float"),
       R"(
         Dice distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32).
+            The first input vector.
         v
-            The second input vector (1D, c-contig, np.float32).
+            The second input vector.
 
         Returns
         -------
@@ -301,16 +288,15 @@ NB_MODULE(_distances, m) {
         return get_dist<Metric::Jaccard>(metric_kws)(to_view(u), to_view(v));
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def jaccard(u: np.ndarray, v: np.ndarray) -> float"),
       R"(
         Jaccard distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32).
+            The first input vector.
         v
-            The second input vector (1D, c-contig, np.float32).
+            The second input vector.
 
         Returns
         -------
@@ -326,16 +312,15 @@ NB_MODULE(_distances, m) {
         return get_dist<Metric::Russellrao>(metric_kws)(to_view(u), to_view(v));
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def russellrao(u: np.ndarray, v: np.ndarray) -> float"),
       R"(
         Russellrao distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32).
+            The first input vector.
         v
-            The second input vector (1D, c-contig, np.float32).
+            The second input vector.
 
         Returns
         -------
@@ -353,16 +338,15 @@ NB_MODULE(_distances, m) {
         );
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def rogerstanimoto(u: np.ndarray, v: np.ndarray) -> float"),
       R"(
         Rogerstanimoto distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32).
+            The first input vector.
         v
-            The second input vector (1D, c-contig, np.float32).
+            The second input vector.
 
         Returns
         -------
@@ -380,16 +364,15 @@ NB_MODULE(_distances, m) {
         );
       },
       nb::arg("u").noconvert(), nb::arg("v").noconvert(), nb::arg("metric_kws"),
-      nb::sig("def sokalsneath(u: np.ndarray, v: np.ndarray) -> float"),
       R"(
         Sokalsneath distance between two 1D vectors.
 
         Parameters
         ----------
         u
-            The first input vector (1D, c-contig, np.float32).
+            The first input vector.
         v
-            The second input vector (1D, c-contig, np.float32).
+            The second input vector.
 
         Returns
         -------

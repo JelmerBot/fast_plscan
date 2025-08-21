@@ -1,4 +1,4 @@
-#include "_condense_tree.h"
+#include "_condensed_tree.h"
 
 #include <nanobind/stl/optional.h>
 
@@ -225,7 +225,7 @@ CondensedTree compute_condensed_tree(
   return {tree_view, std::move(tree_cap), filled_edges, cluster_count};
 }
 
-NB_MODULE(_condense_tree, m) {
+NB_MODULE(_condensed_tree, m) {
   m.doc() = "Module for condensed tree computation in PLSCAN.";
 
   nb::class_<CondensedTree>(m, "CondensedTree")
@@ -249,9 +249,6 @@ NB_MODULE(_condense_tree, m) {
           },
           nb::arg("parent"), nb::arg("child"), nb::arg("distance"),
           nb::arg("child_size"), nb::arg("cluster_rows"),
-          nb::sig(
-              "def __init__(self, parent: np.ndarray, child: np.ndarray, distance: np.ndarray, child_size: np.ndarray, cluster_rows: np.ndarray) -> None"
-          ),
           R"(
             Parameters
             ----------
@@ -271,29 +268,23 @@ NB_MODULE(_condense_tree, m) {
       )
       .def_ro(
           "parent", &CondensedTree::parent, nb::rv_policy::reference,
-          nb::sig("def parent(self) -> np.ndarray"),
-          "A 1D array of parent cluster indices (np.uint32)."
+          "A 1D array of parent cluster indices."
       )
       .def_ro(
           "child", &CondensedTree::child, nb::rv_policy::reference,
-          nb::sig("def child(self) -> np.ndarray"),
-          "A 1D array of child cluster indices (np.uint32)."
+          "A 1D array of child cluster indices."
       )
       .def_ro(
           "distance", &CondensedTree::distance, nb::rv_policy::reference,
-          nb::sig("def distance(self) -> np.ndarray"),
-          "A 1D array of distances (np.float32)."
+          "A 1D array of distances."
       )
       .def_ro(
           "child_size", &CondensedTree::child_size, nb::rv_policy::reference,
-          nb::sig("def child_size(self) -> np.ndarray"),
-          "A 1D array of child sizes (np.float32)."
+          "A 1D array of child sizes."
       )
       .def_ro(
           "cluster_rows", &CondensedTree::cluster_rows,
-          nb::rv_policy::reference,
-          nb::sig("def cluster_rows(self) -> np.ndarray"),
-          "A 1D array of cluster row indices (np.uint32)."
+          nb::rv_policy::reference, "A 1D array of cluster row indices."
       )
       .def(
           "__iter__",
@@ -324,9 +315,6 @@ NB_MODULE(_condense_tree, m) {
       nb::arg("linkage_tree"), nb::arg("minimum_spanning_tree"),
       nb::arg("num_points"), nb::arg("min_cluster_size") = 5.0f,
       nb::arg("sample_weights") = nb::none(),
-      nb::sig(
-          "def compute_condensed_tree(linkage_tree: plscan.linkage_tree.LinkageTree, minimum_spanning_tree: plscan.spanning_tree.SpanningTree, num_points: int, min_cluster_size: float = 5.0, sample_weights: np.ndarray | None = None) -> CondensedTree"
-      ),
       R"(
         Prunes a linkage tree to create a condensed tree.
 
@@ -341,7 +329,7 @@ NB_MODULE(_condense_tree, m) {
             The minimum size of clusters to be included in the condensed tree.
             Default is 5.0.
         sample_weights
-            The data point sample weights (np.float32). If not provided, all
+            The data point sample weights. If not provided, all
             points get an equal weight. Must have a value for each data point!
 
         Returns

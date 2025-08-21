@@ -99,9 +99,6 @@ NB_MODULE(_linkage_tree, m) {
               array_ref<uint32_t const>, array_ref<float const>>(),
           nb::arg("parent").noconvert(), nb::arg("child").noconvert(),
           nb::arg("child_count").noconvert(), nb::arg("child_size").noconvert(),
-          nb::sig(
-              "def __init__(self, parent: np.ndarray, child: np.ndarray, child_count: np.ndarray, child_size: np.ndarray) -> None"
-          ),
           R"(
             Parameters
             ----------
@@ -119,23 +116,19 @@ NB_MODULE(_linkage_tree, m) {
       )
       .def_ro(
           "parent", &LinkageTree::parent, nb::rv_policy::reference,
-          nb::sig("def parent(self) -> np.ndarray"),
-          "A 1D array with parent values (np.uint32). "
+          "A 1D array with parent values. "
       )
       .def_ro(
           "child", &LinkageTree::child, nb::rv_policy::reference,
-          nb::sig("def child(self) -> np.ndarray"),
-          "A 1D array with child values (np.uint32). "
+          "A 1D array with child values. "
       )
       .def_ro(
           "child_count", &LinkageTree::child_count, nb::rv_policy::reference,
-          nb::sig("def child_count(self) -> np.ndarray"),
-          "A 1D array with child_count values (np.uint32). "
+          "A 1D array with child_count values. "
       )
       .def_ro(
           "child_size", &LinkageTree::child_size, nb::rv_policy::reference,
-          nb::sig("def child_size(self) -> np.ndarray"),
-          "A 1D array with child_size values (np.float32). "
+          "A 1D array with child_size values. "
       )
       .def(
           "__iter__",
@@ -164,7 +157,6 @@ NB_MODULE(_linkage_tree, m) {
       "compute_linkage_tree", &compute_linkage_tree,
       nb::arg("minimum_spanning_tree"), nb::arg("num_points"),
       nb::arg("sample_weights") = nb::none(),
-      nb::sig("def compute_linkage_tree(minimum_spanning_tree: plscan.spanning_tree.SpanningTree, num_points: int, sample_weights: np.ndarray | None = None) -> LinkageTree"),
       R"(
         Constructs a LinkageTree containing a single-linkage
         dendrogram.

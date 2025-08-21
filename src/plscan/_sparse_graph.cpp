@@ -141,32 +141,28 @@ NB_MODULE(_sparse_graph, m) {
             );
           },
           nb::arg("data"), nb::arg("indices"), nb::arg("indptr"),
-          nb::sig("def __init__(self, data: np.ndarray, indices: np.ndarray, indptr: np.ndarray) -> None"),
           R"(
           Parameters
           ----------
           data
-              An array of distances (np.float32).
+              An array of distances.
           indices
-              An array of column indices (np.int32).
+              An array of column indices.
           indptr
-              The CSR indptr array (np.int32).
+              The CSR indptr array.
           )"
       )
       .def_ro(
           "data", &SparseGraph::data, nb::rv_policy::reference,
-          nb::sig("def data(self) -> np.ndarray"),
-          "A 1D array with data values (np.float32)"
+          "A 1D array with data values."
       )
       .def_ro(
           "indices", &SparseGraph::indices, nb::rv_policy::reference,
-          nb::sig("def indices(self) -> np.ndarray"),
-          "A 1D array with indices values (np.int32)"
+          "A 1D array with indices values."
       )
       .def_ro(
           "indptr", &SparseGraph::indptr, nb::rv_policy::reference,
-          nb::sig("def indptr(self) -> np.ndarray"),
-          "A 1D array with indptr values (np.int32)"
+          "A 1D array with indptr values."
       )
       .def(
           "__iter__",
@@ -189,7 +185,6 @@ NB_MODULE(_sparse_graph, m) {
   m.def(
       "extract_core_distances", &extract_core_distances, nb::arg("graph"),
       nb::arg("min_samples") = 5, nb::arg("is_sorted") = false,
-      nb::sig("def extract_core_distances(graph: SparseGraph, min_samples: int = 5, is_sorted: bool = False) -> np.ndarray"),
       R"(
           Extracts core distances from a sparse graph.
 
@@ -212,7 +207,6 @@ NB_MODULE(_sparse_graph, m) {
   m.def(
       "compute_mutual_reachability", &compute_mutual_reachability,
       nb::arg("graph"), nb::arg("core_distances"),
-      nb::sig("def compute_mutual_reachability(graph: SparseGraph, core_distances: np.ndarray) -> SparseGraph"),
       R"(
           Applies core distances to a sparse graph to compute mutual
           reachability.

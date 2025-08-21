@@ -336,7 +336,6 @@ NB_MODULE(_space_tree, m) {
               array_ref<double const>, ndarray_ref<float const, 3>>(),
           nb::arg("data").noconvert(), nb::arg("idx_array").noconvert(),
           nb::arg("node_data").noconvert(), nb::arg("node_bounds").noconvert(),
-          nb::sig("def __init__(self, data: np.ndarray, idx_array: np.ndarray, node_data: np.ndarray, node_bounds: np.ndarray) -> None"),
           R"(
             Parameters
             ----------
@@ -347,30 +346,26 @@ NB_MODULE(_space_tree, m) {
             node_data
                 A float64 view into the structured :py:class:`~NodeData` array.
             node_bounds
-                The node bounds, a 3D array with shape (x, num_nodes, num_features),
+                The node bounds, a 3D array (x, num_nodes, num_features),
                 representing the min and max bounds of each node in the feature
                 space.
           )"
       )
       .def_ro(
           "data", &SpaceTree::data, nb::rv_policy::reference,
-          nb::sig("def data(self) -> np.ndarray"),
-          "A 2D array with feature vectors (np.float32)."
+          "A 2D array with feature vectors."
       )
       .def_ro(
           "idx_array", &SpaceTree::idx_array, nb::rv_policy::reference,
-          nb::sig("def idx_array(self) -> np.ndarray"),
           "A 1D array mapping nodes to data points (np.int64)."
       )
       .def_ro(
           "node_data", &SpaceTree::node_data, nb::rv_policy::reference,
-          nb::sig("def node_data(self) -> np.ndarray"),
           "A 1D float64 view into a node data array."
       )
       .def_ro(
           "node_bounds", &SpaceTree::node_bounds, nb::rv_policy::reference,
-          nb::sig("def node_bounds(self) -> np.ndarray"),
-          "A 3D array with node bounds (np.float32)."
+          "A 3D array with node bounds."
       )
       .def(
           "__iter__",
@@ -397,8 +392,6 @@ NB_MODULE(_space_tree, m) {
 
   m.def(
       "check_node_data", &check_node_data, nb::arg("node_data").noconvert(),
-      nb::sig("def check_node_data(node_data: np.ndarray) -> list[NodeData]"
-      ),
       R"(
         Converts float64 node_data view to a list of NodeData objects.
         This function is used in tests to check whether the node data
@@ -407,23 +400,19 @@ NB_MODULE(_space_tree, m) {
         Parameters
         ----------
         node_data
-            A flat float64 array view containing node data in the format:
-              int64 idx_start,
-              int64 idx_end,
-              int64 is_leaf,
-              float 64 radius.
+            A flat float64 array view containing :py:class:`~NodeData`.
 
         Returns
         -------
-        copyied_data
-            A list of NodeData objects created from the input array.
+        copied_data
+            A list of :py:class:`~NodeData` objects created from the input
+            array.
       )"
   );
 
   m.def(
       "kdtree_query", &kdtree_query, nb::arg("tree"), nb::arg("num_neighbors"),
       nb::arg("metric"), nb::arg("metric_kws"),
-      nb::sig("def kdtree_query(tree: SpaceTree, num_neighbors: int, metric: str, metric_kws: dict) -> plscan.sparse_graph.SparseGraph"),
       R"(
         Performs a k-nearest neighbors query on a SpaceTree.
 
@@ -434,9 +423,8 @@ NB_MODULE(_space_tree, m) {
         num_neighbors
             The number of nearest neighbors to find.
         metric
-            The distance metric to use. Supported metrics are: "euclidean",
-            "l2","manhattan", "cityblock", "l1", "chebyshev", "infinity",
-            "minkowski", "p".
+            The distance metric to use. Supported metrics are listed in
+            :py:attr:`~plscan.PLSCAN.VALID_KDTREE_METRICS`.
         metric_kws
             Additional keyword arguments for the distance function, such as
             the Minkowski distance parameter `p` for the "minkowski" metric.
@@ -452,7 +440,6 @@ NB_MODULE(_space_tree, m) {
   m.def(
       "balltree_query", &balltree_query, nb::arg("tree"),
       nb::arg("num_neighbors"), nb::arg("metric"), nb::arg("metric_kws"),
-      nb::sig("def balltree_query(tree: SpaceTree, num_neighbors: int, metric: str, metric_kws: dict) -> plscan.sparse_graph.SparseGraph"),
       R"(
         Performs a k-nearest neighbors query on a SpaceTree.
 
@@ -463,11 +450,8 @@ NB_MODULE(_space_tree, m) {
         num_neighbors
             The number of nearest neighbors to find.
         metric
-            The distance metric to use. Supported metrics are: "euclidean",
-            "l2", "manhattan", "cityblock", "l1", "chebyshev", "infinity",
-            "minkowski", "p", "seuclidean", "hamming",  "braycurtis",
-            "canberra", "haversine", "mahalanobis", "dice",  "jaccard",
-            "russellrao", "rogerstanimoto", "sokalsneath".
+            The distance metric to use. Supported metrics are listed in
+            :py:attr:`~plscan.PLSCAN.VALID_BALLTREE_METRICS`.
         metric_kws
             Additional keyword arguments for the distance function, such as
             the Minkowski distance parameter `p` for the "minkowski" metric.

@@ -548,7 +548,6 @@ NB_MODULE(_spanning_tree, m) {
             );
           },
           nb::arg("parent"), nb::arg("child"), nb::arg("distance"),
-          nb::sig("def __init__(self, parent: np.ndarray, child: np.ndarray, distance: np.ndarray) -> None"),
           R"(
             Parameters
             ----------
@@ -562,18 +561,15 @@ NB_MODULE(_spanning_tree, m) {
       )
       .def_ro(
           "parent", &SpanningTree::parent, nb::rv_policy::reference,
-          nb::sig("def parent(self) -> np.ndarray"),
-          "A 1D array with parent values (np.uint32)"
+          "A 1D array with parent values."
       )
       .def_ro(
           "child", &SpanningTree::child, nb::rv_policy::reference,
-          nb::sig("def child(self) -> np.ndarray"),
-          "A 1D array with child values (np.uint32)"
+          "A 1D array with child values."
       )
       .def_ro(
           "distance", &SpanningTree::distance, nb::rv_policy::reference,
-          nb::sig("def distance(self) -> np.ndarray"),
-          "A 1D array with distance values (np.float32)"
+          "A 1D array with distance values."
       )
       .def(
           "__iter__",
@@ -595,7 +591,6 @@ NB_MODULE(_spanning_tree, m) {
 
   m.def(
       "extract_spanning_forest", &extract_spanning_forest, nb::arg("graph"),
-      nb::sig("def extract_spanning_forest(graph: plscan.sparse_graph.SparseGraph) -> SpanningTree"),
       R"(
         Extracts a minimum spanning forest from a sparse graph.
 
@@ -615,7 +610,6 @@ NB_MODULE(_spanning_tree, m) {
       "compute_spanning_tree_kdtree", &compute_spanning_tree_kdtree,
       nb::arg("tree"), nb::arg("knn"), nb::arg("core_distances"),
       nb::arg("metric"), nb::arg("metric_kws"),
-      nb::sig("def compute_spanning_tree_kdtree(tree: plscan.space_tree.SpaceTree, knn: plscan.sparse_graph.SparseGraph, core_distances: np.ndarray, metric: str, metric_kws: dict) -> SpanningTree"),
       R"(
         Computes a minimum spanning tree (MST) using a k-d tree.
 
@@ -628,9 +622,8 @@ NB_MODULE(_spanning_tree, m) {
         core_distances
             The core distances for each point.
         metric
-            The distance metric to use. Supported metrics are:
-            "euclidean", "l2", "manhattan", "cityblock", "l1", "chebyshev",
-            "infinity", "minkowski", "p".
+            The distance metric to use. Supported metrics are listed in
+            :py:attr:`~plscan.PLSCAN.VALID_KDTREE_METRICS`.
         metric_kws
             Additional keyword arguments for the distance function, such as
             the Minkowski distance parameter `p` for the "minkowski" metric.
@@ -646,7 +639,6 @@ NB_MODULE(_spanning_tree, m) {
       "compute_spanning_tree_balltree", &compute_spanning_tree_balltree,
       nb::arg("tree"), nb::arg("knn"), nb::arg("core_distances"),
       nb::arg("metric"), nb::arg("metric_kws"),
-      nb::sig("def compute_spanning_tree_balltree(tree: plscan.space_tree.SpaceTree, knn: plscan.sparse_graph.SparseGraph, core_distances: np.ndarray, metric: str, metric_kws: dict) -> SpanningTree"),
       R"(
         Computes a minimum spanning tree (MST) using a ball tree.
 
@@ -659,11 +651,8 @@ NB_MODULE(_spanning_tree, m) {
         core_distances
             The core distances for each point.
         metric
-            The distance metric to use. Supported metrics are:
-            "euclidean", "l2", "manhattan", "cityblock", "l1", "chebyshev",
-            "infinity", "minkowski", "p", "seuclidean", "hamming", "braycurtis",
-            "canberra", "haversine", "mahalanobis", "dice", "jaccard",
-            "russellrao", "rogerstanimoto", "sokalsneath".
+            The distance metric to use. Supported metrics are listed in
+            :py:attr:`~plscan.PLSCAN.VALID_BALLTREE_METRICS`.
         metric_kws
             Additional keyword arguments for the distance function, such as
             the Minkowski distance parameter `p` for the "minkowski" metric.

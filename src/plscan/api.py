@@ -20,7 +20,7 @@ from .spanning_tree import (
     compute_spanning_tree_balltree,
 )
 from .linkage_tree import LinkageTree, compute_linkage_tree
-from .condense_tree import CondensedTree, compute_condensed_tree
+from .condensed_tree import CondensedTree, compute_condensed_tree
 from .leaf_tree import LeafTree, compute_leaf_tree, apply_size_cut, apply_distance_cut
 from .persistence_trace import (
     PersistenceTrace,

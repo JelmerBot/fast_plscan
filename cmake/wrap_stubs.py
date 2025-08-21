@@ -37,15 +37,15 @@ def main(path, stub, docs_out, mod_out, project_name):
         offset += len(new_line)
 
     # Correct imports
-    stubs = stubs.replace("import np", "import numpy as np")
-    child_modules = set(re.findall(rf"{project_name}\.(\w+)\.\w+", stubs))
-    stubs = re.sub(rf"{project_name}\.(\w+)\.(\w+)", r"\1.\2", stubs)
-    stubs = re.sub(
-        rf"import {project_name}.*$",
-        "from . import " + ", ".join(child_modules),
-        stubs,
-        flags=re.MULTILINE,
-    )
+    # stubs = stubs.replace("import np", "import numpy as np")
+    # child_modules = set(re.findall(rf"{project_name}\.(\w+)\.\w+", stubs))
+    # stubs = re.sub(rf"{project_name}\.(\w+)\.(\w+)", r"\1.\2", stubs)
+    # stubs = re.sub(
+    #     rf"import {project_name}.*$",
+    #     "from . import " + ", ".join(child_modules),
+    #     stubs,
+    #     flags=re.MULTILINE,
+    # )
 
     # Write the modified stubs to the output file
     docs_file = Path(path) / docs_out

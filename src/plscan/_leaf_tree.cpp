@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include "_condense_tree.h"
+#include "_condensed_tree.h"
 
 void fill_min_dist(
     LeafTreeWriteView leaf_tree, CondensedTreeView const condensed_tree,
@@ -151,49 +151,40 @@ NB_MODULE(_leaf_tree, m) {
           },
           nb::arg("parent"), nb::arg("min_distance"), nb::arg("max_distance"),
           nb::arg("min_size"), nb::arg("max_size"),
-          nb::sig("def __init__(parent: np.ndarray, min_distance: np.ndarray, max_distance: np.ndarray, min_size: np.ndarray, max_size: np.ndarray) -> None"),
           R"(
             Parameters
             ----------
             parent
-                The parent cluster IDs (np.uint32).
+                The parent cluster IDs.
             min_distance
-                The minimum distance at which the cluster exists (np.float32).
+                The minimum distance at which the cluster exists.
             max_distance
-                The distance at which the cluster connects to its parent
-                (np.float32).
+                The distance at which the cluster connects to its parent.
             min_size
-                The min_cluster_size at which the cluster becomes a leaf
-                (np.float32).
+                The min_cluster_size at which the cluster becomes a leaf.
             max_size
-                The min_cluster_size at which the cluster stops being a leaf
-                (np.float32).
+                The min_cluster_size at which the cluster stops being a leaf.
           )"
       )
       .def_ro(
           "parent", &LeafTree::parent, nb::rv_policy::reference,
-          nb::sig("def parent(self) -> np.ndarray"),
-          "A 1D array with parent cluster IDs (np.uint32)."
+          "A 1D array with parent cluster IDs."
       )
       .def_ro(
           "min_distance", &LeafTree::min_distance, nb::rv_policy::reference,
-          nb::sig("def min_distance(self) -> np.ndarray"),
-          "A 1D array with minimum leaf cluster distances (np.float32)."
+          "A 1D array with minimum leaf cluster distances."
       )
       .def_ro(
           "max_distance", &LeafTree::max_distance, nb::rv_policy::reference,
-          nb::sig("def max_distance(self) -> np.ndarray"),
-          "A 1D array with maximum leaf cluster distances (np.float32)."
+          "A 1D array with maximum leaf cluster distances."
       )
       .def_ro(
           "min_size", &LeafTree::min_size, nb::rv_policy::reference,
-          nb::sig("def min_size(self) -> np.ndarray"),
-          "A 1D array with minimum leaf cluster sizes (np.float32)."
+          "A 1D array with minimum leaf cluster sizes."
       )
       .def_ro(
           "max_size", &LeafTree::max_size, nb::rv_policy::reference,
-          nb::sig("def max_size(self) -> np.ndarray"),
-          "A 1D array with maximum leaf cluster sizes (np.float32)."
+          "A 1D array with maximum leaf cluster sizes."
       )
       .def(
           "__iter__",
@@ -227,7 +218,6 @@ NB_MODULE(_leaf_tree, m) {
   m.def(
       "compute_leaf_tree", &compute_leaf_tree, nb::arg("condensed_tree"),
       nb::arg("num_points"), nb::arg("min_cluster_size") = 5.0f,
-      nb::sig("def compute_leaf_tree(condensed_tree: plscan.condense_tree.CondensedTree, num_points: int, min_cluster_size: float = 5.0) -> LeafTree"),
       R"(
         Computes a leaf tree from a condensed tree.
 
@@ -255,7 +245,6 @@ NB_MODULE(_leaf_tree, m) {
   m.def(
       "apply_size_cut", &apply_size_cut, nb::arg("leaf_tree"),
       nb::arg("cut_size"),
-      nb::sig("def apply_size_cut(leaf_tree: LeafTree, cut_size: float) -> np.ndarray"),
       R"(
         Finds the cluster IDs for leaf-clusters that exist at the 
         given cut_size threshold. The threshold is interpreted as a
@@ -281,7 +270,6 @@ NB_MODULE(_leaf_tree, m) {
   m.def(
       "apply_distance_cut", &apply_distance_cut, nb::arg("leaf_tree"),
       nb::arg("cut_distance"),
-      nb::sig("def apply_distance_cut(leaf_tree: LeafTree, cut_distance: float) -> np.ndarray"),
       R"(
         Finds the cluster IDs for clusters that exist at the given cut distance 
         threshold.
