@@ -8,7 +8,7 @@ from scipy.stats import rankdata
 from matplotlib.collections import LineCollection, PatchCollection
 from matplotlib.patches import Ellipse
 from matplotlib.colors import Colormap, BoundaryNorm
-from typing import Self, Any
+from typing import Any
 
 from . import _lib as lib
 
@@ -22,7 +22,7 @@ class CondensedTree(object):
     """
 
     def __init__(
-        self: Self,
+        self,
         leaf_tree: lib.LeafTree,
         condensed_tree: lib.CondensedTree,
         selected_clusters: np.ndarray[tuple[int], np.dtype[np.uint32]],
@@ -45,7 +45,7 @@ class CondensedTree(object):
         self._chosen_segments = {c: i for i, c in enumerate(selected_clusters)}
         self._num_points = num_points
 
-    def to_numpy(self: Self) -> np.ndarray:
+    def to_numpy(self) -> np.ndarray:
         """Returns a numpy structured array of the condensed tree.
 
         The columns are: parent, child, distance, child_size. The parent
@@ -73,7 +73,7 @@ class CondensedTree(object):
         result["child_size"] = self._tree.child_size
         return result
 
-    def to_pandas(self: Self):
+    def to_pandas(self):
         """
         Returns a pandas dataframe of the condensed tree.
 
@@ -105,7 +105,7 @@ class CondensedTree(object):
             )
         )
 
-    def to_networkx(self: Self):
+    def to_networkx(self):
         """Return a NetworkX DiGraph object representing the condensed tree.
 
         Edges have a `distance` attribute attached giving the distance at which
@@ -147,7 +147,7 @@ class CondensedTree(object):
         return g
 
     def plot(
-        self: Self,
+        self,
         *,
         leaf_separation: float = 0.8,
         cmap: str | Colormap = "viridis",
@@ -438,7 +438,7 @@ class LeafTree(object):
     """
 
     def __init__(
-        self: Self,
+        self,
         leaf_tree: lib.LeafTree,
         condensed_tree: lib.CondensedTree,
         selected_clusters: np.ndarray[tuple[int], np.dtype[np.uint32]],
@@ -465,7 +465,7 @@ class LeafTree(object):
         self._persistence_trace = persistence_trace
         self._num_points = num_points
 
-    def to_numpy(self: Self) -> np.ndarray:
+    def to_numpy(self) -> np.ndarray:
         """Returns a numpy structured array of the leaf tree.
 
         Each row represents a segment in the condensed tree, with the first row
@@ -498,7 +498,7 @@ class LeafTree(object):
         result["max_size"] = self._tree.max_size
         return result
 
-    def to_pandas(self: Self):
+    def to_pandas(self):
         """Return a pandas dataframe of the leaf tree.
 
         Each row represents a segment in the condensed tree, with the first row
@@ -533,7 +533,7 @@ class LeafTree(object):
             )
         )
 
-    def to_networkx(self: Self):
+    def to_networkx(self):
         """Return a NetworkX DiGraph object representing the leaf tree.
 
         Edges have a `size` and `distance` attribute giving the cluster size
@@ -591,7 +591,7 @@ class LeafTree(object):
         return g
 
     def plot(
-        self: Self,
+        self,
         *,
         leaf_separation: float = 0.8,
         cmap: str | Colormap = "viridis_r",
@@ -882,7 +882,7 @@ class PersistenceTrace(object):
     A trace of the persistence of clusters in a condensed tree.
     """
 
-    def __init__(self: Self, trace: lib.PersistenceTrace):
+    def __init__(self, trace: lib.PersistenceTrace):
         """
         Parameters
         ----------
@@ -891,7 +891,7 @@ class PersistenceTrace(object):
         """
         self._trace = trace
 
-    def to_numpy(self: Self) -> np.ndarray:
+    def to_numpy(self) -> np.ndarray:
         """Returns a numpy array of the persistence trace.
 
         The total persistence is computed over the leaf-clusters' left-open
@@ -909,7 +909,7 @@ class PersistenceTrace(object):
         result["persistence"] = self._trace.persistence
         return result
 
-    def to_pandas(self: Self):
+    def to_pandas(self):
         """Returns a pandas dataframe representation of the persistence trace.
 
         The total persistence is computed over the leaf-clusters' left-open
@@ -929,7 +929,7 @@ class PersistenceTrace(object):
             dict(min_size=self._trace.min_size, persistence=self._trace.persistence)
         )
 
-    def plot(self: Self, line_kws: dict[str, Any] | None = None):
+    def plot(self, line_kws: dict[str, Any] | None = None):
         """
         Plots the total persistence trace.
 

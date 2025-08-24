@@ -11,7 +11,7 @@ from sklearn.utils.validation import validate_data
 from sklearn.utils._param_validation import Interval, StrOptions, InvalidParameterError
 from sklearn.neighbors import KDTree, BallTree
 from numbers import Real, Integral
-from typing import Self, Any
+from typing import Any
 
 from .api import (
     compute_mutual_spanning_tree,
@@ -161,13 +161,13 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         self.num_threads = num_threads
 
     def fit(
-        self: Self,
+        self,
         X: np.ndarray[tuple[int, ...]] | tuple | csr_array,
         y: None = None,
         *,
         sample_weights: np.ndarray[tuple[int], np.dtype[np.float32]] | None = None,
         **fit_params,
-    ) -> Self:
+    ):
         """
         Computes PLSCAN clusters and hierarchies for the input data. Several
         inputs are supported, including feature vectors, precomputed sorted
@@ -346,7 +346,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         return self
 
     @property
-    def persistence_trace_(self: Self) -> plots.PersistenceTrace:
+    def persistence_trace_(self) -> plots.PersistenceTrace:
         """
         A trace of the total (bi-)persistence per minimum cluster size. sizes
         represent births in (birth, death] intervals.
@@ -355,7 +355,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         return plots.PersistenceTrace(self._persistence_trace)
 
     @property
-    def leaf_tree_(self: Self) -> plots.LeafTree:
+    def leaf_tree_(self) -> plots.LeafTree:
         """
         The minimum cluster size leaf-cluster tree showing which condensed tree
         segments are leaves at each minimum cluster size value. The object has
@@ -372,7 +372,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         )
 
     @property
-    def condensed_tree_(self: Self) -> plots.CondensedTree:
+    def condensed_tree_(self) -> plots.CondensedTree:
         """
         The condensed cluster tree showing which distance-contour clusters exist
         in the data. The object has as plotting function and conversion methods
@@ -388,7 +388,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
 
     @property
     def single_linkage_tree_(
-        self: Self,
+        self,
     ) -> np.ndarray[tuple[int, int], np.dtype[np.float64]]:
         """
         A single linkage dendrogram in scipy format. The first column represents
@@ -407,7 +407,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
 
     @property
     def minimum_spanning_tree_(
-        self: Self,
+        self,
     ) -> np.ndarray[tuple[int, int], np.dtype[np.float64]]:
         """
         A minimum spanning tree in scipy format. The first column represents the
@@ -419,7 +419,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         return np.column_stack(tuple(self._minimum_spanning_tree))
 
     def cluster_layers(
-        self: Self,
+        self,
         n_peaks: int | None = None,
         min_size: float | None = None,
         max_size: float | None = None,
@@ -477,7 +477,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
             peaks = peaks[y[peaks] >= limit]
         return [(x[peak], *self.min_cluster_size_cut(x[peak])) for peak in peaks]
 
-    def distance_cut(self: Self, epsilon: float) -> Labelling:
+    def distance_cut(self, epsilon: float) -> Labelling:
         """
         Computes (DBSCAN*-like) cluster labels and membership probabilities at
         the given distance threshold (epsilon).
@@ -500,7 +500,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
             self._leaf_tree, self._condensed_tree, selected_clusters, self._num_points
         )
 
-    def min_cluster_size_cut(self: Self, cut_size: float) -> Labelling:
+    def min_cluster_size_cut(self, cut_size: float) -> Labelling:
         """
         Computes cluster labels and membership probabilities at the given cut
         size threshold (cut_size) in a left-open (birth, death] size interval.
@@ -523,7 +523,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
             self._leaf_tree, self._condensed_tree, selected_clusters, self._num_points
         )
 
-    def _check_input(self: Self, X):
+    def _check_input(self, X):
         """Checks and converts the input to a CSR sparse matrix."""
         # Check kNN / MST inputs
         if isinstance(X, tuple):
@@ -561,7 +561,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
             X = distance_matrix_to_csr(X, copy=copy)
         return X, X.shape[0], False, False
 
-    def _check_knn(self: Self, X):
+    def _check_knn(self, X):
         """Checks if a kNN graph is valid."""
         if len(X) != 2:
             raise ValueError(
@@ -591,7 +591,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         )
         return distances, indices
 
-    def _check_mst(self: Self, X):
+    def _check_mst(self, X):
         if len(X) != 2:
             raise ValueError(
                 "MST input must be a tuple of (edges, num_points), "
