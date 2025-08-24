@@ -15,9 +15,31 @@ jobs:
     secrets: inherit
 
   make_release:
+    name: Make release
+    environment: pypi
     needs: build_wheels
-    uses: ./.github/workflows/_make_release.yml
-    secrets: inherit
     permissions:
       contents: write
       id-token: write
+    runs-on: ubuntu-latest
+    steps:   
+    - uses: actions/checkout@v4
+    
+    - uses: actions/download-artifact@v4
+      with:
+        pattern: cibw-wheels-*
+        path: dist
+        merge-multiple: true
+    
+    - name: Build SDist
+      run: python -m build --sdist
+    
+    - uses: pypa/gh-action-pypi-publish@release/v1
+    
+    - name: Create Github Release
+      run: |
+        TAG=${{ github.ref }}
+        VERSION=${TAG#refs/tags/v}
+        gh release create -R JelmerBot/plscan -t "Version $VERSION" -n "**Full Changelog**: https://github.com/JelmerBot/plscan/commits/$TAG" "$TAG" dist/*.whl dist/*.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  

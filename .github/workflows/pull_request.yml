@@ -8,25 +8,74 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - 'LICENSE'
-      - 'README.md'
-      - 'CMakeLists.txt'
-      - 'pyproject.toml'
-      - '.github/workflows/build_wheels.yml'
 
 jobs:
+  file_filter:
+    name: Check file changes
+    runs-on: ubuntu-24.04
+    outputs:
+      lint: ${{ steps.changes_filter.outputs.lint }}
+      build: ${{ steps.changes_filter.outputs.build }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes_filter
+        with:
+          filters: |
+            lint: 
+              - '*.h'
+              - '*.cpp'
+              - '*.py'
+              - '*.ipynb'
+            build:
+              - 'src/**'
+              - 'tests/**'
+              - 'cmake/**' 
+              - 'pyproject.toml'
+              - 'CMakeLists.txt'
+              - '.github/workflows/_build_wheels.yml'
+
   run_linters:
-    uses: ./.github/workflows/_run_linters.yml
-    secrets: inherit
+    name: Run linters
+    needs: file_filter
+    if: needs.file_filter.outputs.lint == 'true'
+    runs-on: ubuntu-24.04
     permissions:
       checks: write
-      contents: write
-      pull-requests: write
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install linters   # clang-format is already at 18.1.3
+        run: pip install black[jupyter]==25.1 
+      - uses: wearerequired/lint-action@v2
+        with:
+          black: true
+          black_args: "--color"
+          black_extensions: py, ipynb
+          clang_format: true
+          continue_on_error: false
 
   build_wheels:
-    needs: run_linters
+    name: Build wheels
+    needs: [file_filter, run_linters]
+    if: always() && needs.file_filter.outputs.build == 'true' && needs.file_filter.result != 'failure' && needs.run_linters.result != 'cancelled'
     uses: ./.github/workflows/_build_wheels.yml
     secrets: inherit
+
+  pr_status:
+    name: PR status
+    runs-on: ubuntu-latest
+    needs: [run_linters, build_wheels]
+    if: always()
+    steps:
+      - name: Check Workflow Status
+        run: |
+          exit_on_result() {
+            if [[ "$2" == "failure" || "$2" == "cancelled" ]]; then
+              echo "Job '$1' failed or was cancelled."
+              exit 1
+            fi
+          }
+          exit_on_result "run_linters" "${{ needs.run_linters.result }}"
+          exit_on_result "build_wheels" "${{ needs.build_wheels.result }}"

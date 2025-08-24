@@ -4,80 +4,48 @@ on:
 
 jobs:
   build_wheels:
-    name: Build ${{matrix.name}}
-    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.platform }}_${{ matrix.arch }}
+    runs-on: ${{ 
+      (matrix.platform == 'macosx' && matrix.arch == 'x64' && 'macosx-13') ||
+      (matrix.platform == 'macosx' && matrix.arch == 'arm64' && 'macosx-latest') ||
+      (matrix.platform == 'win' && matrix.arch == 'x64' && 'windows-latest') ||
+      (matrix.platform == 'win' && matrix.arch == 'arm64' && 'windows-11-arm64') ||
+      (endsWith(matrix.platform, 'linux') && matrix.arch == 'x64' && 'ubuntu-latest') || 
+      (endsWith(matrix.platform, 'linux') && matrix.arch == 'arm64' && 'ubuntu-24.04-arm64') }}
     strategy:
       matrix:
+        arch: [x64]                                        # add arm64 when repo is public
+        platform: [manylinux, win, macosx]                 # no scikit-learn wheels for musllinux
         include: 
-          - name: "Linux x64 (manylinux)"
-            os: ubuntu-latest
-            cibw_build: "*-manylinux*"
-            cibw_test_skip: "*314*"       # no scikit-learn wheels
-          # - name: "Linux arm (manylinux)"
-          #   os: ubuntu-24.04-arm
-          #   cibw_build: "*-manylinux*"
-          #   cibw_test_skip: "*314*"       # no scikit-learn wheels
-          - name: "Linux x64 (musllinux)"
-            os: ubuntu-latest
-            cibw_build: "*-musllinux*"
-            cibw_test_skip: "*"           # no scikit-learn wheels
-          # - name: "Linux arm (musllinux)"
-          #   os: ubuntu-24.04-arm
-          #   cibw_build: "*-musllinux*"
-          #   cibw_test_skip: "*"           # no scikit-learn wheels
-          - name: "Windows x64"
-            os: windows-latest
-            cibw_test_skip: "*314*"       # no scikit-learn wheels
-          # - name: "Windows arm"
-          #   os: windows-11-arm64
-          #   cibw_test_skip: "*314*"       # no scikit-learn wheels
-          - name: "macOS Intel"
-            os: macos-13
-            cibw_skip: "*314t*"           # nanobind compile issue
-            cibw_test_skip: "*314*"       # no scikit-learn wheels
-          - name: "macOS Apple Silicon"
-            os: macos-latest
-            cibw_skip: "*314t*"           # nanobind compile issue
-            cibw_test_skip: "*314*"       # no scikit-learn wheels
+          - arch: arm64
+            platform: macosx
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/cibuildwheel
-            ~/.cache/pip
-            ~/Library/Caches/pip
-            ~\AppData\Local\pip\Cache
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
 
-      - uses: ilammy/msvc-dev-cmd@v1
-        if: startsWith(matrix.os, 'windows-')
+      - uses: ilammy/msvc-dev-cmd@v1                       # enter Visual Studio dev-shell
+        if: matrix.platform == 'win'
         with:
-          arch: ${{ matrix.os == 'windows-latest' && 'x64' || matrix.os == 'windows-11-arm' && 'arm64' }}
+          arch: ${{ matrix.arch }}
 
-      - name: MacOS OpenMP
-        if: startsWith(matrix.os, 'macos-')
+      - name: MacOS setup and environment                  # Configure OpenMP and install target
+        if: matrix.platform == 'macosx'
         run: | 
           brew install libomp
           echo "OpenMP_ROOT=$(brew --prefix libomp)" >> $GITHUB_ENV
+          echo "MACOSX_DEPLOYMENT_TARGET=${{ matrix.arch == 'arm64' && '14.0' || '13.0' }}" >> $GITHUB_ENV
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.3
         env:
           CIBW_ARCHS: "native"
-          CIBW_SKIP: ${{ matrix.cibw_skip || '' }}
-          CIBW_BUILD: ${{ matrix.cibw_build || '*' }}
-          CIBW_TEST_SKIP: ${{ matrix.cibw_test_skip || '' }}
-          CIBW_BUILD_VERBOSITY : "1"
-          PIP_ONLY_BINARY: ":all:"
-          PIP_CACHE_DIR: ${{ runner.os == 'Linux' && '~/.cache/pip' || runner.os == 'macOS' && '~/Library/Caches/pip' || '~\AppData\Local\pip\Cache' }}
-          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.os == 'macos-latest' && '14.0' || matrix.os == 'macos-13' && '13.0' || '' }}
-          CIBW_ENVIRONMENT_PASS_LINUX: "PIP_CACHE_DIR PIP_ONLY_BINARY"   # only linux platform needs this
+          CIBW_BUILD: "*${{ matrix.platform }}*"
+          CIBW_SKIP: "*314*"                               # no scikit-learn wheels for Python 3.14(t) (yet)
+          CIBW_BUILD_VERBOSITY : "1"                       # show build output for debugging
+          PIP_ONLY_BINARY: ":all:"                         # avoid compiling dependencies
+          CIBW_ENVIRONMENT_PASS_LINUX: "PIP_ONLY_BINARY"   # also in the manylinux container
 
       - uses: actions/upload-artifact@v4
         with:
-          name: cibw-wheels-${{ matrix.name }}-${{ strategy.job-index }}
+          name: cibw-wheels-${{ matrix.platform }}_${{ matrix.arch }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl

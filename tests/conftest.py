@@ -7,9 +7,9 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors._kd_tree import KDTree32
 from sklearn.neighbors._ball_tree import BallTree32
 
-# from sklearn.preprocessing import StandardScaler
-# from sklearn.datasets import make_blobs
-# from sklearn.utils import shuffle
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import make_blobs
+from sklearn.utils import shuffle
 
 from plscan import PLSCAN
 from plscan._api import (
@@ -47,20 +47,16 @@ def pytest_sessionfinish(session, exitstatus):
 
 @pytest.fixture(scope="session")
 def X():
-    # X, y = make_blobs(n_samples=200, random_state=10)
-    # X, y = shuffle(X, y, random_state=7)
-    # X = StandardScaler().fit_transform(X).astype(np.float32)
-    # np.save(datapath / "X.npy", X)
-    return np.load(datapath / "X.npy")
+    X, y = make_blobs(n_samples=200, random_state=10)
+    X, y = shuffle(X, y, random_state=7)
+    return StandardScaler().fit_transform(X).astype(np.float32)
 
 
 @pytest.fixture(scope="session")
 def X_bool():
-    # p = 0.25
-    # rng = np.random.Generator(np.random.PCG64(10))
-    # X_bool = rng.choice(a=[True, False], size=(200, 100), p=[p, 1 - p]).astype(np.float32)
-    # np.save(datapath / "X_bool.npy", X_bool)
-    return np.load(datapath / "X_bool.npy")
+    p = 0.25
+    rng = np.random.Generator(np.random.PCG64(10))
+    return rng.choice(a=[True, False], size=(200, 100), p=[p, 1 - p]).astype(np.float32)
 
 
 @pytest.fixture(scope="session")

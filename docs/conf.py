@@ -46,14 +46,16 @@ autodoc_default_flags = ["members"]
 napoleon_use_rtype = False
 autosummary_generate = True
 autosummary_ignore_module_all = False
+nbsphinx_assume_equations = False
+nbsphinx_execute = 'never'
 intersphinx_mapping = {
     "python": ("https://docs.python.org/{.major}".format(sys.version_info), None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
 }
 
-
 # -- Options for HTML output -------------------------------------------------
 
 html_theme = "furo"
 htmlhelp_basename = "plscan_doc"
+

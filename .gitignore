@@ -1,12 +1,11 @@
-.idea/
+.*/
+!.github/
 dist/
 docs/_autosummary*/
 build/
 _build/
 wheelhouse/
 cmake-build*/
-*.pytest_cache/
-*.ipynb_checkpoints/
 
 __pycache__/
 **/_version.py

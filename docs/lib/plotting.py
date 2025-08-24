@@ -39,7 +39,7 @@ def sized_fig(width=0.5, aspect=0.618, dpi=None):
 
 
 def frame_off():
-    """Disables frames and ticks, sets aspect ratio to 1."""
+    """Disables frames and ticks."""
     plt.xticks([])
     plt.yticks([])
     for spine in plt.gca().spines.values():
