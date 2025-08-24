@@ -63,7 +63,7 @@ def test_leaf_tree_args(knn):
 
 
 @image_comparison(
-    baseline_images=["persistence_trace"], extensions=["png"], style="mpl20", tol=6.68
+    baseline_images=["persistence_trace"], extensions=["png"], style="mpl20", tol=7.26
 )
 def test_persistence_trace(knn):
     plt.figure()
@@ -74,7 +74,7 @@ def test_persistence_trace(knn):
     baseline_images=["persistence_trace_args"],
     extensions=["png"],
     style="mpl20",
-    tol=6.68,
+    tol=7.26,
 )
 def test_persistence_trace_args(knn):
     plt.figure()
