@@ -53,18 +53,18 @@ jobs:
       - uses: wearerequired/lint-action@v2
         with:
           auto_fix: true
+          git_email: github-actions[bot]@users.noreply.github.com
           black: true
           black_args: "--color --diff"
           black_extensions: py, ipynb
           clang_format: true
-          continue_on_error: false
 
   build_wheels:
     name: Build wheels
     permissions:
       contents: read
     needs: [file_filter, run_linters]
-    if: always() && needs.file_filter.outputs.build == 'true' && needs.file_filter.result != 'failure' && needs.run_linters.result != 'cancelled'
+    if: needs.file_filter.outputs.build == 'true'
     uses: ./.github/workflows/_build_wheels.yml
     secrets: inherit
 
