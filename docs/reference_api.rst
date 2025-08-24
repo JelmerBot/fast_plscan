@@ -22,18 +22,4 @@ Internal API
    .. autosummary::
       :toctree: _autosummary_api
 
-      euclidean
-      cityblock
-      chebyshev
-      minkowski
-      seuclidean
-      braycurtis
-      canberra
-      haversine
-      mahalanobis
-      hamming
-      dice
-      jaccard
-      russellrao
-      rogerstanimoto
-      sokalsneath
+      get_dist

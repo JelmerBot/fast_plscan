@@ -1,17 +1,22 @@
 "Internal API of the plscan package."
 
-import numpy as np
-from scipy.sparse import csr_array
-from sklearn.neighbors._kd_tree import KDTree32
-from sklearn.neighbors._ball_tree import BallTree32
 from typing import Any
 
-from ._distances import *
-from ._threads import get_max_threads, set_num_threads
-from ._sparse_graph import (
-    SparseGraph,
-    extract_core_distances,
-    compute_mutual_reachability,
+import numpy as np
+from scipy.sparse import csr_array
+from sklearn.neighbors._ball_tree import BallTree32
+from sklearn.neighbors._kd_tree import KDTree32
+
+from ._condensed_tree import CondensedTree, compute_condensed_tree
+from ._distances import get_dist
+from ._labelling import Labelling, compute_cluster_labels
+from ._leaf_tree import LeafTree, compute_leaf_tree, apply_size_cut, apply_distance_cut
+from ._linkage_tree import LinkageTree, compute_linkage_tree
+from ._persistence_trace import (
+    PersistenceTrace,
+    compute_size_persistence,
+    compute_bi_persistence,
+    compute_stability_icicles,
 )
 from ._space_tree import NodeData, SpaceTree, kdtree_query, balltree_query
 from ._spanning_tree import (
@@ -20,25 +25,21 @@ from ._spanning_tree import (
     compute_spanning_tree_kdtree,
     compute_spanning_tree_balltree,
 )
-from ._linkage_tree import LinkageTree, compute_linkage_tree
-from ._condensed_tree import CondensedTree, compute_condensed_tree
-from ._leaf_tree import LeafTree, compute_leaf_tree, apply_size_cut, apply_distance_cut
-from ._persistence_trace import (
-    PersistenceTrace,
-    compute_size_persistence,
-    compute_bi_persistence,
-    compute_stability_icicles,
+from ._sparse_graph import (
+    SparseGraph,
+    extract_core_distances,
+    compute_mutual_reachability,
 )
-from ._labelling import Labelling, compute_cluster_labels
+from ._threads import get_max_threads, set_num_threads
 
 
 def compute_mutual_spanning_tree(
-    data: np.ndarray[tuple[int, int], np.dtype[np.float32]],
-    *,
-    min_samples: int = 5,
-    space_tree: str = "kd_tree",
-    metric: str = "euclidean",
-    metric_kws: dict[str, Any] | None = None,
+        data: np.ndarray[tuple[int, int], np.dtype[np.float32]],
+        *,
+        min_samples: int = 5,
+        space_tree: str = "kd_tree",
+        metric: str = "euclidean",
+        metric_kws: dict[str, Any] | None = None,
 ) -> tuple[
     SpanningTree,
     np.ndarray[tuple[int, int], np.dtype[np.int32]],
@@ -108,7 +109,7 @@ def compute_mutual_spanning_tree(
 
 
 def extract_mutual_spanning_forest(
-    graph: csr_array, *, min_samples: int = 5, is_sorted: bool = False
+        graph: csr_array, *, min_samples: int = 5, is_sorted: bool = False
 ) -> tuple[
     SpanningTree,
     SparseGraph,
@@ -174,14 +175,15 @@ def sort_spanning_tree(spanning_tree: SpanningTree) -> SpanningTree:
 
 
 def clusters_from_spanning_forest(
-    sorted_mst: SpanningTree,
-    num_points: int,
-    *,
-    min_cluster_size: float = 2.0,
-    max_cluster_size: float = np.inf,
-    use_bi_persistence: bool = False,
-    sample_weights: np.ndarray[tuple[int], np.dtype[np.float32]] | None = None,
-) -> tuple[Labelling, PersistenceTrace, LeafTree, CondensedTree, LinkageTree]:
+        sorted_mst: SpanningTree,
+        num_points: int,
+        *,
+        min_cluster_size: float = 2.0,
+        max_cluster_size: float = np.inf,
+        use_bi_persistence: bool = False,
+        sample_weights: np.ndarray[tuple[int], np.dtype[np.float32]] | None = None,
+) -> tuple[
+    Labelling, np.ndarray[tuple[int], np.dtype[np.uint32]], PersistenceTrace, LeafTree, CondensedTree, LinkageTree]:
     """
     Compute PLSCAN clusters from a sorted minimum spanning forest.
 
@@ -256,7 +258,7 @@ def clusters_from_spanning_forest(
 
 
 def most_persistent_clusters(
-    leaf_tree: LeafTree, trace: PersistenceTrace, max_cluster_size: float = np.inf
+        leaf_tree: LeafTree, trace: PersistenceTrace, max_cluster_size: float = np.inf
 ) -> np.ndarray[tuple[int], np.dtype[np.uint32]]:
     """
     Selects the most persistent clusters based on the total persistence trace.
@@ -282,8 +284,8 @@ def most_persistent_clusters(
 
 
 def knn_to_csr(
-    distances: np.ndarray[tuple[int, int], np.dtype[np.float32]],
-    indices: np.ndarray[tuple[int, int], np.dtype[np.int64]],
+        distances: np.ndarray[tuple[int, int], np.dtype[np.float32]],
+        indices: np.ndarray[tuple[int, int], np.dtype[np.int64]],
 ) -> csr_array:
     """
     Converts k-nearest neighbor distances and indices into a CSR matrix.
@@ -315,7 +317,7 @@ def knn_to_csr(
 
 
 def distance_matrix_to_csr(
-    distances: np.ndarray[tuple[int, int], np.dtype[np.float32]], copy: bool = True
+        distances: np.ndarray[tuple[int, int], np.dtype[np.float32]], copy: bool = True
 ) -> csr_array:
     """
     Converts a dense 2D distance matrix into a CSR matrix.

@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.metrics import pairwise_distances
 from sklearn.exceptions import DataConversionWarning
 
-import plscan._distances as pd
+from plscan._api import get_dist
 
 from .conftest import numerical_balltree_metrics, duplicate_metrics, boolean_metrics
 
@@ -23,7 +23,7 @@ def test_numerical_distance(X, metric):
         metric_kws["VI"] = np.linalg.inv(np.cov(X, rowvar=False))
 
     d1 = pairwise_distances(X, metric=metric, **metric_kws)
-    d2 = pairwise_distances(X, metric=getattr(pd, metric), **metric_kws)
+    d2 = pairwise_distances(X, metric=get_dist(metric, **metric_kws))
 
     assert np.allclose(d2, d1)
 
@@ -35,7 +35,7 @@ def test_boolean_distance(X_bool, metric):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DataConversionWarning)
         d1 = pairwise_distances(X_bool, metric=metric, **metric_kws)
-    d2 = pairwise_distances(X_bool, metric=getattr(pd, metric), **metric_kws)
+    d2 = pairwise_distances(X_bool, metric=get_dist(metric, **metric_kws))
     if metric == "russellrao":
         np.fill_diagonal(d2, 0.0)
 
