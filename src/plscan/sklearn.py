@@ -18,7 +18,7 @@ from .api import (
     extract_mutual_spanning_forest,
     clusters_from_spanning_forest,
 )
-from ._api import (
+from ._lib import (
     Labelling,
     SpanningTree,
     apply_distance_cut,

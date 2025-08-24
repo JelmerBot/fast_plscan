@@ -12,7 +12,7 @@ from sklearn.datasets import make_blobs
 from sklearn.utils import shuffle
 
 from plscan import PLSCAN
-from plscan._api import (
+from plscan._lib import (
     set_num_threads,
     get_max_threads,
     distance_matrix_to_csr,

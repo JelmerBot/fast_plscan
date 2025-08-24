@@ -3,7 +3,7 @@ from typing import Any
 from scipy.sparse import csr_array
 from sklearn.neighbors._ball_tree import BallTree32
 from sklearn.neighbors._kd_tree import KDTree32
-from ._api import (
+from ._lib import (
     CondensedTree,
     Labelling,
     LeafTree,

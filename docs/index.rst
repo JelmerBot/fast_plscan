@@ -23,7 +23,7 @@
    :hidden:
    
    local_development
-   reference_api
+   reference_lib
 
 |PyPI version|
 

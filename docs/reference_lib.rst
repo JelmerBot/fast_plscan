@@ -2,7 +2,7 @@ Internal API
 ============
 
 .. currentmodule:: plscan
-.. automodule:: plscan._api
+.. automodule:: plscan._lib
    
    .. rubric:: Classes
    .. autosummary::
