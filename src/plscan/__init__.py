@@ -1,4 +1,5 @@
 """Public API for the plscan package."""
+
 from .sklearn import PLSCAN
 from .api import (
     clusters_from_spanning_forest,

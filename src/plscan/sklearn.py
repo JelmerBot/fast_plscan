@@ -28,7 +28,7 @@ from ._lib import (
     knn_to_csr,
     remove_self_loops,
     get_max_threads,
-    set_num_threads
+    set_num_threads,
 )
 from . import plots
 

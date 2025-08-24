@@ -41,12 +41,16 @@ NB_MODULE(_distances_ext, m) {
         );
       },
       nb::arg("metric"), nb::arg("metric_kws"),
-      nb::sig(
-          "def get_dist(metric: str, *, p: float, V: "
-          "np.ndarray[tuple[int], np.dtype[np.float32]], VI: "
-          "np.ndarray[tuple[int, int], np.dtype[np.float32]]) -> "
-          "typing.Callable[[np.ndarray[tuple[int], np.dtype[np.float32]], "
-          "np.ndarray[tuple[int], np.dtype[np.float32]]], float]"
+      nb::sig(                //
+          "def get_dist("     //
+          " metric: str, *,"  //
+          " p: float,"        //
+          " V: np.ndarray[tuple[int], np.dtype[np.float3//2]],"
+          " VI: np.ndarray[tuple[int, int], np.dtype[np.//float32]]"
+          ") -> typing.Callable[["  //
+          " np.ndarray[tuple[int], np.dtype[np.float32]]//,"
+          " np.ndarray[tuple[int], np.dtype[np.float32]]//"
+          "], float]"  //
       ),
       R"(
         Retrieves the specified distance metric callback.

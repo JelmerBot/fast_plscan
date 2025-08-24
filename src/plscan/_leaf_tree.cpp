@@ -151,13 +151,14 @@ NB_MODULE(_leaf_tree_ext, m) {
           },
           nb::arg("parent"), nb::arg("min_distance"), nb::arg("max_distance"),
           nb::arg("min_size"), nb::arg("max_size"),
-          nb::sig(
-              "def __init__(self, parent: np.ndarray[tuple[int], "
-              "np.dtype[np.uint32]], min_distance: np.ndarray[tuple[int], "
-              "np.dtype[np.float32]], max_distance: np.ndarray[tuple[int], "
-              "np.dtype[np.float32]], min_size: np.ndarray[tuple[int], "
-              "np.dtype[np.float32]], max_size: np.ndarray[tuple[int], "
-              "np.dtype[np.float32]]) -> None"
+          nb::sig(                                                            //
+              "def __init__(self, "                                           //
+              " parent: np.ndarray[tuple[int], np.dtype[np.uint32]],"         //
+              " min_distance: np.ndarray[tuple[int], np.dtype[np.float32]],"  //
+              " max_distance: np.ndarray[tuple[int], np.dtype[np.float32]],"  //
+              " min_size: np.ndarray[tuple[int], np.dtype[np.float32]],"      //
+              " max_size: np.ndarray[tuple[int], np.dtype[np.float32]]"       //
+              ") -> None"
           ),
           R"(
             Parameters

@@ -14,6 +14,7 @@ import os
 import sys
 import builtins
 from importlib.metadata import version as get_version
+
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("."))
 setattr(builtins, "--BUILDING-DOCS--", True)
@@ -27,13 +28,13 @@ author = "Jelmer Bot"
 # -- General configuration ---------------------------------------------------
 
 release = get_version("plscan")
-version = '.'.join(release.split('.')[:2])
+version = ".".join(release.split(".")[:2])
 master_doc = "index"
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
@@ -41,13 +42,13 @@ extensions = [
     "nbsphinx",
 ]
 
-autoclass_content = 'both'
+autoclass_content = "both"
 autodoc_default_flags = ["members"]
 napoleon_use_rtype = False
 autosummary_generate = True
 autosummary_ignore_module_all = False
 nbsphinx_assume_equations = False
-nbsphinx_execute = 'never'
+nbsphinx_execute = "never"
 intersphinx_mapping = {
     "python": ("https://docs.python.org/{.major}".format(sys.version_info), None),
     "numpy": ("https://numpy.org/doc/stable/", None),
@@ -58,4 +59,3 @@ intersphinx_mapping = {
 
 html_theme = "furo"
 htmlhelp_basename = "plscan_doc"
-

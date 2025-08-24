@@ -263,9 +263,10 @@ NB_MODULE(_persistence_trace_ext, m) {
           },
           nb::arg("min_size"), nb::arg("persistence"),
           nb::sig(
-              "def __init__(self, min_size: np.ndarray[tuple[int], "
-              "np.dtype[np.float32]], persistence: np.ndarray[tuple[int], "
-              "np.dtype[np.float32]]) -> None"
+              "def __init__(self,"                                          //
+              " min_size: np.ndarray[tuple[int], np.dtype[np.float32]],"    //
+              " persistence: np.ndarray[tuple[int], np.dtype[np.float32]]"  //
+              ") -> None"
           ),
           R"(
             Parameters

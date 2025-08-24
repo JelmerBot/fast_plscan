@@ -249,13 +249,14 @@ NB_MODULE(_condensed_tree_ext, m) {
           },
           nb::arg("parent"), nb::arg("child"), nb::arg("distance"),
           nb::arg("child_size"), nb::arg("cluster_rows"),
-          nb::sig(
-              "def __init__(self, parent: np.ndarray[tuple[int], "
-              "np.dtype[np.uint32]], child: np.ndarray[tuple[int], "
-              "np.dtype[np.uint32]], distance: np.ndarray[tuple[int], "
-              "np.dtype[np.float32]], child_size: np.ndarray[tuple[int], "
-              "np.dtype[np.float32]], cluster_rows: np.ndarray[tuple[int], "
-              "np.dtype[np.uint32]]) -> None"
+          nb::sig(                                                          //
+              "def __init__(self,"                                          //
+              " parent: np.ndarray[tuple[int], np.dtype[np.uint32]],"       //
+              " child: np.ndarray[tuple[int], np.dtype[np.uint32]],"        //
+              " distance: np.ndarray[tuple[int], np.dtype[np.float32]],"    //
+              " child_size: np.ndarray[tuple[int], np.dtype[np.float32]],"  //
+              " cluster_rows: np.ndarray[tuple[int], np.dtype[np.uint32]]"  //
+              ") -> None"
           ),
           R"(
             Parameters

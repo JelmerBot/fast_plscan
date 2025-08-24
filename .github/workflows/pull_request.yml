@@ -54,7 +54,7 @@ jobs:
       - uses: wearerequired/lint-action@v2
         with:
           black: true
-          black_args: "--color"
+          black_args: "--color --diff"
           black_extensions: py, ipynb
           clang_format: true
           continue_on_error: false
