@@ -16,11 +16,8 @@ jobs:
       (endsWith(matrix.platform, 'linux') && matrix.arch == 'arm64' && 'ubuntu-24.04-arm64') }}
     strategy:
       matrix:
-        arch: [x64]                                        # add arm64 when repo is public
-        platform: [manylinux, win, macosx]                 # no scikit-learn wheels for musllinux
-        include: 
-          - arch: arm64
-            platform: macosx
+        arch: [x64]                                        # add macos and arm64 when repo is public
+        platform: [manylinux, win]                         # no scikit-learn wheels for musllinux
 
     steps:
       - uses: actions/checkout@v4
