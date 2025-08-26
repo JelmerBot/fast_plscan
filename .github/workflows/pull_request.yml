@@ -21,7 +21,7 @@ jobs:
       cache-hit: ${{ steps.cache.outputs.cache-hit }}
       cache-key: ${{ steps.cache.outputs.cache-primary-key }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install linters
         run: pip install black[jupyter]==25.1 
       - uses: wearerequired/lint-action@v2
