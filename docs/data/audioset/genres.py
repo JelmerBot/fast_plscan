@@ -55,4 +55,6 @@ if __name__ == "__main__":
 
     # Write the resulting files
     genres.to_csv("docs/data/audioset/generated/genres.csv", index=False)
-    subset.to_csv("docs/data/audioset/generated/unbalanced_music_segments.csv", index=False)
+    subset.to_csv(
+        "docs/data/audioset/generated/unbalanced_music_segments.csv", index=False
+    )

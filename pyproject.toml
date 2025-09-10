@@ -48,7 +48,7 @@ minimum-version = "0.4"
 build-dir = "build/{wheel_tag}"
 wheel.py-api = "cp312"
 wheel.exclude = ["**.h", "**.cpp"]
-sdist.exclude = [".*", ".*/", "docs/data/", "docs/lib", "docs/images"]
+sdist.exclude = [".*", ".*/", "docs/data/", "docs/lib/", "docs/images/"]
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 
 [tool.setuptools_scm]
