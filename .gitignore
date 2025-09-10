@@ -2,6 +2,8 @@
 !.github/
 dist/
 docs/_autosummary*/
+docs/data/**/sources/
+docs/data/**/generated/
 build/
 _build/
 wheelhouse/

@@ -27,7 +27,6 @@ jobs:
       - uses: wearerequired/lint-action@v2
         with:
           black: true
-          black_args: "--color --diff"
           black_extensions: py, ipynb
           continue_on_error: false
       - uses: actions/cache/restore@v4

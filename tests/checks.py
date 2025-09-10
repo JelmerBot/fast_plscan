@@ -42,7 +42,7 @@ def valid_core_distances(cd, X):
 def valid_labels(labels, X):
     assert isinstance(labels, np.ndarray)
     assert labels.shape[0] == X.shape[0]
-    assert labels.dtype == np.int32
+    assert labels.dtype == np.int64
     assert np.all(labels >= -1)
 
 

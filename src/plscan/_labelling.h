@@ -13,7 +13,7 @@ struct LabellingCapsule {
 
 // Non-owning view of a labelling
 struct LabellingWriteView {
-  std::span<int32_t> const label;
+  std::span<int64_t> const label;
   std::span<float> const probability;
 
   [[nodiscard]] size_t size() const {
@@ -23,7 +23,7 @@ struct LabellingWriteView {
 
 // Non-owning view of a labelling
 struct LabellingView {
-  std::span<int32_t const> const label;
+  std::span<int64_t const> const label;
   std::span<float const> const probability;
 
   [[nodiscard]] size_t size() const {
@@ -32,7 +32,7 @@ struct LabellingView {
 };
 
 struct Labelling {
-  array_ref<int32_t const> label;
+  array_ref<int64_t const> label;
   array_ref<float const> probability;
 
   Labelling() = default;
@@ -58,7 +58,7 @@ struct Labelling {
 
   // Allocate buffers to fill later.
   static auto allocate(size_t const num_points) {
-    auto [label, label_cap] = new_buffer<int32_t>(num_points);
+    auto [label, label_cap] = new_buffer<int64_t>(num_points);
     auto [prob, prob_cap] = new_buffer<float>(num_points);
     return std::make_pair(
         LabellingWriteView{label, prob},

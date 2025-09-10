@@ -5,18 +5,18 @@
 #include "_condensed_tree.h"
 #include "_leaf_tree.h"
 
-[[nodiscard]] std::vector<int32_t> compute_segment_labels(
+[[nodiscard]] std::vector<int64_t> compute_segment_labels(
     LeafTreeView const leaf_tree, std::span<uint32_t const> const selected
 ) {
   size_t const num_segments = leaf_tree.size();
   size_t const num_clusters = selected.size();
 
   // phantom root always gets the noise label
-  std::vector<int32_t> segment_labels(num_segments);
+  std::vector<int64_t> segment_labels(num_segments);
   segment_labels[0] = -1;
 
-  int32_t label = 0;
-  for (int32_t segment_idx = 1; segment_idx < num_segments; ++segment_idx)
+  int64_t label = 0;
+  for (int64_t segment_idx = 1; segment_idx < num_segments; ++segment_idx)
     if (label < num_clusters && selected[label] == segment_idx)
       // bump label if we found the next selected cluster
       segment_labels[segment_idx] = label++;
@@ -44,7 +44,7 @@ void fill_labels(
     LabellingWriteView result, LeafTreeView const leaf_tree,
     CondensedTreeView const condensed_tree,
     std::span<uint32_t const> const selected_clusters,
-    std::vector<int32_t> const &segment_labels,
+    std::vector<int64_t> const &segment_labels,
     std::vector<float> const &leaf_persistence, size_t const num_points
 ) {
   // fill in default values to support points without any edges
@@ -60,7 +60,7 @@ void fill_labels(
 
     // child is a point, so we can label it
     size_t const parent_idx = condensed_tree.parent[idx] - num_points;
-    int32_t const label = segment_labels[parent_idx];
+    int64_t const label = segment_labels[parent_idx];
     result.label[child] = label;
     if (label >= 0) {
       float const max_dist = leaf_tree.max_distance[selected_clusters[label]];

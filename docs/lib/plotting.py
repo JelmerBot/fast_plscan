@@ -1,30 +1,58 @@
+import colorsys
+import seaborn as sns
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from textwrap import dedent
+
+
+# LaTeX font sizes on 10pt document:
+# https://latex-tutorial.com/changing-font-size/
+fontsize = dict(tiny=5, script=7, footnote=8, small=9, normal=10)
 
 
 def configure_matplotlib():
-    mpl.rcParams["text.color"] = "black"
-    mpl.rcParams["xtick.color"] = "black"
-    mpl.rcParams["ytick.color"] = "black"
-    mpl.rcParams["axes.labelcolor"] = "black"
-    mpl.rcParams["xtick.bottom"] = True
-    mpl.rcParams["ytick.left"] = True
-    mpl.rcParams["ytick.major.size"] = mpl.rcParams["xtick.major.size"]
-    mpl.rcParams["ytick.major.width"] = mpl.rcParams["xtick.major.width"]
-    mpl.rcParams["font.size"] = 8
-    mpl.rcParams["axes.labelsize"] = 8
-    mpl.rcParams["axes.titlesize"] = 10
-    mpl.rcParams["legend.fontsize"] = 8
-    mpl.rcParams["legend.title_fontsize"] = 8
-    mpl.rcParams["xtick.labelsize"] = 8
-    mpl.rcParams["ytick.labelsize"] = 8
-    mpl.rcParams["axes.unicode_minus"] = True
-    mpl.rcParams["axes.spines.left"] = False
-    mpl.rcParams["axes.spines.right"] = False
-    mpl.rcParams["axes.spines.top"] = False
-    mpl.rcParams["axes.spines.bottom"] = False
-    mpl.rcParams["savefig.dpi"] = 300
-    mpl.rcParams["savefig.format"] = "png"
+    sns.set_style("white")
+    sns.set_color_codes()
+
+    mpl.rcParams.update(
+        {
+            "text.color": "black",
+            "xtick.color": "black",
+            "ytick.color": "black",
+            "axes.labelcolor": "black",
+            "xtick.bottom": True,
+            "ytick.left": True,
+            "axes.titlesize": fontsize["normal"],
+            "axes.labelsize": fontsize["small"],
+            "xtick.labelsize": fontsize["small"],
+            "ytick.labelsize": fontsize["small"],
+            "font.size": fontsize["footnote"],
+            "legend.title_fontsize": fontsize["footnote"],
+            "legend.fontsize": fontsize["footnote"],
+            "axes.unicode_minus": True,
+            "axes.spines.left": False,
+            "axes.spines.right": False,
+            "axes.spines.top": False,
+            "axes.spines.bottom": False,
+            "savefig.dpi": 300,
+            "savefig.format": "png",
+            "font.family": "serif",
+            "text.usetex": True,
+            "text.latex.preamble": dedent(
+                r"""
+                \usepackage[english]{babel}
+                \usepackage[T1]{fontenc}
+                \usepackage[varqu,varl,scaled=0.95]{inconsolata}
+                \usepackage[scaled=.95,helvratio=.96,trueslanted,largesc,p,amsthm,smallerops]{newpx}
+                \usepackage[scr=rsfso]{mathalpha}
+                \usepackage{bm}
+                \usepackage[stretch=10,shrink=10,tracking,spacing,kerning,babel]{microtype}
+                """
+            ),
+        }
+    )
+
+    return sns.color_palette("tab10", 10)
 
 
 def sized_fig(width=0.5, aspect=0.618, dpi=None):
@@ -44,3 +72,8 @@ def frame_off():
     plt.yticks([])
     for spine in plt.gca().spines.values():
         spine.set_visible(False)
+
+
+def lighten(color, amount=0.5):
+    c = colorsys.rgb_to_hls(*mpl.colors.to_rgb(color))
+    return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
