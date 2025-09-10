@@ -1,3 +1,4 @@
+import colorsys
 import seaborn as sns
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -71,3 +72,8 @@ def frame_off():
     plt.yticks([])
     for spine in plt.gca().spines.values():
         spine.set_visible(False)
+
+
+def lighten(color, amount=0.5):
+    c = colorsys.rgb_to_hls(*mpl.colors.to_rgb(color))
+    return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])

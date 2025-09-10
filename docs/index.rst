@@ -15,7 +15,9 @@
    :maxdepth: 1
    :hidden:
 
+   demo_selection_strategies
    demo_parameter_sensitivity
+   demo_computational_performance
 
 .. toctree::
    :caption: API reference
@@ -37,7 +39,7 @@
 Persistent Leaves Spatial Clustering of Applications with Noise
 ===============================================================
 
-This library provides a new clustering algorithm based on HDBSCAN. The primary
+This library provides a new clustering algorithm based on HDBSCAN*. The primary
 advantages of PLSCAN over the standard ``hdbscan`` library are:
 
  - PLSCAN automatically finds the optimal minimum cluster size.
@@ -45,9 +47,11 @@ advantages of PLSCAN over the standard ``hdbscan`` library are:
  - PLSCAN has much faster implementations of tree condensing and cluster extraction;
  - PLSCAN does not rely on JIT compilation.
 
-When using PLSCAN, only the `min_samples` parameter has to be given, which
-specifies the number of neighbors used for mutual reachability distances. Higher
-values produce smoother density profiles with fewer leaf clusters.
+To use PLSCAN, you only need to set the ``min_samples`` parameter. This
+parameter controls how many neighbors are considered when measuring distances
+between points. Setting a higher value for ``min_samples`` makes the algorithm
+group points into larger, smoother clusters, and usually results in fewer, more
+stable clusters.
 
 .. code:: python
 
@@ -74,12 +78,13 @@ values produce smoother density profiles with fewer leaf clusters.
 .. figure:: _static/readme.png
    :alt: scatterplot
 
-The algorithm builds a hierarchy of leaf-clusters, showing which clusters are
-leaves as the minimum cluster size varies (filtration). Then, it computes the
-total leaf-cluster persistence per minimum cluster size, and picks the minimum
-cluster size that maximizes that score. The leaf-cluster hierarchy in
-`leaf_tree_` can be plotted as an alternative to HDBSCAN\*'s condensed cluster
-tree.
+The algorithm creates a hierarchy of leaf-clusters by changing the minimum
+cluster size. As this parameter varies, clusters appear or disappear. For each
+minimum cluster size, the algorithm measures how long these leaf-clusters
+persist. It then selects the minimum cluster size where the total persistence is
+highest, giving the most stable clustering. You can visualize this hierarchy
+using the ``leaf_tree_`` attribute, which provides an alternative to HDBSCAN*'s
+condensed cluster tree.
 
 .. code:: python
 
@@ -89,9 +94,10 @@ tree.
 .. figure:: _static/leaf_tree.png
    :alt: leaf cluster tree
 
-Cluster segmentations for other high-persistence minimum cluster sizes can
-be computed using the `cluster_layers` method. This method finds the
-persistence peaks and returns their cluster labels and memberships.
+You can also explore how the clustering changes for other important values of
+the minimum cluster size. The ``cluster_layers`` method automatically finds the
+most persistent clusterings and returns their cluster labels and membership
+strengths.
 
 .. code:: python
 
