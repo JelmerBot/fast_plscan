@@ -61,7 +61,7 @@ most persistent clusterings and returns their cluster labels and membership
 strengths.
 
 ```python
-layers = clusterer.cluster_layers(n_peaks=4)
+layers = clusterer.cluster_layers(max_peaks=4)
 for i, (size, labels, probs) in enumerate(layers):
   plt.subplot(2, 2, i + 1)
   plt.scatter(

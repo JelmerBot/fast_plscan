@@ -422,7 +422,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
 
     def cluster_layers(
         self,
-        n_peaks: int | None = None,
+        max_peaks: int | None = None,
         min_size: float | None = None,
         max_size: float | None = None,
         height: float = 0.0,
@@ -435,10 +435,10 @@ class PLSCAN(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        n_peaks
-            The number of peaks to return. If None, all peaks are returned. If
-            specified, the n_peaks most persistent peaks are returned. The
-            selection is performed after all other thresholds.
+        max_peaks
+            The maximum number of peaks to return. If None, all peaks are
+            returned. If specified, the ``max_peaks`` most persistent peaks are
+            returned. The selection is performed after all other thresholds.
         min_size
             The minimum cluster size to consider for the cluster layers. If
             None, all clusters are considered.
@@ -473,8 +473,8 @@ class PLSCAN(ClusterMixin, BaseEstimator):
             peaks = peaks[x[peaks] >= min_size]
         if max_size is not None:
             peaks = peaks[x[peaks] <= max_size]
-        if n_peaks is not None and len(peaks) > 0:
-            peak_idx = -min(n_peaks, len(peaks))
+        if max_peaks is not None and len(peaks) > 0:
+            peak_idx = -min(max_peaks, len(peaks))
             limit = np.partition(y[peaks], peak_idx)[peak_idx]
             peaks = peaks[y[peaks] >= limit]
         return [(x[peak], *self.min_cluster_size_cut(x[peak])) for peak in peaks]
