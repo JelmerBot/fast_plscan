@@ -68,6 +68,7 @@ def test_leaf_tree_args(knn):
     plt.figure()
     PLSCAN(metric="precomputed").fit(knn).leaf_tree_.plot(
         leaf_separation=0.5,
+        width="density",
         cmap="turbo",
         colorbar=False,
         label_clusters=True,
