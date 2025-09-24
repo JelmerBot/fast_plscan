@@ -7,5 +7,5 @@ if __name__ == "__main__":
     X = TfidfVectorizer(
         max_df=0.95, min_df=2, max_features=5000, stop_words="english"
     ).fit_transform(X)
-    np.save("docs/data/newsgroups/generated/X_20newsgroups.npy", X.toarray())
-    np.save("docs/data/newsgroups/generated/y_20newsgroups.npy", y)
+    np.save("docs/data/newsgroups/generated/X.npy", X.toarray())
+    np.save("docs/data/newsgroups/generated/y.npy", y)
