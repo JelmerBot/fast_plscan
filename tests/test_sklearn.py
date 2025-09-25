@@ -383,7 +383,11 @@ def test_min_samples(X, dists):
     valid_linkage(c._linkage_tree, X)
 
 
-def test_bad_min_samples(knn):
+def test_bad_min_samples(X, knn):
+    with pytest.raises(ValueError):
+        PLSCAN(min_samples=X.shape[0] - 1).fit(X)
+    with pytest.raises(ValueError):
+        PLSCAN(metric="precomputed", min_samples=X.shape[0] - 1).fit(knn)
     with pytest.raises(InvalidParameterError):
         PLSCAN(metric="precomputed", min_samples=-1).fit(knn)
     with pytest.raises(InvalidParameterError):

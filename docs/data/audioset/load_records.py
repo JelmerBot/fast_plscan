@@ -59,6 +59,6 @@ if __name__ == "__main__":
     id = train_set.video_id.to_numpy()
     mask = [x.shape[0] == 1280 for x in X]
 
-    np.save("docs/data/audioset/generated/X_music.npy", np.stack(X[mask]))
-    np.save("docs/data/audioset/generated/y_music.npy", y[mask])
-    np.save("docs/data/audioset/generated/video_id_music.npy", id[mask])
+    np.save("docs/data/audioset/generated/X.npy", np.stack(X[mask]))
+    np.save("docs/data/audioset/generated/y.npy", y[mask])
+    np.save("docs/data/audioset/generated/video_id.npy", id[mask])

@@ -14,7 +14,8 @@ from ._leaf_tree import LeafTree as LeafTreeTuple
 from ._condensed_tree import CondensedTree as CondensedTreeTuple
 from ._persistence_trace import (
     PersistenceTrace as PersistenceTraceTuple,
-    compute_stability_icicles,
+    compute_distance_icicles,
+    compute_density_icicles,
 )
 
 
@@ -618,6 +619,7 @@ class LeafTree(object):
     def plot(
         self,
         *,
+        width: Literal["distance", "density"] = "distance",
         leaf_separation: float = 0.8,
         cmap: str | Colormap = "viridis_r",
         colorbar: bool = True,
@@ -634,7 +636,14 @@ class LeafTree(object):
 
         Parameters
         ----------
-
+        width
+            Which cluster stability measure to use for the width of the
+            segments. Can be one of "distance" or "density", determining whether
+            distance or density persistences are used. The stability measure sum
+            the persistences over all points in the cluster. These persistences
+            change with the minimum cluster size threshold, as that threshold
+            determines the lowest distance at which enough points are connected
+            to be considered a cluster.
         leaf_separation
             A spacing parameter for icicle positioning.
         cmap
@@ -699,7 +708,7 @@ class LeafTree(object):
             )
         cmap = plt.get_cmap(cmap)
         cmap_norm = BoundaryNorm(np.linspace(1, 10, 10), cmap.N)
-        min_size_traces, width_traces = self._compute_icicle_traces()
+        min_size_traces, width_traces = self._compute_icicle_traces(width)
         non_empty_traces = [trace[0] for trace in width_traces if trace.size > 0]
         if len(non_empty_traces) == 0:
             max_width = 1
@@ -845,11 +854,15 @@ class LeafTree(object):
             parent_idx = self._tree.parent[parent_idx]
         return parent_idx
 
-    def _compute_icicle_traces(self):
+    def _compute_icicle_traces(self, width: Literal["distance", "density"]):
         # Lists the size--distance-persistence trace for each cluster
-        sizes, traces = compute_stability_icicles(
-            self._tree, self._condensed_tree, self._num_points
-        )
+        if width == "distance":
+            fun = compute_distance_icicles
+        elif width == "density":
+            fun = compute_density_icicles
+        else:
+            raise ValueError(f"Unknown width option '{width}'")
+        sizes, traces = fun(self._tree, self._condensed_tree, self._num_points)
 
         # Compute stability and truncate to min_cluster_size lifetime
         upper_idx = [

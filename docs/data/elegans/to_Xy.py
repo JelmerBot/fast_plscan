@@ -9,5 +9,5 @@ if __name__ == "__main__":
     cell_type = metadata["cell.type"][df.index]
     type_label = cell_type.astype("category").cat.codes.to_numpy()
 
-    np.save("docs/data/elegans/generated/X_elegans.npy", X)
-    np.save("docs/data/elegans/generated/y_elegans.npy", type_label)
+    np.save("docs/data/elegans/generated/X.npy", X)
+    np.save("docs/data/elegans/generated/y.npy", type_label)

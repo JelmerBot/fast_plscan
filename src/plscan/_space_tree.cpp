@@ -2,6 +2,7 @@
 
 #include <nanobind/stl/vector.h>
 
+#include <array>
 #include <functional>
 
 #include "_distances.h"
@@ -180,19 +181,21 @@ void run_parallel_kdtree_query(
 }
 
 parallel_query_fun_t get_kdtree_executor(char const *const metric) {
-  static std::map<Metric, parallel_query_fun_t> lookup = {
-      {Metric::Euclidean, run_parallel_kdtree_query<Metric::Euclidean>},
-      {Metric::Cityblock, run_parallel_kdtree_query<Metric::Cityblock>},
-      {Metric::Chebyshev, run_parallel_kdtree_query<Metric::Chebyshev>},
-      {Metric::Minkowski, run_parallel_kdtree_query<Metric::Minkowski>},
+  // Must match Metric enumeration order!
+  constexpr std::array lookup = {
+      run_parallel_kdtree_query<Metric::Euclidean>,
+      run_parallel_kdtree_query<Metric::Cityblock>,
+      run_parallel_kdtree_query<Metric::Chebyshev>,
+      run_parallel_kdtree_query<Metric::Minkowski>,
   };
 
-  if (auto const it = lookup.find(parse_metric(metric)); it != lookup.end())
-    return it->second;
+  auto const idx = parse_metric(metric);
+  if (idx >= lookup.size())
+    throw nb::value_error(  //
+        nb::str("Missing KDTree query for '{}'").format(metric).c_str()
+    );
 
-  throw nb::value_error(
-      nb::str("Unsupported metric for KDTree query: {}").format(metric).c_str()
-  );
+  return lookup[idx];
 }
 
 SparseGraph kdtree_query(
@@ -220,33 +223,32 @@ void run_parallel_balltree_query(
 }
 
 parallel_query_fun_t get_balltree_executor(char const *const metric) {
-  static std::map<Metric, parallel_query_fun_t> lookup = {
-      {Metric::Euclidean, run_parallel_balltree_query<Metric::Euclidean>},
-      {Metric::Cityblock, run_parallel_balltree_query<Metric::Cityblock>},
-      {Metric::Chebyshev, run_parallel_balltree_query<Metric::Chebyshev>},
-      {Metric::Minkowski, run_parallel_balltree_query<Metric::Minkowski>},
-      {Metric::Hamming, run_parallel_balltree_query<Metric::Hamming>},
-      {Metric::Braycurtis, run_parallel_balltree_query<Metric::Braycurtis>},
-      {Metric::Canberra, run_parallel_balltree_query<Metric::Canberra>},
-      {Metric::Haversine, run_parallel_balltree_query<Metric::Haversine>},
-      {Metric::SEuclidean, run_parallel_balltree_query<Metric::SEuclidean>},
-      {Metric::Mahalanobis, run_parallel_balltree_query<Metric::Mahalanobis>},
-      {Metric::Dice, run_parallel_balltree_query<Metric::Dice>},
-      {Metric::Jaccard, run_parallel_balltree_query<Metric::Jaccard>},
-      {Metric::Russellrao, run_parallel_balltree_query<Metric::Russellrao>},
-      {Metric::Rogerstanimoto,
-       run_parallel_balltree_query<Metric::Rogerstanimoto>},
-      {Metric::Sokalsneath, run_parallel_balltree_query<Metric::Sokalsneath>}
+  // Must match Metric enumeration order!
+  constexpr std::array lookup = {
+      run_parallel_balltree_query<Metric::Euclidean>,
+      run_parallel_balltree_query<Metric::Cityblock>,
+      run_parallel_balltree_query<Metric::Chebyshev>,
+      run_parallel_balltree_query<Metric::Minkowski>,
+      run_parallel_balltree_query<Metric::Hamming>,
+      run_parallel_balltree_query<Metric::Braycurtis>,
+      run_parallel_balltree_query<Metric::Canberra>,
+      run_parallel_balltree_query<Metric::Haversine>,
+      run_parallel_balltree_query<Metric::SEuclidean>,
+      run_parallel_balltree_query<Metric::Mahalanobis>,
+      run_parallel_balltree_query<Metric::Dice>,
+      run_parallel_balltree_query<Metric::Jaccard>,
+      run_parallel_balltree_query<Metric::Russellrao>,
+      run_parallel_balltree_query<Metric::Rogerstanimoto>,
+      run_parallel_balltree_query<Metric::Sokalsneath>,
   };
 
-  if (auto const it = lookup.find(parse_metric(metric)); it != lookup.end())
-    return it->second;
+  auto const idx = parse_metric(metric);
+  if (idx >= lookup.size())
+    throw nb::value_error(  //
+        nb::str("Missing BallTree query for '{}'").format(metric).c_str()
+    );
 
-  throw nb::value_error(  //
-      nb::str("Unsupported metric for BallTree query: {}")
-          .format(metric)
-          .c_str()
-  );
+  return lookup[idx];
 }
 
 SparseGraph balltree_query(

@@ -11,11 +11,14 @@
 
 // --- Supported metrics
 
+// Enum value is used as index into lookup arrays. Do not change order without
+// updating all lookup sites. All KDTree metrics must be listed first, followed
+// by all BallTree metrics, and finally non-tree metrics.
 enum class Metric {
   Euclidean,
   Cityblock,
   Chebyshev,
-  Minkowski,
+  Minkowski,  // boundary for KDTree metrics
   Hamming,
   Braycurtis,
   Canberra,
@@ -26,8 +29,14 @@ enum class Metric {
   Jaccard,
   Russellrao,
   Rogerstanimoto,
-  Sokalsneath
+  Sokalsneath  // boundary for BallTree metrics
 };
+
+template <Metric metric>
+concept KDTreeMetric = metric <= Metric::Minkowski;
+
+template <Metric metric>
+concept BallTreeMetric = metric <= Metric::Sokalsneath;
 
 struct strless {
   bool operator()(char const *const a, char const *const b) const {
@@ -35,7 +44,7 @@ struct strless {
   }
 };
 
-inline Metric parse_metric(char const *const metric) {
+inline std::underlying_type_t<Metric> parse_metric(char const *const metric) {
   static std::map<char const *const, Metric, strless> const metric_map = {
       {"l2", Metric::Euclidean},
       {"euclidean", Metric::Euclidean},
@@ -58,11 +67,14 @@ inline Metric parse_metric(char const *const metric) {
       {"rogerstanimoto", Metric::Rogerstanimoto},
       {"sokalsneath", Metric::Sokalsneath}
   };
-  if (auto const it = metric_map.find(metric); it != metric_map.end())
-    return it->second;
-  throw nb::value_error(  //
-      nb::str("Unsupported metric: {}").format(metric).c_str()
-  );
+
+  auto const it = metric_map.find(metric);
+  if (it == metric_map.end())
+    throw nb::value_error(  //
+        nb::str("Unsupported metric: {}").format(metric).c_str()
+    );
+
+  return static_cast<std::underlying_type_t<Metric>>(it->second);
 }
 
 // --- Parameter pack helpers
@@ -73,13 +85,8 @@ auto first_in_pack(auto &first, auto &...) {
 
 // --- Minkowski distance implementations
 
-template <Metric metric>
-concept MinkowskiMetric =
-    (metric == Metric::Euclidean || metric == Metric::Cityblock ||
-     metric == Metric::Chebyshev || metric == Metric::Minkowski);
-
 template <Metric metric, typename... Args>
-  requires MinkowskiMetric<metric>
+  requires KDTreeMetric<metric>
 void apply_minkowski(float &rdist, float const diff, Args... args) {
   if constexpr (metric == Metric::Euclidean)
     rdist += diff * diff;
@@ -94,7 +101,7 @@ void apply_minkowski(float &rdist, float const diff, Args... args) {
 // Rdist overloads for different metrics
 
 template <Metric metric, typename... Args>
-  requires MinkowskiMetric<metric>
+  requires KDTreeMetric<metric>
 float rdist(
     std::span<float const> const a, std::span<float const> const b, Args... args
 ) {

@@ -46,7 +46,7 @@ struct SpaceTree {
 // --- KDTree distance point-to-node lower bound functions
 
 template <Metric metric, typename... Args>
-  requires MinkowskiMetric<metric>
+  requires KDTreeMetric<metric>
 float kdtree_min_rdist(
     SpaceTreeView const tree, std::span<float const> const point,
     size_t const node_idx, Args... args
@@ -62,7 +62,7 @@ float kdtree_min_rdist(
 }
 
 template <Metric metric>
-  requires MinkowskiMetric<metric>
+  requires KDTreeMetric<metric>
 auto get_kdtree_min_rdist(nb::dict const kwargs) {
   if constexpr (metric == Metric::Minkowski) {
     return [p = nb::cast<float>(kwargs["p"])](
@@ -76,6 +76,7 @@ auto get_kdtree_min_rdist(nb::dict const kwargs) {
 // --- BallTree distance point-to-node lower bound functions
 
 template <Metric metric>
+  requires BallTreeMetric<metric>
 auto get_balltree_min_rdist(nb::dict const kwargs) {
   return [dist_fun = get_dist<metric>(kwargs),
           to_rdist = get_dist_to_rdist<metric>(kwargs)](  //

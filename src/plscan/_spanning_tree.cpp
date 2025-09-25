@@ -1,6 +1,7 @@
 #include "_spanning_tree.h"
 
 #include <algorithm>
+#include <array>
 #include <numeric>
 #include <ranges>
 #include <vector>
@@ -443,19 +444,21 @@ size_t run_kdtree_boruvka(
 }
 
 space_tree_boruvka_fun_t get_kdtree_executor(char const *const metric) {
-  static std::map<Metric, space_tree_boruvka_fun_t> lookup = {
-      {Metric::Euclidean, run_kdtree_boruvka<Metric::Euclidean>},
-      {Metric::Cityblock, run_kdtree_boruvka<Metric::Cityblock>},
-      {Metric::Chebyshev, run_kdtree_boruvka<Metric::Chebyshev>},
-      {Metric::Minkowski, run_kdtree_boruvka<Metric::Minkowski>},
+  // Must match Metric enumeration order!
+  constexpr std::array lookup = {
+      run_kdtree_boruvka<Metric::Euclidean>,
+      run_kdtree_boruvka<Metric::Cityblock>,
+      run_kdtree_boruvka<Metric::Chebyshev>,
+      run_kdtree_boruvka<Metric::Minkowski>,
   };
 
-  if (auto const it = lookup.find(parse_metric(metric)); it != lookup.end())
-    return it->second;
+  auto const idx = parse_metric(metric);
+  if (idx >= lookup.size())
+    throw nb::value_error(
+        nb::str("Missing KDTree boruvka for '{}'").format(metric).c_str()
+    );
 
-  throw nb::value_error(
-      nb::str("Unsupported metric for KDTree query: {}").format(metric).c_str()
-  );
+  return lookup[idx];
 }
 
 SpanningTree compute_spanning_tree_kdtree(
@@ -487,32 +490,32 @@ size_t run_balltree_boruvka(
 }
 
 space_tree_boruvka_fun_t get_balltree_executor(char const *const metric) {
-  static std::map<Metric, space_tree_boruvka_fun_t> lookup = {
-      {Metric::Euclidean, run_balltree_boruvka<Metric::Euclidean>},
-      {Metric::Cityblock, run_balltree_boruvka<Metric::Cityblock>},
-      {Metric::Chebyshev, run_balltree_boruvka<Metric::Chebyshev>},
-      {Metric::Minkowski, run_balltree_boruvka<Metric::Minkowski>},
-      {Metric::Hamming, run_balltree_boruvka<Metric::Hamming>},
-      {Metric::Braycurtis, run_balltree_boruvka<Metric::Braycurtis>},
-      {Metric::Canberra, run_balltree_boruvka<Metric::Canberra>},
-      {Metric::Haversine, run_balltree_boruvka<Metric::Haversine>},
-      {Metric::SEuclidean, run_balltree_boruvka<Metric::SEuclidean>},
-      {Metric::Mahalanobis, run_balltree_boruvka<Metric::Mahalanobis>},
-      {Metric::Dice, run_balltree_boruvka<Metric::Dice>},
-      {Metric::Jaccard, run_balltree_boruvka<Metric::Jaccard>},
-      {Metric::Russellrao, run_balltree_boruvka<Metric::Russellrao>},
-      {Metric::Rogerstanimoto, run_balltree_boruvka<Metric::Rogerstanimoto>},
-      {Metric::Sokalsneath, run_balltree_boruvka<Metric::Sokalsneath>}
+  // Must match Metric enumeration order!
+  constexpr std::array lookup = {
+      run_balltree_boruvka<Metric::Euclidean>,
+      run_balltree_boruvka<Metric::Cityblock>,
+      run_balltree_boruvka<Metric::Chebyshev>,
+      run_balltree_boruvka<Metric::Minkowski>,
+      run_balltree_boruvka<Metric::Hamming>,
+      run_balltree_boruvka<Metric::Braycurtis>,
+      run_balltree_boruvka<Metric::Canberra>,
+      run_balltree_boruvka<Metric::Haversine>,
+      run_balltree_boruvka<Metric::SEuclidean>,
+      run_balltree_boruvka<Metric::Mahalanobis>,
+      run_balltree_boruvka<Metric::Dice>,
+      run_balltree_boruvka<Metric::Jaccard>,
+      run_balltree_boruvka<Metric::Russellrao>,
+      run_balltree_boruvka<Metric::Rogerstanimoto>,
+      run_balltree_boruvka<Metric::Sokalsneath>,
   };
 
-  if (auto const it = lookup.find(parse_metric(metric)); it != lookup.end())
-    return it->second;
+  auto const idx = parse_metric(metric);
+  if (idx >= lookup.size())
+    throw nb::value_error(  //
+        nb::str("Missing BallTree boruvka for '{}'").format(metric).c_str()
+    );
 
-  throw nb::value_error(  //
-      nb::str("Unsupported metric for BallTree query: {}")
-          .format(metric)
-          .c_str()
-  );
+  return lookup[idx];
 }
 
 SpanningTree compute_spanning_tree_balltree(

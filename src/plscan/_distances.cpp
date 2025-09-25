@@ -1,5 +1,7 @@
 #include "_distances.h"
 
+#include <array>
+
 #include "_array.h"
 
 template <Metric metric>
@@ -15,30 +17,25 @@ NB_MODULE(_distances, m) {
   m.def(
       "get_dist",
       [](char const *const metric, nb::kwargs const metric_kws) {
-        static std::map<Metric, nb::object (*)(nb::dict)> lookup = {
-            {Metric::Euclidean, wrap_dist<Metric::Euclidean>},
-            {Metric::Cityblock, wrap_dist<Metric::Cityblock>},
-            {Metric::Chebyshev, wrap_dist<Metric::Chebyshev>},
-            {Metric::Minkowski, wrap_dist<Metric::Minkowski>},
-            {Metric::Hamming, wrap_dist<Metric::Hamming>},
-            {Metric::Braycurtis, wrap_dist<Metric::Braycurtis>},
-            {Metric::Canberra, wrap_dist<Metric::Canberra>},
-            {Metric::Haversine, wrap_dist<Metric::Haversine>},
-            {Metric::SEuclidean, wrap_dist<Metric::SEuclidean>},
-            {Metric::Mahalanobis, wrap_dist<Metric::Mahalanobis>},
-            {Metric::Dice, wrap_dist<Metric::Dice>},
-            {Metric::Jaccard, wrap_dist<Metric::Jaccard>},
-            {Metric::Russellrao, wrap_dist<Metric::Russellrao>},
-            {Metric::Rogerstanimoto, wrap_dist<Metric::Rogerstanimoto>},
-            {Metric::Sokalsneath, wrap_dist<Metric::Sokalsneath>}
+        // Must match Metric enumeration order!
+        constexpr std::array lookup{
+            wrap_dist<Metric::Euclidean>,   wrap_dist<Metric::Cityblock>,
+            wrap_dist<Metric::Chebyshev>,   wrap_dist<Metric::Minkowski>,
+            wrap_dist<Metric::Hamming>,     wrap_dist<Metric::Braycurtis>,
+            wrap_dist<Metric::Canberra>,    wrap_dist<Metric::Haversine>,
+            wrap_dist<Metric::SEuclidean>,  wrap_dist<Metric::Mahalanobis>,
+            wrap_dist<Metric::Dice>,        wrap_dist<Metric::Jaccard>,
+            wrap_dist<Metric::Russellrao>,  wrap_dist<Metric::Rogerstanimoto>,
+            wrap_dist<Metric::Sokalsneath>,
         };
-        if (auto const it = lookup.find(parse_metric(metric));
-            it != lookup.end())
-          return it->second(metric_kws);
 
-        throw nb::value_error(  //
-            nb::str("Unsupported metric: {}").format(metric).c_str()
-        );
+        auto const idx = parse_metric(metric);
+        if (idx >= lookup.size())
+          throw nb::value_error(  //
+              nb::str("Missing python wrapper for '{}'").format(metric).c_str()
+          );
+
+        return lookup[idx](metric_kws);
       },
       nb::arg("metric"), nb::arg("metric_kws"),
       R"(

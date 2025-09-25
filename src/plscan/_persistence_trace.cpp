@@ -202,7 +202,7 @@ PersistenceTrace compute_size_density_bi_persistence(
 
 [[nodiscard]] auto collect_traces(
     LeafTreeView const leaf_tree, CondensedTreeView const condensed_tree,
-    size_t const num_points
+    size_t const num_points, auto &&distance_callback
 ) {
   nb::gil_scoped_release guard{};
 
@@ -214,10 +214,10 @@ PersistenceTrace compute_size_density_bi_persistence(
   // counts in the condensed and leaf trees.
   using trace_t = std::unique_ptr<std::vector<float>>;
   std::vector<trace_t> sizes{num_leaves};
-  std::vector<trace_t> stabilities{num_leaves};
+  std::vector<trace_t> persistences{num_leaves};
   for (size_t idx = 0; idx < num_leaves; ++idx) {
     sizes[idx] = std::make_unique<std::vector<float>>();
-    stabilities[idx] = std::make_unique<std::vector<float>>();
+    persistences[idx] = std::make_unique<std::vector<float>>();
   }
 
   // collect the child points (reverse order).
@@ -236,17 +236,18 @@ PersistenceTrace compute_size_density_bi_persistence(
       // Use greater than (not greater equals) here so the icicles reflect the
       // min_size_threshold rather than birth in (birth, death] intervals!
       // This is possible because we also collect the size value here.
-      if (collected[parent_idx] > leaf_tree.min_size[parent_idx]) {
+      if (collected[parent_idx] > leaf_tree.min_size[parent_idx] and
+          leaf_tree.min_size[parent_idx] < leaf_tree.max_size[parent_idx]) {
         sizes[parent_idx]->push_back(collected[parent_idx]);
-        stabilities[parent_idx]->push_back(
-            leaf_tree.max_distance[parent_idx] - distance
+        persistences[parent_idx]->push_back(
+            distance_callback(distance, leaf_tree.max_distance[parent_idx])
         );
       }
       parent_idx = leaf_tree.parent[parent_idx];
     }
   }
 
-  return std::make_pair(std::move(sizes), std::move(stabilities));
+  return std::make_pair(std::move(sizes), std::move(persistences));
 }
 
 [[nodiscard]] std::pair<
@@ -278,12 +279,28 @@ vectors_to_arrays(
   return std::make_pair(size_arrays, stability_arrays);
 }
 
-auto compute_stability_icicles(
+auto compute_distance_icicles(
     LeafTree const leaf_tree, CondensedTree const condensed_tree,
     size_t const num_points
 ) {
   auto [sizes, stabilities] = collect_traces(
-      leaf_tree.view(), condensed_tree.view(), num_points
+      leaf_tree.view(), condensed_tree.view(), num_points,
+      [](float const min_dist, float const max_dist) {
+        return max_dist - min_dist;
+      }
+  );
+  return vectors_to_arrays(std::move(sizes), std::move(stabilities));
+}
+
+auto compute_density_icicles(
+    LeafTree const leaf_tree, CondensedTree const condensed_tree,
+    size_t const num_points
+) {
+  auto [sizes, stabilities] = collect_traces(
+      leaf_tree.view(), condensed_tree.view(), num_points,
+      [](float const min_dist, float const max_dist) {
+        return std::exp(-min_dist) - std::exp(-max_dist);
+      }
   );
   return vectors_to_arrays(std::move(sizes), std::move(stabilities));
 }
@@ -420,10 +437,10 @@ NB_MODULE(_persistence_trace, m) {
   );
 
   m.def(
-      "compute_stability_icicles", &compute_stability_icicles,
+      "compute_distance_icicles", &compute_distance_icicles,
       nb::arg("leaf_tree"), nb::arg("condensed_tree"), nb::arg("num_points"),
       R"(
-        Computes the icicle size--stability trace for the LeafTree plot.
+        Computes size--distance traces for the LeafTree plot.
 
         Parameters
         ----------
@@ -433,6 +450,31 @@ NB_MODULE(_persistence_trace, m) {
             The input condensed tree.
         num_points
             The number of points in the condensed tree.
+
+        Returns
+        -------
+        sizes
+            The icicle min cluster sizes (births in (birth, death])).
+        stabilities
+            The icicle stabilities.
+      )"
+  );
+
+  m.def(
+      "compute_density_icicles", &compute_density_icicles,
+      nb::arg("leaf_tree"), nb::arg("condensed_tree"), nb::arg("num_points"),
+      R"(
+        Computes size--density traces for the LeafTree plot.
+
+        Parameters
+        ----------
+        leaf_tree
+            The input leaf tree.
+        condensed_tree
+            The input condensed tree.
+        num_points
+            The number of points in the condensed tree.
+
         Returns
         -------
         sizes

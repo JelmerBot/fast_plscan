@@ -280,7 +280,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
                 X,
                 y=None,
                 dtype=np.float32,
-                ensure_min_samples=self.min_samples,
+                ensure_min_samples=self.min_samples + 1,
             )
             self._num_points = X.shape[0]
         else:
