@@ -445,7 +445,7 @@ size_t run_kdtree_boruvka(
 
 space_tree_boruvka_fun_t get_kdtree_executor(char const *const metric) {
   // Must match Metric enumeration order!
-  constexpr std::array lookup = {
+  constexpr static std::array lookup = {
       run_kdtree_boruvka<Metric::Euclidean>,
       run_kdtree_boruvka<Metric::Cityblock>,
       run_kdtree_boruvka<Metric::Chebyshev>,
@@ -491,7 +491,7 @@ size_t run_balltree_boruvka(
 
 space_tree_boruvka_fun_t get_balltree_executor(char const *const metric) {
   // Must match Metric enumeration order!
-  constexpr std::array lookup = {
+  constexpr static std::array lookup = {
       run_balltree_boruvka<Metric::Euclidean>,
       run_balltree_boruvka<Metric::Cityblock>,
       run_balltree_boruvka<Metric::Chebyshev>,

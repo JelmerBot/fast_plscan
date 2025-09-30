@@ -152,7 +152,7 @@ struct CondenseState {
     condensed_tree.parent[out_idx] = parent;
     condensed_tree.child[out_idx] = child;
     condensed_tree.distance[out_idx] = distance;
-    condensed_tree.child_size[out_idx] = child_ size;
+    condensed_tree.child_size[out_idx] = child_size;
     ++out_idx;
   }
 

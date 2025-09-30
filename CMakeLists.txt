@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.18...3.26)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_GENERATOR_PLATFORM x64)
 
 # - Warn if the user invokes CMake directly
 if(NOT SKBUILD)
@@ -26,11 +25,6 @@ if(NOT SKBUILD)
   You may optionally add --config-settings editable.rebuild=true to 
   auto-rebuild when the package is imported. Otherwise, you need to 
   rerun the above after editing C++ files.")
-endif()
-
-# - Avoid issues with CMAKE_GENERATOR_PLATFORM from cibuildwheels
-if(NOT WIN32)
-  unset(CMAKE_GENERATOR_PLATFORM)
 endif()
 
 # - Build type

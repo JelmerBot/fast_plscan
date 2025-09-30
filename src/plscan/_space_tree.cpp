@@ -182,7 +182,7 @@ void run_parallel_kdtree_query(
 
 parallel_query_fun_t get_kdtree_executor(char const *const metric) {
   // Must match Metric enumeration order!
-  constexpr std::array lookup = {
+  constexpr static std::array lookup = {
       run_parallel_kdtree_query<Metric::Euclidean>,
       run_parallel_kdtree_query<Metric::Cityblock>,
       run_parallel_kdtree_query<Metric::Chebyshev>,
@@ -224,7 +224,7 @@ void run_parallel_balltree_query(
 
 parallel_query_fun_t get_balltree_executor(char const *const metric) {
   // Must match Metric enumeration order!
-  constexpr std::array lookup = {
+  constexpr static std::array lookup = {
       run_parallel_balltree_query<Metric::Euclidean>,
       run_parallel_balltree_query<Metric::Cityblock>,
       run_parallel_balltree_query<Metric::Chebyshev>,

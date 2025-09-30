@@ -18,7 +18,7 @@ NB_MODULE(_distances, m) {
       "get_dist",
       [](char const *const metric, nb::kwargs const metric_kws) {
         // Must match Metric enumeration order!
-        constexpr std::array lookup{
+        constexpr static std::array lookup{
             wrap_dist<Metric::Euclidean>,   wrap_dist<Metric::Cityblock>,
             wrap_dist<Metric::Chebyshev>,   wrap_dist<Metric::Minkowski>,
             wrap_dist<Metric::Hamming>,     wrap_dist<Metric::Braycurtis>,
