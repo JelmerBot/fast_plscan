@@ -1,16 +1,13 @@
-#include "_persistence_trace.h"
-
-#include <nanobind/stl/pair.h>
-#include <nanobind/stl/vector.h>
+#include "persistence_trace.h"
 
 #include <algorithm>
 #include <cmath>
-#include <vector>
 
-#include "_condensed_tree.h"
-#include "_leaf_tree.h"
+// --- Implementation details
 
-// -- General persistence trace computation
+namespace {
+
+// General persistence trace computation
 
 size_t initialize_trace(
     PersistenceTraceWriteView result, LeafTreeView const leaf_tree
@@ -107,7 +104,7 @@ void fill_persistences(
   return bi_persistences;
 }
 
-// --- Size persistence
+// Size persistence
 
 [[nodiscard]] size_t fill_size_persistence(
     PersistenceTraceWriteView result, LeafTreeView const leaf_tree
@@ -125,14 +122,7 @@ void fill_persistences(
   return trace_size;
 }
 
-PersistenceTrace compute_size_persistence(LeafTree const leaf_tree) {
-  size_t const buffer_size = 2 * (leaf_tree.size() - 1u);
-  auto [trace_view, trace_cap] = PersistenceTrace::allocate(buffer_size);
-  size_t const trace_size = fill_size_persistence(trace_view, leaf_tree.view());
-  return PersistenceTrace{trace_view, std::move(trace_cap), trace_size};
-}
-
-// --- Size-distance bi-persistence
+// Size-distance bi-persistence
 
 size_t fill_size_distance_bi_persistence(
     PersistenceTraceWriteView result, LeafTreeView const leaf_tree,
@@ -153,19 +143,7 @@ size_t fill_size_distance_bi_persistence(
   return trace_size;
 }
 
-PersistenceTrace compute_size_distance_bi_persistence(
-    LeafTree const leaf_tree, CondensedTree const condensed_tree,
-    size_t const num_points
-) {
-  size_t const buffer_size = 2 * (leaf_tree.size() - 1u);
-  auto [trace_view, trace_cap] = PersistenceTrace::allocate(buffer_size);
-  size_t trace_size = fill_size_distance_bi_persistence(
-      trace_view, leaf_tree.view(), condensed_tree.view(), num_points
-  );
-  return PersistenceTrace{trace_view, std::move(trace_cap), trace_size};
-}
-
-// --- Size-density bi-persistence
+// Size-density bi-persistence
 
 size_t fill_size_density_bi_persistence(
     PersistenceTraceWriteView result, LeafTreeView const leaf_tree,
@@ -186,19 +164,7 @@ size_t fill_size_density_bi_persistence(
   return trace_size;
 }
 
-PersistenceTrace compute_size_density_bi_persistence(
-    LeafTree const leaf_tree, CondensedTree const condensed_tree,
-    size_t const num_points
-) {
-  size_t const buffer_size = 2 * (leaf_tree.size() - 1u);
-  auto [trace_view, trace_cap] = PersistenceTrace::allocate(buffer_size);
-  size_t trace_size = fill_size_density_bi_persistence(
-      trace_view, leaf_tree.view(), condensed_tree.view(), num_points
-  );
-  return PersistenceTrace{trace_view, std::move(trace_cap), trace_size};
-}
-
-// -- Compute leaf tree icicles
+// Compute leaf tree icicles
 
 [[nodiscard]] auto collect_traces(
     LeafTreeView const leaf_tree, CondensedTreeView const condensed_tree,
@@ -279,7 +245,43 @@ vectors_to_arrays(
   return std::make_pair(size_arrays, stability_arrays);
 }
 
-auto compute_distance_icicles(
+}  // namespace
+
+// --- Function API
+
+PersistenceTrace compute_size_persistence(LeafTree const leaf_tree) {
+  size_t const buffer_size = 2 * (leaf_tree.size() - 1u);
+  auto [trace_view, trace_cap] = PersistenceTrace::allocate(buffer_size);
+  size_t const trace_size = fill_size_persistence(trace_view, leaf_tree.view());
+  return PersistenceTrace{trace_view, std::move(trace_cap), trace_size};
+}
+
+PersistenceTrace compute_size_distance_bi_persistence(
+    LeafTree const leaf_tree, CondensedTree const condensed_tree,
+    size_t const num_points
+) {
+  size_t const buffer_size = 2 * (leaf_tree.size() - 1u);
+  auto [trace_view, trace_cap] = PersistenceTrace::allocate(buffer_size);
+  size_t trace_size = fill_size_distance_bi_persistence(
+      trace_view, leaf_tree.view(), condensed_tree.view(), num_points
+  );
+  return PersistenceTrace{trace_view, std::move(trace_cap), trace_size};
+}
+
+PersistenceTrace compute_size_density_bi_persistence(
+    LeafTree const leaf_tree, CondensedTree const condensed_tree,
+    size_t const num_points
+) {
+  size_t const buffer_size = 2 * (leaf_tree.size() - 1u);
+  auto [trace_view, trace_cap] = PersistenceTrace::allocate(buffer_size);
+  size_t trace_size = fill_size_density_bi_persistence(
+      trace_view, leaf_tree.view(), condensed_tree.view(), num_points
+  );
+  return PersistenceTrace{trace_view, std::move(trace_cap), trace_size};
+}
+
+std::pair<std::vector<array_ref<float>>, std::vector<array_ref<float>>>
+compute_distance_icicles(
     LeafTree const leaf_tree, CondensedTree const condensed_tree,
     size_t const num_points
 ) {
@@ -292,7 +294,8 @@ auto compute_distance_icicles(
   return vectors_to_arrays(std::move(sizes), std::move(stabilities));
 }
 
-auto compute_density_icicles(
+std::pair<std::vector<array_ref<float>>, std::vector<array_ref<float>>>
+compute_density_icicles(
     LeafTree const leaf_tree, CondensedTree const condensed_tree,
     size_t const num_points
 ) {
@@ -305,182 +308,42 @@ auto compute_density_icicles(
   return vectors_to_arrays(std::move(sizes), std::move(stabilities));
 }
 
-// --- Module definitions
+// --- Class API
 
-NB_MODULE(_persistence_trace, m) {
-  m.doc() = "Module for persistence trace computation in PLSCAN.";
-  nb::class_<PersistenceTrace>(m, "PersistenceTrace")
-      .def(
-          "__init__",
-          [](PersistenceTrace *t, nb::handle min_size, nb::handle persistence) {
-            // Support np.memmap and np.ndarray input types for sklearn
-            // pickling. The output of np.asarray can cast to nanobind ndarrays.
-            auto const asarray = nb::module_::import_("numpy").attr("asarray");
-            new (t) PersistenceTrace(
-                nb::cast<array_ref<float const>>(asarray(min_size), false),
-                nb::cast<array_ref<float const>>(asarray(persistence), false)
-            );
-          },
-          nb::arg("min_size"), nb::arg("persistence"),
-          R"(
-            Parameters
-            ----------
-            min_size
-                The minimum cluster sizes at which leaf-clusters start to exist.
-            persistence
-                The persistence sum for the leaf-clusters that exist at the
-                minimum cluster sizes.
-          )"
-      )
-      .def_ro(
-          "min_size", &PersistenceTrace::min_size, nb::rv_policy::reference,
-          "A 1D array with minimum cluster sizes."
-      )
-      .def_ro(
-          "persistence", &PersistenceTrace::persistence,
-          nb::rv_policy::reference, "A 1D array with total persistence values."
-      )
-      .def(
-          "__iter__",
-          [](PersistenceTrace const &self) {
-            return nb::make_tuple(self.min_size, self.persistence)
-                .attr("__iter__")();
-          }
-      )
-      .def(
-          "__reduce__",
-          [](PersistenceTrace const &self) {
-            return nb::make_tuple(
-                nb::type<PersistenceTrace>(),
-                nb::make_tuple(self.min_size, self.persistence)
-            );
-          }
-      )
-      .doc() = "PersistenceTrace lists the persistences per min_cluster_size.";
+PersistenceTrace::PersistenceTrace(
+    array_ref<float const> const min_size,
+    array_ref<float const> const persistence
+)
+    : min_size(min_size), persistence(persistence) {}
 
-  m.def(
-      "compute_size_persistence", &compute_size_persistence,
-      nb::arg("leaf_tree"),
-      R"(
-        Computes the total min_cluster_size persistence trace.
+PersistenceTrace::PersistenceTrace(
+    PersistenceTraceWriteView const view, PersistenceTraceCapsule cap,
+    size_t const num_traces
+)
+    : min_size(to_array(view.min_size, std::move(cap.min_size), num_traces)),
+      persistence(
+          to_array(view.persistence, std::move(cap.persistence), num_traces)
+      ) {}
 
-        Parameters
-        ----------
-        leaf_tree
-            The input leaf tree.
+std::pair<PersistenceTraceWriteView, PersistenceTraceCapsule>
+PersistenceTrace::allocate(size_t const num_traces) {
+  auto [sizes, size_cap] = new_buffer<float>(num_traces);
+  auto [pers, pers_cap] = new_buffer<float>(num_traces);
+  return {{sizes, pers}, {std::move(size_cap), std::move(pers_cap)}};
+}
 
-        Returns
-        -------
-        persistence_trace
-            A PersistenceTrace containing arrays for the minimum cluster size
-            and total persistence values. The min_size array contains all unique
-            min_cluster_sizes at which clusters become leaves. The persistence
-            array contains the total persistence of leaf clusters at those
-            minimum size thresholds.
-      )"
-  );
+PersistenceTraceView PersistenceTrace::view() const {
+  return {to_view(min_size), to_view(persistence)};
+}
 
-  m.def(
-      "compute_size_distance_bi_persistence",
-      &compute_size_distance_bi_persistence, nb::arg("leaf_tree"),
-      nb::arg("condensed_tree"), nb::arg("num_points"),
-      R"(
-        Computes a bi-persistence trace for over min_cluster_size and
-        mutual reachability distances.
+size_t PersistenceTraceWriteView::size() const {
+  return min_size.size();
+}
 
-        Parameters
-        ----------
-        leaf_tree
-            The input leaf tree.
-        condensed_tree
-            The input condensed tree.
-        num_points
-            The number of points in the condensed tree.
+size_t PersistenceTraceView::size() const {
+  return min_size.size();
+}
 
-        Returns
-        -------
-        persistence_trace
-            A PersistenceTrace containing arrays for the minimum cluster size
-            and total persistence values. The min_size array contains all unique
-            min_cluster_sizes at which clusters become leaves. The persistence
-            array contains the total bi-persistence of leaf clusters at those
-            minimum size thresholds.
-      )"
-  );
-
-  m.def(
-      "compute_size_density_bi_persistence",
-      &compute_size_density_bi_persistence, nb::arg("leaf_tree"),
-      nb::arg("condensed_tree"), nb::arg("num_points"),
-      R"(
-        Computes a bi-persistence trace for over min_cluster_size and
-        mutual reachability densities.
-
-        Parameters
-        ----------
-        leaf_tree
-            The input leaf tree.
-        condensed_tree
-            The input condensed tree.
-        num_points
-            The number of points in the condensed tree.
-
-        Returns
-        -------
-        persistence_trace
-            A PersistenceTrace containing arrays for the minimum cluster size
-            and total persistence values. The min_size array contains all unique
-            min_cluster_sizes at which clusters become leaves. The persistence
-            array contains the total bi-persistence of leaf clusters at those
-            minimum size thresholds.
-      )"
-  );
-
-  m.def(
-      "compute_distance_icicles", &compute_distance_icicles,
-      nb::arg("leaf_tree"), nb::arg("condensed_tree"), nb::arg("num_points"),
-      R"(
-        Computes size--distance traces for the LeafTree plot.
-
-        Parameters
-        ----------
-        leaf_tree
-            The input leaf tree.
-        condensed_tree
-            The input condensed tree.
-        num_points
-            The number of points in the condensed tree.
-
-        Returns
-        -------
-        sizes
-            The icicle min cluster sizes (births in (birth, death])).
-        stabilities
-            The icicle stabilities.
-      )"
-  );
-
-  m.def(
-      "compute_density_icicles", &compute_density_icicles,
-      nb::arg("leaf_tree"), nb::arg("condensed_tree"), nb::arg("num_points"),
-      R"(
-        Computes size--density traces for the LeafTree plot.
-
-        Parameters
-        ----------
-        leaf_tree
-            The input leaf tree.
-        condensed_tree
-            The input condensed tree.
-        num_points
-            The number of points in the condensed tree.
-
-        Returns
-        -------
-        sizes
-            The icicle min cluster sizes (births in (birth, death])).
-        stabilities
-            The icicle stabilities.
-      )"
-  );
+size_t PersistenceTrace::size() const {
+  return min_size.size();
 }

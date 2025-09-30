@@ -2,12 +2,9 @@
 #define PLSCAN_API_DISTANCES_H
 
 #include <cmath>
-#include <cstring>
-#include <map>
-#include <span>
 #include <vector>
 
-#include "_array.h"
+#include "array.h"
 
 // --- Supported metrics
 
@@ -38,52 +35,17 @@ concept KDTreeMetric = metric <= Metric::Minkowski;
 template <Metric metric>
 concept BallTreeMetric = metric <= Metric::Sokalsneath;
 
-struct strless {
-  bool operator()(char const *const a, char const *const b) const {
-    return std::strcmp(a, b) < 0;
-  }
-};
-
-inline std::underlying_type_t<Metric> parse_metric(char const *const metric) {
-  static std::map<char const *const, Metric, strless> const metric_map = {
-      {"l2", Metric::Euclidean},
-      {"euclidean", Metric::Euclidean},
-      {"l1", Metric::Cityblock},
-      {"manhattan", Metric::Cityblock},
-      {"cityblock", Metric::Cityblock},
-      {"chebyshev", Metric::Chebyshev},
-      {"infinity", Metric::Chebyshev},
-      {"p", Metric::Minkowski},
-      {"minkowski", Metric::Minkowski},
-      {"hamming", Metric::Hamming},
-      {"braycurtis", Metric::Braycurtis},
-      {"canberra", Metric::Canberra},
-      {"haversine", Metric::Haversine},
-      {"seuclidean", Metric::SEuclidean},
-      {"mahalanobis", Metric::Mahalanobis},
-      {"dice", Metric::Dice},
-      {"jaccard", Metric::Jaccard},
-      {"russellrao", Metric::Russellrao},
-      {"rogerstanimoto", Metric::Rogerstanimoto},
-      {"sokalsneath", Metric::Sokalsneath}
-  };
-
-  auto const it = metric_map.find(metric);
-  if (it == metric_map.end())
-    throw nb::value_error(  //
-        nb::str("Unsupported metric: {}").format(metric).c_str()
-    );
-
-  return static_cast<std::underlying_type_t<Metric>>(it->second);
-}
-
 // --- Parameter pack helpers
 
 auto first_in_pack(auto &first, auto &...) {
   return first;
 }
 
-// --- Minkowski distance implementations
+// --- Function API
+
+std::underlying_type_t<Metric> parse_metric(char const *metric);
+
+// Minkowski distance implementations
 
 template <Metric metric, typename... Args>
   requires KDTreeMetric<metric>
@@ -253,12 +215,12 @@ float rdist(std::span<float const> const a, std::span<float const> const b) {
   return num_diff / (0.5f * num_both + num_diff);
 }
 
-// --- Getter for (r)dist functions dealing with potential keyword arguments
+// Getter for (r)dist functions dealing with potential keyword arguments
 
 template <Metric metric>
-concept SquaredMetrics =
-    (metric == Metric::Euclidean or metric == Metric::SEuclidean or
-     metric == Metric::Mahalanobis);
+concept SquaredMetrics = metric == Metric::Euclidean or
+                         metric == Metric::SEuclidean or
+                         metric == Metric::Mahalanobis;
 
 template <Metric metric>
 auto get_rdist(nb::dict const metric_kws) {

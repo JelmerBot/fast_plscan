@@ -10,9 +10,9 @@ from matplotlib.patches import Ellipse
 from matplotlib.colors import Colormap, BoundaryNorm
 from typing import Any, Literal
 
-from ._leaf_tree import LeafTree as LeafTreeTuple
-from ._condensed_tree import CondensedTree as CondensedTreeTuple
-from ._persistence_trace import (
+from ._api import (
+    LeafTree as LeafTreeTuple,
+    CondensedTree as CondensedTreeTuple,
     PersistenceTrace as PersistenceTraceTuple,
     compute_distance_icicles,
     compute_density_icicles,

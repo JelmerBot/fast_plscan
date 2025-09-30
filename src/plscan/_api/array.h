@@ -4,6 +4,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 
+#include <span>
 #include <memory>
 
 namespace nb = nanobind;

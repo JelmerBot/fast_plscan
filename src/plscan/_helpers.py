@@ -3,9 +3,12 @@
 import numpy as np
 from scipy.sparse import csr_array
 
-from ._spanning_tree import SpanningTree
-from ._leaf_tree import LeafTree, apply_size_cut
-from ._persistence_trace import PersistenceTrace
+from ._api import (
+    SpanningTree,
+    LeafTree,
+    apply_size_cut,
+    PersistenceTrace,
+)
 
 
 def sort_spanning_tree(spanning_tree: SpanningTree) -> SpanningTree:

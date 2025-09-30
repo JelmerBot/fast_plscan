@@ -1,10 +1,9 @@
 #ifndef PLSCAN_API_SPACE_TREE_H
 #define PLSCAN_API_SPACE_TREE_H
 
-#include <span>
-
-#include "_array.h"
-#include "_distances.h"
+#include "array.h"
+#include "distances.h"
+#include "sparse_graph.h"
 
 struct NodeData {
   int64_t idx_start;
@@ -12,15 +11,6 @@ struct NodeData {
   int64_t is_leaf;
   double radius;
 };
-
-// Reinterprets 64bit float array view as an array of NodeData objects
-inline std::span<NodeData const> convert_node_data(
-    array_ref<double const> const &node_data
-) {
-  return {
-      reinterpret_cast<NodeData const *>(node_data.data()), node_data.size() / 4
-  };
-}
 
 struct SpaceTreeView {
   nb::ndarray_view<float const, 2, 'C'> const data;
@@ -35,15 +25,24 @@ struct SpaceTree {
   array_ref<double const> node_data;
   ndarray_ref<float const, 3> node_bounds;
 
-  [[nodiscard]] SpaceTreeView view() const {
-    return {
-        data.view(), to_view(idx_array), convert_node_data(node_data),
-        node_bounds.view()
-    };
-  }
+  [[nodiscard]] SpaceTreeView view() const;
 };
 
-// --- KDTree distance point-to-node lower bound functions
+// --- Function API
+
+SparseGraph kdtree_query(
+    SpaceTree tree, uint32_t num_neighbors, char const *metric,
+    nb::dict metric_kws
+);
+
+SparseGraph balltree_query(
+    SpaceTree tree, uint32_t num_neighbors, char const *metric,
+    nb::dict metric_kws
+);
+
+std::vector<NodeData> check_node_data(array_ref<double const> node_data);
+
+// KDTree distance point-to-node lower bound functions
 
 template <Metric metric, typename... Args>
   requires KDTreeMetric<metric>
@@ -73,7 +72,7 @@ auto get_kdtree_min_rdist(nb::dict const kwargs) {
     return kdtree_min_rdist<metric>;
 }
 
-// --- BallTree distance point-to-node lower bound functions
+// BallTree distance point-to-node lower bound functions
 
 template <Metric metric>
   requires BallTreeMetric<metric>

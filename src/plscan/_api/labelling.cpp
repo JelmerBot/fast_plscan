@@ -1,9 +1,10 @@
-#include "_labelling.h"
+#include "labelling.h"
 
 #include <vector>
 
-#include "_condensed_tree.h"
-#include "_leaf_tree.h"
+// --- Implementation details
+
+namespace {
 
 [[nodiscard]] std::vector<int64_t> compute_segment_labels(
     LeafTreeView const leaf_tree, std::span<uint32_t const> const selected
@@ -89,6 +90,10 @@ void compute_labels(
   );
 }
 
+}  // namespace
+
+// --- Function API
+
 Labelling compute_cluster_labels(
     LeafTree const leaf_tree, CondensedTree const condensed_tree,
     array_ref<uint32_t const> const selected_clusters, size_t const num_points
@@ -101,81 +106,40 @@ Labelling compute_cluster_labels(
   return {label_view, std::move(label_cap)};
 }
 
-NB_MODULE(_labelling, m) {
-  m.doc() = "Module for cluster labelling in PLSCAN.";
+// --- Class API
 
-  nb::class_<Labelling>(m, "Labelling")
-      .def(
-          "__init__",
-          [](Labelling *t, nb::handle label, nb::handle probability) {
-            // Support np.memmap and np.ndarray input types for sklearn
-            // pickling. The output of np.asarray can cast to nanobind ndarrays.
-            auto const asarray = nb::module_::import_("numpy").attr("asarray");
-            new (t) Labelling(
-                nb::cast<array_ref<int32_t const>>(asarray(label), false),
-                nb::cast<array_ref<float const>>(asarray(probability), false)
-            );
-          },
-          nb::arg("label"), nb::arg("probability"),
-          R"(
-            Parameters
-            ----------
-            label
-                The data point cluster labels.
-            persistence
-                The data point cluster membership probabilities.
-          )"
-      )
-      .def_ro(
-          "label", &Labelling::label, nb::rv_policy::reference,
-          "A 1D array with cluster labels."
-      )
-      .def_ro(
-          "probability", &Labelling::probability, nb::rv_policy::reference,
-          "A 1D array with cluster membership probabilities."
-      )
-      .def(
-          "__iter__",
-          [](Labelling const &self) {
-            return nb::make_tuple(self.label, self.probability)
-                .attr("__iter__")();
-          }
-      )
-      .def(
-          "__reduce__",
-          [](Labelling const &self) {
-            return nb::make_tuple(
-                nb::type<Labelling>(),
-                nb::make_tuple(self.label, self.probability)
-            );
-          }
-      )
-      .doc() = "Labelling contains the cluster labels and probabilities.";
+Labelling::Labelling(
+    array_ref<int32_t const> const label,
+    array_ref<float const> const probability
+)
+    : label(label), probability(probability) {}
 
-  m.def(
-      "compute_cluster_labels", &compute_cluster_labels, nb::arg("leaf_tree"),
-      nb::arg("condensed_tree"), nb::arg("selected_clusters").noconvert(),
-      nb::arg("num_points"),
-      R"(
-        Computes cluster labels and membership probabilities for the points.
+Labelling::Labelling(LabellingWriteView const view, LabellingCapsule cap)
+    : label(to_array(view.label, std::move(cap.label), view.label.size())),
+      probability(to_array(
+          view.probability, std::move(cap.probability), view.probability.size()
+      )) {}
 
-        Parameters
-        ----------
-        leaf_tree
-            The input leaf tree.
-        condensed_tree
-            The input condensed tree.
-        selected_clusters
-            The condensed_tree parent IDs of the selected clusters.
-        num_points
-            The number of points in the condensed tree.
+std::pair<LabellingWriteView, LabellingCapsule> Labelling::allocate(
+    size_t const num_points
+) {
+  auto [label, label_cap] = new_buffer<int64_t>(num_points);
+  auto [prob, prob_cap] = new_buffer<float>(num_points);
+  return {{label, prob}, {std::move(label_cap), std::move(prob_cap)}};
+}
 
-        Returns
-        -------
-        labelling
-            The Labelling containing arrays for the cluster labels and
-            membership probabilities. Labels -1 indicate points classified as
-            noise.
-      )"
-  );
+LabellingView Labelling::view() const {
+  return {to_view(label), to_view(probability)};
+}
+
+size_t LabellingWriteView::size() const {
+  return label.size();
+}
+
+size_t LabellingView::size() const {
+  return label.size();
+}
+
+size_t Labelling::size() const {
+  return label.size();
 }

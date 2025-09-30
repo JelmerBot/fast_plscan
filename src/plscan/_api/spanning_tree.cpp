@@ -1,4 +1,4 @@
-#include "_spanning_tree.h"
+#include "spanning_tree.h"
 
 #include <algorithm>
 #include <array>
@@ -6,11 +6,13 @@
 #include <ranges>
 #include <vector>
 
-#include "_distances.h"
-#include "_space_tree.h"
-#include "_sparse_graph.h"
+#include "distances.h"
 
-// --- General spanning forest construction helpers
+// --- Implementation details
+
+namespace {
+
+// General spanning forest construction helpers
 
 struct Edge {
   int32_t parent = -1;
@@ -100,7 +102,7 @@ void combine_vectors(std::vector<Edge> &dest, std::vector<Edge> const &src) {
         merge_edges : std::vector<Edge> : combine_vectors(omp_out, omp_in) \
 ) initializer(omp_priv = omp_orig)
 
-// --- Extract spanning forest from sparse graph
+// Extract spanning forest from sparse graph
 
 void find_candidates(SpanningState &state, SparseGraphWriteView const graph) {
   std::vector<Edge> &candidates = state.candidates;
@@ -168,15 +170,7 @@ size_t process_graph(
   return num_edges;
 }
 
-SpanningTree extract_spanning_forest(SparseGraph graph) {
-  // Build the spanning tree structure
-  auto [mst_view, mst_cap] = SpanningTree::allocate(graph.size() - 1u);
-  auto [graph_view, graph_cap] = SparseGraph::allocate_copy(graph);
-  size_t num_edges = process_graph(mst_view, graph_view);
-  return {mst_view, std::move(mst_cap), num_edges};
-}
-
-// --- Spanning forest from general space tree helpers
+// Spanning forest from general space tree helpers
 
 struct TraversalState {
   std::vector<int64_t> node_component;
@@ -428,7 +422,7 @@ using space_tree_boruvka_fun_t = size_t (*)(
     nb::dict
 );
 
-// --- Spanning forest from kdtree
+// Spanning forest from kdtree
 
 template <Metric metric>
 size_t run_kdtree_boruvka(
@@ -461,20 +455,7 @@ space_tree_boruvka_fun_t get_kdtree_executor(char const *const metric) {
   return lookup[idx];
 }
 
-SpanningTree compute_spanning_tree_kdtree(
-    SpaceTree const tree, SparseGraph const knn,
-    array_ref<float> const core_distances, char const *const metric,
-    nb::dict const metric_kws
-) {
-  // Build the spanning tree structure
-  auto [mst_view, mst_cap] = SpanningTree::allocate(knn.size() - 1u);
-  size_t num_edges = get_kdtree_executor(metric)(
-      mst_view, tree.view(), knn.view(), to_view(core_distances), metric_kws
-  );
-  return {mst_view, std::move(mst_cap), num_edges};
-}
-
-// --- Spanning forest from balltree
+// Spanning forest from balltree
 
 template <Metric metric>
 size_t run_balltree_boruvka(
@@ -518,6 +499,31 @@ space_tree_boruvka_fun_t get_balltree_executor(char const *const metric) {
   return lookup[idx];
 }
 
+}  // namespace
+
+// --- Function API
+
+SpanningTree extract_spanning_forest(SparseGraph graph) {
+  // Build the spanning tree structure
+  auto [mst_view, mst_cap] = SpanningTree::allocate(graph.size() - 1u);
+  auto [graph_view, graph_cap] = SparseGraph::allocate_copy(graph);
+  size_t num_edges = process_graph(mst_view, graph_view);
+  return {mst_view, std::move(mst_cap), num_edges};
+}
+
+SpanningTree compute_spanning_tree_kdtree(
+    SpaceTree const tree, SparseGraph const knn,
+    array_ref<float> const core_distances, char const *const metric,
+    nb::dict const metric_kws
+) {
+  // Build the spanning tree structure
+  auto [mst_view, mst_cap] = SpanningTree::allocate(knn.size() - 1u);
+  size_t num_edges = get_kdtree_executor(metric)(
+      mst_view, tree.view(), knn.view(), to_view(core_distances), metric_kws
+  );
+  return {mst_view, std::move(mst_cap), num_edges};
+}
+
 SpanningTree compute_spanning_tree_balltree(
     SpaceTree const tree, SparseGraph const knn,
     array_ref<float> const core_distances, char const *const metric,
@@ -531,139 +537,48 @@ SpanningTree compute_spanning_tree_balltree(
   return {mst_view, std::move(mst_cap), num_edges};
 }
 
-// --- Module definitions
+// --- Class API
 
-NB_MODULE(_spanning_tree, m) {
-  m.doc() = "Module for spanning tree computation in PLSCAN.";
+size_t SpanningTreeWriteView::size() const {
+  return parent.size();
+}
 
-  nb::class_<SpanningTree>(m, "SpanningTree")
-      .def(
-          "__init__",
-          [](SpanningTree *t, nb::handle parent, nb::handle child,
-             nb::handle distance) {
-            // Support np.memmap and np.ndarray input types for sklearn
-            // pickling. The output of np.asarray can cast to nanobind ndarrays.
-            auto const asarray = nb::module_::import_("numpy").attr("asarray");
-            new (t) SpanningTree(
-                nb::cast<array_ref<uint32_t const>>(asarray(parent), false),
-                nb::cast<array_ref<uint32_t const>>(asarray(child), false),
-                nb::cast<array_ref<float const>>(asarray(distance), false)
-            );
-          },
-          nb::arg("parent"), nb::arg("child"), nb::arg("distance"),
-          R"(
-            Parameters
-            ----------
-            parent
-                An array of parent node indices.
-            child
-                An array of child node indices.
-            distance
-                An array of distances between the nodes.
-          )"
-      )
-      .def_ro(
-          "parent", &SpanningTree::parent, nb::rv_policy::reference,
-          "A 1D array with parent values."
-      )
-      .def_ro(
-          "child", &SpanningTree::child, nb::rv_policy::reference,
-          "A 1D array with child values."
-      )
-      .def_ro(
-          "distance", &SpanningTree::distance, nb::rv_policy::reference,
-          "A 1D array with distance values."
-      )
-      .def(
-          "__iter__",
-          [](SpanningTree const &self) {
-            return nb::make_tuple(self.parent, self.child, self.distance)
-                .attr("__iter__")();
-          }
-      )
-      .def(
-          "__reduce__",
-          [](SpanningTree const &self) {
-            return nb::make_tuple(
-                nb::type<SpanningTree>(),
-                nb::make_tuple(self.parent, self.child, self.distance)
-            );
-          }
-      )
-      .doc() = "SpanningTree contains a sorted minimum spanning tree (MST).";
+size_t SpanningTreeView::size() const {
+  return parent.size();
+}
 
-  m.def(
-      "extract_spanning_forest", &extract_spanning_forest, nb::arg("graph"),
-      R"(
-        Extracts a minimum spanning forest from a sparse graph.
+// SpanningTree constructors and member functions
 
-        Parameters
-        ----------
-        graph
-            The input sparse graph.
+SpanningTree::SpanningTree(
+    array_ref<uint32_t const> const parent,
+    array_ref<uint32_t const> const child, array_ref<float const> const distance
+)
+    : parent(parent), child(child), distance(distance) {}
 
-        Returns
-        -------
-        spanning_tree
-            The computed spanning forest.
-        )"
-  );
+SpanningTree::SpanningTree(
+    SpanningTreeWriteView const view, SpanningTreeCapsule cap,
+    size_t const num_edges
+)
+    : parent(to_array(view.parent, std::move(cap.parent), num_edges)),
+      child(to_array(view.child, std::move(cap.child), num_edges)),
+      distance(to_array(view.distance, std::move(cap.distance), num_edges)) {}
 
-  m.def(
-      "compute_spanning_tree_kdtree", &compute_spanning_tree_kdtree,
-      nb::arg("tree"), nb::arg("knn"), nb::arg("core_distances"),
-      nb::arg("metric"), nb::arg("metric_kws"),
-      R"(
-        Computes a minimum spanning tree (MST) using a k-d tree.
+std::pair<SpanningTreeWriteView, SpanningTreeCapsule> SpanningTree::allocate(
+    size_t const num_edges
+) {
+  auto [parents, parent_cap] = new_buffer<uint32_t>(num_edges);
+  auto [children, child_cap] = new_buffer<uint32_t>(num_edges);
+  auto [distances, distance_cap] = new_buffer<float>(num_edges);
+  return {
+      {parents, children, distances},
+      {std::move(parent_cap), std::move(child_cap), std::move(distance_cap)}
+  };
+}
 
-        Parameters
-        ----------
-        tree
-            The kdtree structure.
-        knn
-            The k-nearest neighbors graph.
-        core_distances
-            The core distances for each point.
-        metric
-            The distance metric to use. Supported metrics are listed in
-            :py:attr:`~plscan.PLSCAN.VALID_KDTREE_METRICS`.
-        metric_kws
-            Additional keyword arguments for the distance function, such as
-            the Minkowski distance parameter `p` for the "minkowski" metric.
+SpanningTreeView SpanningTree::view() const {
+  return {to_view(parent), to_view(child), to_view(distance)};
+}
 
-        Returns
-        -------
-        spanning_tree
-            The computed minimum spanning tree.
-        )"
-  );
-
-  m.def(
-      "compute_spanning_tree_balltree", &compute_spanning_tree_balltree,
-      nb::arg("tree"), nb::arg("knn"), nb::arg("core_distances"),
-      nb::arg("metric"), nb::arg("metric_kws"),
-      R"(
-        Computes a minimum spanning tree (MST) using a ball tree.
-
-        Parameters
-        ----------
-        tree
-            The balltree structure.
-        knn
-            The k-nearest neighbors graph.
-        core_distances
-            The core distances for each point.
-        metric
-            The distance metric to use. Supported metrics are listed in
-            :py:attr:`~plscan.PLSCAN.VALID_BALLTREE_METRICS`.
-        metric_kws
-            Additional keyword arguments for the distance function, such as
-            the Minkowski distance parameter `p` for the "minkowski" metric.
-
-        Returns
-        -------
-        spanning_tree
-            The computed minimum spanning tree.
-        )"
-  );
+size_t SpanningTree::size() const {
+  return parent.size();
 }

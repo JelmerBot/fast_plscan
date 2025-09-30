@@ -1,12 +1,10 @@
-#include "_condensed_tree.h"
+#include "condensed_tree.h"
 
-#include <nanobind/stl/optional.h>
-
-#include <optional>
 #include <vector>
 
-#include "_linkage_tree.h"
-#include "_spanning_tree.h"
+// --- Implementation details
+
+namespace {
 
 struct RowInfo {
   uint32_t const parent;
@@ -56,7 +54,7 @@ struct CondenseState {
       // Append or write points to reserved spots.
       size_t out_idx = update_output_index(row, idx, node_idx, min_size);
       store_or_delay(row, out_idx, num_points, min_size);
-      
+
       // Write rows for cluster merges.
       if (row.left_size >= min_size && row.right_size >= min_size)
         write_merge(row, idx, cluster_count, next_label, num_points);
@@ -213,6 +211,10 @@ std::pair<size_t, size_t> process_hierarchy(
   );
 }
 
+}  // namespace
+
+// --- Function API
+
 CondensedTree compute_condensed_tree(
     LinkageTree const linkage, SpanningTree const mst, size_t const num_points,
     float const min_size, std::optional<array_ref<float>> const sample_weights
@@ -225,121 +227,65 @@ CondensedTree compute_condensed_tree(
   return {tree_view, std::move(tree_cap), filled_edges, cluster_count};
 }
 
-NB_MODULE(_condensed_tree, m) {
-  m.doc() = "Module for condensed tree computation in PLSCAN.";
+// --- Class API
 
-  nb::class_<CondensedTree>(m, "CondensedTree")
-      .def(
-          "__init__",
-          [](CondensedTree *t, nb::handle parent, nb::handle child,
-             nb::handle distance, nb::handle child_size,
-             nb::handle cluster_rows) {
-            // Support np.memmap and np.ndarray input types for sklearn
-            // pickling. The output of np.asarray can cast to nanobind ndarrays.
-            auto const asarray = nb::module_::import_("numpy").attr("asarray");
-            new (t) CondensedTree(
-                nb::cast<array_ref<uint32_t const>>(asarray(parent), false),
-                nb::cast<array_ref<uint32_t const>>(asarray(child), false),
-                nb::cast<array_ref<float const>>(asarray(distance), false),
-                nb::cast<array_ref<float const>>(asarray(child_size), false),
-                nb::cast<array_ref<uint32_t const>>(
-                    asarray(cluster_rows), false
-                )
-            );
-          },
-          nb::arg("parent"), nb::arg("child"), nb::arg("distance"),
-          nb::arg("child_size"), nb::arg("cluster_rows"),
-          R"(
-            Parameters
-            ----------
-            parent
-                An array of parent cluster indices. Clusters are labelled
-                with indices starting from the number of points.
-            child
-                An array of child node and cluster indices. Clusters are labelled
-                with indices starting from the number of points.
-            distance
-                The distance at which the child side connects to the parent side.
-            child_size
-                The (weighted) size in the child side of the link.
-            cluster_rows
-                The row indices with a cluster as child.
-          )"
-      )
-      .def_ro(
-          "parent", &CondensedTree::parent, nb::rv_policy::reference,
-          "A 1D array of parent cluster indices."
-      )
-      .def_ro(
-          "child", &CondensedTree::child, nb::rv_policy::reference,
-          "A 1D array of child cluster indices."
-      )
-      .def_ro(
-          "distance", &CondensedTree::distance, nb::rv_policy::reference,
-          "A 1D array of distances."
-      )
-      .def_ro(
-          "child_size", &CondensedTree::child_size, nb::rv_policy::reference,
-          "A 1D array of child sizes."
-      )
-      .def_ro(
-          "cluster_rows", &CondensedTree::cluster_rows,
-          nb::rv_policy::reference, "A 1D array of cluster row indices."
-      )
-      .def(
-          "__iter__",
-          [](CondensedTree const &self) {
-            return nb::make_tuple(
-                       self.parent, self.child, self.distance, self.child_size,
-                       self.cluster_rows
-            )
-                .attr("__iter__")();
-          }
-      )
-      .def(
-          "__reduce__",
-          [](CondensedTree &self) {
-            return nb::make_tuple(
-                nb::type<CondensedTree>(),
-                nb::make_tuple(
-                    self.parent, self.child, self.distance, self.child_size,
-                    self.cluster_rows
-                )
-            );
-          }
-      )
-      .doc() = "CondensedTree contains a pruned dendrogram.";
+CondensedTree::CondensedTree(
+    array_ref<uint32_t const> const parent,
+    array_ref<uint32_t const> const child,
+    array_ref<float const> const distance,
+    array_ref<float const> const child_size,
+    array_ref<uint32_t const> const cluster_rows
+)
+    : parent(parent),
+      child(child),
+      distance(distance),
+      child_size(child_size),
+      cluster_rows(cluster_rows) {}
 
-  m.def(
-      "compute_condensed_tree", &compute_condensed_tree,
-      nb::arg("linkage_tree"), nb::arg("minimum_spanning_tree"),
-      nb::arg("num_points"), nb::arg("min_cluster_size") = 5.0f,
-      nb::arg("sample_weights") = nb::none(),
-      R"(
-        Prunes a linkage tree to create a condensed tree.
+CondensedTree::CondensedTree(
+    CondensedTreeWriteView const view, CondensedTreeCapsule cap,
+    size_t const num_edges, size_t const num_clusters
+)
+    : parent(to_array(view.parent, std::move(cap.parent), num_edges)),
+      child(to_array(view.child, std::move(cap.child), num_edges)),
+      distance(to_array(view.distance, std::move(cap.distance), num_edges)),
+      child_size(to_array(view.child_size, std::move(cap.child_size), num_edges)
+      ),
+      cluster_rows(
+          to_array(view.cluster_rows, std::move(cap.cluster_rows), num_clusters)
+      ) {}
 
-        Parameters
-        ----------
-        linkage_tree
-            The input linkage tree. Must originate from and have the same size
-            as the spanning tree.
-        spanning_tree
-            The input minimum spanning tree (sorted).
-        min_cluster_size
-            The minimum size of clusters to be included in the condensed tree.
-            Default is 5.0.
-        sample_weights
-            The data point sample weights. If not provided, all
-            points get an equal weight. Must have a value for each data point!
+std::pair<CondensedTreeWriteView, CondensedTreeCapsule> CondensedTree::allocate(
+    size_t const num_edges
+) {
+  size_t const buffer_size = 2 * num_edges;
+  auto [parent, parent_cap] = new_buffer<uint32_t>(buffer_size);
+  auto [child, child_cap] = new_buffer<uint32_t>(buffer_size);
+  auto [dist, dist_cap] = new_buffer<float>(buffer_size);
+  auto [size, size_cap] = new_buffer<float>(buffer_size);
+  auto [rows, rows_cap] = new_buffer<uint32_t>(num_edges);
+  return {
+      {parent, child, dist, size, rows},
+      {std::move(parent_cap), std::move(child_cap), std::move(dist_cap),
+       std::move(size_cap), std::move(rows_cap)}
+  };
+}
 
-        Returns
-        -------
-        condensed_tree
-            A CondensedTree with parent, child, distance, child_size,
-            and cluster_rows arrays. The child_size array contains the
-            (weighted) size of the child cluster, which is the sum of the
-            sample weights for all points in the child cluster. The cluster_rows
-            array contains the row indices with clusters as child.
-        )"
-  );
+CondensedTreeView CondensedTree::view() const {
+  return {
+      to_view(parent),     to_view(child),        to_view(distance),
+      to_view(child_size), to_view(cluster_rows),
+  };
+}
+
+size_t CondensedTreeWriteView::size() const {
+  return parent.size();
+}
+
+size_t CondensedTreeView::size() const {
+  return parent.size();
+}
+
+size_t CondensedTree::size() const {
+  return parent.size();
 }

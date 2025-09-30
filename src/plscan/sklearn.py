@@ -13,11 +13,16 @@ from sklearn.neighbors import KDTree, BallTree
 from numbers import Real, Integral
 from typing import Any
 
-from ._spanning_tree import SpanningTree
-from ._leaf_tree import apply_distance_cut, apply_size_cut
-from ._labelling import Labelling, compute_cluster_labels
-from ._threads import get_max_threads, set_num_threads
 from ._helpers import distance_matrix_to_csr, knn_to_csr, remove_self_loops
+from ._api import (
+    SpanningTree,
+    apply_distance_cut,
+    apply_size_cut,
+    Labelling,
+    compute_cluster_labels,
+    get_max_threads,
+    set_num_threads,
+)
 from .api import (
     compute_mutual_spanning_tree,
     extract_mutual_spanning_forest,
@@ -293,6 +298,10 @@ class PLSCAN(ClusterMixin, BaseEstimator):
                 dtype=np.float32,
                 ensure_non_negative=True,
             )
+            if sample_weights.max() > min_cluster_size:
+                raise ValueError(
+                    "Sample weights must not exceed the minimum cluster size."
+                )
 
         # Compute / extract MST
         if self.metric != "precomputed":
