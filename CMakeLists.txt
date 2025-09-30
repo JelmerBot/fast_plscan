@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.18...3.26)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_GENERATOR_PLATFORM x64)
 
 # - Warn if the user invokes CMake directly
 if(NOT SKBUILD)
@@ -28,11 +25,6 @@ if(NOT SKBUILD)
   rerun the above after editing C++ files.")
 endif()
 
-# - Avoid issues with CMAKE_GENERATOR_PLATFORM from cibuildwheels
-if(NOT WIN32)
-  unset(CMAKE_GENERATOR_PLATFORM)
-endif()
-
 # - Build type
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
@@ -50,39 +42,9 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
 find_package(nanobind CONFIG REQUIRED)
 
-# - Find module source-file
-# The build command `pip install ...` re-runs cmake on every call!
-# Treats all cpp files as extension modules.
-# Includes all top-level .h files as source file.
-set(SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/${SKBUILD_PROJECT_NAME})
-file(GLOB_RECURSE EXT_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${SRC_PATH}/*.cpp)
-foreach(EXT_SOURCE ${EXT_SOURCES})
-  # Create variables for the extension name, stub, and destination
-  get_filename_component(EXT_NAME ${EXT_SOURCE} NAME_WE)
-  get_filename_component(EXT_DIR ${EXT_SOURCE} DIRECTORY)
-  cmake_path(RELATIVE_PATH EXT_DIR BASE_DIRECTORY ${SRC_PATH})
-  set(EXT_STUB ${EXT_NAME}_stub)
-  set(EXT_STUB_OUT ${EXT_NAME}.pyi)
-  set(EXT_DESTINATION ${SKBUILD_PROJECT_NAME}/${EXT_DIR})
-  message(STATUS "Found extension: ${EXT_DESTINATION}${EXT_NAME}")
+# - Configure compiler
+add_library(compiler_options INTERFACE)
+target_compile_features(compiler_options INTERFACE cxx_std_23)
 
-  # Add speed optimized module target
-  nanobind_add_module(${EXT_NAME}
-    NOMINSIZE
-    STABLE_ABI
-    FREE_THREADED
-    LTO
-    NB_DOMAIN ${SKBUILD_PROJECT_NAME}
-    ${EXT_SOURCE}
-  )
-  target_link_libraries(${EXT_NAME} PRIVATE OpenMP::OpenMP_CXX)
-  nanobind_add_stub(
-    ${EXT_STUB}
-    MODULE ${EXT_NAME}
-    OUTPUT ${EXT_STUB_OUT}
-    PYTHON_PATH $<TARGET_FILE_DIR:${EXT_NAME}>
-    DEPENDS ${EXT_NAME}
-  )
-  install(TARGETS ${EXT_NAME} LIBRARY DESTINATION ${EXT_DESTINATION})
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${EXT_STUB_OUT} DESTINATION ${EXT_DESTINATION})
-endforeach()
+# - Add nanobind modules
+add_subdirectory(src/${SKBUILD_PROJECT_NAME}/_api)

@@ -500,6 +500,12 @@ def test_bad_sample_weights(X, knn):
         sample_weights = np.full(X.shape[0], 0.5, dtype=np.float32)
         sample_weights[0] = np.inf
         PLSCAN(metric="precomputed").fit(knn, sample_weights=sample_weights)
+    with pytest.raises(ValueError):
+        sample_weights = np.full(X.shape[0], 0.5, dtype=np.float32)
+        sample_weights[0] = 10.0
+        PLSCAN(metric="precomputed", min_cluster_size=5.0).fit(
+            knn, sample_weights=sample_weights
+        )
 
 
 # Attributes

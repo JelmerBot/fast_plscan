@@ -1,11 +1,13 @@
 import numpy as np
 
-from plscan._sparse_graph import SparseGraph
-from plscan._spanning_tree import SpanningTree
-from plscan._linkage_tree import LinkageTree
-from plscan._condensed_tree import CondensedTree
-from plscan._leaf_tree import LeafTree
-from plscan._persistence_trace import PersistenceTrace
+from plscan._api import (
+    SparseGraph,
+    SpanningTree,
+    LinkageTree,
+    CondensedTree,
+    LeafTree,
+    PersistenceTrace,
+)
 
 
 def valid_spanning_forest(msf, X):

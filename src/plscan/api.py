@@ -4,26 +4,28 @@ from scipy.sparse import csr_array
 from sklearn.neighbors._ball_tree import BallTree32
 from sklearn.neighbors._kd_tree import KDTree32
 
-from ._distances import get_dist as get_dist
-from ._leaf_tree import LeafTree, compute_leaf_tree
-from ._labelling import Labelling, compute_cluster_labels
-from ._linkage_tree import LinkageTree, compute_linkage_tree
 from ._helpers import sort_spanning_tree, most_persistent_clusters
-from ._condensed_tree import CondensedTree, compute_condensed_tree
-from ._space_tree import SpaceTree, kdtree_query, balltree_query
-from ._persistence_trace import (
+from ._api import (
+    get_dist as get_dist,
+    LeafTree,
+    compute_leaf_tree,
+    Labelling,
+    compute_cluster_labels,
+    LinkageTree,
+    compute_linkage_tree,
+    CondensedTree,
+    compute_condensed_tree,
+    SpaceTree,
+    kdtree_query,
+    balltree_query,
     PersistenceTrace,
     compute_size_persistence,
     compute_size_distance_bi_persistence,
     compute_size_density_bi_persistence,
-)
-from ._spanning_tree import (
     SpanningTree,
     extract_spanning_forest,
     compute_spanning_tree_kdtree,
     compute_spanning_tree_balltree,
-)
-from ._sparse_graph import (
     SparseGraph,
     extract_core_distances,
     compute_mutual_reachability,

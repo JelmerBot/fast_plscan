@@ -13,7 +13,7 @@ from sklearn.utils import shuffle
 
 from plscan import PLSCAN
 from plscan._helpers import distance_matrix_to_csr, knn_to_csr
-from plscan._threads import set_num_threads, get_max_threads
+from plscan._api import set_num_threads, get_max_threads
 
 # Ensure random data does not change on different OSes
 datapath = Path(__file__).parent / "data"

@@ -42,10 +42,12 @@ def configure_matplotlib():
                 r"""
                 \usepackage[english]{babel}
                 \usepackage[T1]{fontenc}
-                \usepackage[varqu,varl,scaled=0.95]{inconsolata}
-                \usepackage[scaled=.95,helvratio=.96,trueslanted,largesc,p,amsthm,smallerops]{newpx}
+                \usepackage[varqu,varl]{inconsolata}
+                \usepackage[
+                    theoremfont,trueslanted,largesc,p,
+                    amsthm,smallerops
+                ]{newpx}
                 \usepackage[scr=rsfso]{mathalpha}
-                \usepackage{bm}
                 \usepackage[stretch=10,shrink=10,tracking,spacing,kerning,babel]{microtype}
                 """
             ),
@@ -59,11 +61,10 @@ def sized_fig(width=0.5, aspect=0.618, dpi=None):
     """Create a figure with width as fraction of A4 page."""
     if dpi is None:
         dpi = 150
-    page_width_cm = 13.9
-    inch = 2.54
-    w = width * page_width_cm
+    page_width_inch = 6.9305
+    w = width * page_width_inch
     h = aspect * w
-    return plt.figure(figsize=(w / inch, h / inch), dpi=dpi)
+    return plt.figure(figsize=(w, h), dpi=dpi)
 
 
 def frame_off():

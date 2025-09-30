@@ -31,7 +31,7 @@ release = get_version("plscan")
 version = ".".join(release.split(".")[:2])
 master_doc = "index"
 templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "_*.ipynb"]
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
