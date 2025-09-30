@@ -56,8 +56,8 @@ struct CondenseState {
       // Append or write points to reserved spots.
       size_t out_idx = update_output_index(row, idx, node_idx, min_size);
       store_or_delay(row, out_idx, num_points, min_size);
+      
       // Write rows for cluster merges.
-
       if (row.left_size >= min_size && row.right_size >= min_size)
         write_merge(row, idx, cluster_count, next_label, num_points);
     }
@@ -152,7 +152,7 @@ struct CondenseState {
     condensed_tree.parent[out_idx] = parent;
     condensed_tree.child[out_idx] = child;
     condensed_tree.distance[out_idx] = distance;
-    condensed_tree.child_size[out_idx] = child_size;
+    condensed_tree.child_size[out_idx] = child_ size;
     ++out_idx;
   }
 
