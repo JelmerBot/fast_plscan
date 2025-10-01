@@ -22,6 +22,8 @@ namespace nb = nanobind;
 
 namespace {
 
+// Helper functions
+
 template <Metric metric>
 nb::object wrap_dist(nb::dict const metric_kws) {
   return nb::cpp_function([dist = get_dist<metric>(metric_kws)](
@@ -30,9 +32,7 @@ nb::object wrap_dist(nb::dict const metric_kws) {
                           ) { return dist(to_view(x), to_view(y)); });
 }
 
-}  // namespace
-
-// --- Public bindings
+// Public bindings
 
 void add_condensed_bindings(nb::module_ &m) {
   nb::class_<CondensedTree>(m, "CondensedTree")
@@ -1162,6 +1162,8 @@ void add_threading_bindings(nb::module_ &m) {
         )"
   );
 }
+
+}  // namespace
 
 // --- Module definition
 
