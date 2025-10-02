@@ -90,7 +90,7 @@ The development workflow works best by pre-installing python dependencies with
 pip install numpy scipy matplotlib scikit-learn scikit-build-core nanobind setuptools_scm
 ```
 
-Building the package requires a C++ 20 compiler with OpenMP support. The OpenMP
+Building the package requires a C++ 23 compiler with OpenMP support. The OpenMP
 version must support user-defined reductions. Selecting the proper OpenMP
 version requires some additional configuration, see below. Assuming the compiler
 and OpenMP are present, the package can be compiled and installed with:
@@ -102,7 +102,7 @@ pip install --no-deps --no-build-isolation -ve .
 To change the build type, add `-C cmake.build-type=Debug` or `-C
 cmake.build-type=Release` to the command.
 
-`scikit-build-core` also experimentally editable installs (see [their
+`scikit-build-core` also experimentally supports editable installs (see [their
 documentation](https://scikit-build-core.readthedocs.io/en/latest/configuration/index.html#editable-installs)):
 
 ```bash
@@ -132,9 +132,9 @@ export OpenMP_ROOT=$(brew --prefix)/opt/libomp
 
 ### Windows
 
-The default MSVC C++ compiler on windows does not support a recent enough
-OpenMP. In addition, the default powershell terminal on windows is not
-configured for cmake to find the correct OpenMP version. Instead, use a
+The default MSVC C++ compiler on windows does not support
+a recent enough OpenMP. In addition, the default powershell terminal on windows
+is not configured for cmake to find the correct OpenMP version. Instead, use a
 developer powershell configured for a 64-bit target architecture. To open such a
 terminal, run the following code in a normal Powershell terminal:
 
@@ -153,6 +153,10 @@ pip install --no-deps --no-build-isolation -C cmake.args="-T ClangCL" -ve .
 ```
 
 The `-C cmake.args=...` option does not have to be repeated on rebuilds.
+
+You may need to install the [visual studio build
+tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022)
+with the optional Clang compiler support enabled.
 
 ## Citing
 
