@@ -90,7 +90,7 @@ The development workflow works best by pre-installing python dependencies with
 pip install numpy scipy matplotlib scikit-learn scikit-build-core nanobind setuptools_scm
 ```
 
-Building the package requires a C++ 23 compiler with OpenMP support. The OpenMP
+Building the package requires a C++ 20 compiler with OpenMP support. The OpenMP
 version must support user-defined reductions. Selecting the proper OpenMP
 version requires some additional configuration, see below. Assuming the compiler
 and OpenMP are present, the package can be compiled and installed with:
