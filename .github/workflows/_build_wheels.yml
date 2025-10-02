@@ -8,7 +8,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ${{ 
-      (matrix.platform == 'macosx' && matrix.arch == 'x64' && 'macosx-13') ||
+      (matrix.platform == 'macosx' && matrix.arch == 'x64' && 'macosx-15-intel') ||
       (matrix.platform == 'macosx' && matrix.arch == 'arm64' && 'macosx-latest') ||
       (matrix.platform == 'win' && matrix.arch == 'x64' && 'windows-latest') ||
       (matrix.platform == 'win' && matrix.arch == 'arm64' && 'windows-11-arm64') ||

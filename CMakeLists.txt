@@ -44,7 +44,7 @@ find_package(nanobind CONFIG REQUIRED)
 
 # - Configure compiler
 add_library(compiler_options INTERFACE)
-target_compile_features(compiler_options INTERFACE cxx_std_20)
+target_compile_features(compiler_options INTERFACE cxx_std_23)
 
 # - Add nanobind modules
 add_subdirectory(src/${SKBUILD_PROJECT_NAME}/_api)
