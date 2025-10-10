@@ -105,9 +105,10 @@ void collect_leaf_children(
     uint64_t leaf_idx = condensed_tree.parent[idx] - num_points;
     // skip roots (i.e. direct children of the phantom root)
     while (leaf_tree.parent[leaf_idx] > 0) {
-      pre_callback(leaf_idx, collected[leaf_idx], distance);
-      collected[leaf_idx] += condensed_tree.child_size[idx];
-      post_callback(leaf_idx, collected[leaf_idx], distance);
+      float const weight = condensed_tree.child_size[idx];
+      pre_callback(leaf_idx, collected[leaf_idx], distance, weight);
+      collected[leaf_idx] += weight;
+      post_callback(leaf_idx, collected[leaf_idx], distance, weight);
       leaf_idx = leaf_tree.parent[leaf_idx];
     }
   }
@@ -126,14 +127,15 @@ void collect_leaf_children(
       leaf_tree, condensed_tree, num_points,
       // Pre-callback runs before size is updated.
       [&min_dists, leaf_tree](  //
-          size_t const idx, float const size, float const distance
+          size_t const idx, float const size, float const distance,
+          float const weight
       ) {
         // Finds the first distance after reaching the min_size threshold!
         if (size <= leaf_tree.min_size[idx])
           min_dists[idx] = distance;
       },
       // Post-callback runs after size is updated, becomes a no-op here.
-      [](size_t const idx, float const size, float const dist) {}
+      [](size_t, float, float, float) {}
   );
 
   // Convert distances to persistences
@@ -153,16 +155,18 @@ void collect_leaf_children(
   collect_leaf_children(
       leaf_tree, condensed_tree, num_points,
       // Pre-callback runs before size is updated, becomes a no-op here.
-      [](size_t const idx, float const size, float const dist) {},
+      [](size_t, float, float, float) {},
       // Post-callback runs after size is updated.
       [&bi_persistences, leaf_tree, persistence_callback](
-          size_t const idx, float const size, float const distance
+          size_t const idx, float const size, float const distance,
+          float const weight
       ) {
         // Sum distance persistences for size thresholds in (birth, death]!
         if (size > leaf_tree.min_size[idx] && size <= leaf_tree.max_size[idx])
-          bi_persistences[idx] += persistence_callback(
-              distance, leaf_tree.max_distance[idx]
-          );
+          bi_persistences[idx] += weight *
+                                  persistence_callback(
+                                      distance, leaf_tree.max_distance[idx]
+                                  );
       }
   );
 
@@ -276,10 +280,11 @@ size_t fill_size_density_bi_persistence(
   collect_leaf_children(
       leaf_tree, condensed_tree, num_points,
       // Pre-callback runs before size is updated, becomes a no-op here.
-      [](size_t const idx, float const size, float const dist) {},
+      [](size_t, float, float, float) {},
       // Post-callback runs after size is updated.
       [&sizes, &persistences, &leaf_tree, &distance_callback](
-          size_t const idx, float const size, float const dist
+          size_t const idx, float const size, float const dist,
+          float const weight
       ) {
         // Collect all points in the leaf-cluster (birth, inf] size interval!
         if (size > leaf_tree.min_size[idx] and
