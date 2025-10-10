@@ -37,7 +37,7 @@ def test_one_component(X, space_tree):
 
 
 @pytest.mark.parametrize(
-    "persistence_measure", ["size", "size-distance", "size-density"]
+    "persistence_measure", ["size", "distance", "density", "size-distance", "size-density"]
 )
 def test_one_component(X, persistence_measure):
     mst, neighbors, cd = compute_mutual_spanning_tree(X)

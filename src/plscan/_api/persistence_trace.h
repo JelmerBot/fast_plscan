@@ -63,6 +63,14 @@ struct PersistenceTrace {
 
 PersistenceTrace compute_size_persistence(LeafTree leaf_tree);
 
+PersistenceTrace compute_distance_persistence(
+    LeafTree leaf_tree, CondensedTree condensed_tree, size_t num_points
+);
+
+PersistenceTrace compute_density_persistence(
+    LeafTree leaf_tree, CondensedTree condensed_tree, size_t num_points
+);
+
 PersistenceTrace compute_size_distance_bi_persistence(
     LeafTree leaf_tree, CondensedTree condensed_tree, size_t num_points
 );

@@ -20,6 +20,8 @@ from ._api import (
     balltree_query,
     PersistenceTrace,
     compute_size_persistence,
+    compute_distance_persistence,
+    compute_density_persistence,
     compute_size_distance_bi_persistence,
     compute_size_density_bi_persistence,
     SpanningTree,
@@ -87,7 +89,7 @@ def compute_mutual_spanning_tree(
         query_fun = kdtree_query
         spanning_tree_fun = compute_spanning_tree_kdtree
     elif space_tree == "ball_tree":
-        tree = BallTree32(data, metric=metric, **metric_kws)
+        tree = BallTree32(data, leaf_size=5, metric=metric, **metric_kws)
         query_fun = balltree_query
         spanning_tree_fun = compute_spanning_tree_balltree
     else:
@@ -183,14 +185,13 @@ def clusters_from_spanning_forest(
     max_cluster_size
         The maximum size of a cluster.
     persistence_measure
-        Selects a persistence measure. Valid options are "size",
-        "size-distance", and "size-density". The "size" option computes the
-        minimum cluster size range for which clusters are leaves. The latter
-        two options compute bi-persistence values over the minimum cluster
-        size and mutual reachability distance / density. (One can think of
-        bi-persistences as an area indicating for which size and distance /
-        density values clusters exist as leaves.) Density is computed as
-        exp(-dist).
+        Selects a persistence measure. Valid options are "size", "distance",
+        "density", "size-distance", and "size-density". The "size",
+        "distance", and "density" options compute persistence as the range
+        of size/distance/density values for which clusters are leaves. The
+        "size-distance" and "size-density" options compute bi-persistence as
+        the distance/density -- minimum cluster size areas for which clusters
+        are leaves. Density is computed as exp(-dist).
     sample_weights
         Sample weights for the points in the sorted minimum spanning tree. If
         None, all samples are considered equally weighted.
@@ -237,6 +238,14 @@ def clusters_from_spanning_forest(
         )
     if persistence_measure == "size":
         trace = compute_size_persistence(leaf_tree)
+    elif persistence_measure == "distance":
+        trace = compute_distance_persistence(
+            leaf_tree, condensed_tree, num_points
+        )
+    elif persistence_measure == "density":
+        trace = compute_density_persistence(
+            leaf_tree, condensed_tree, num_points
+        )
     elif persistence_measure == "size-distance":
         trace = compute_size_distance_bi_persistence(
             leaf_tree, condensed_tree, num_points
