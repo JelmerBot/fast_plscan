@@ -99,7 +99,9 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         metric=[StrOptions({*VALID_BALLTREE_METRICS, "precomputed"})],
         min_cluster_size=[None, Interval(Real, 2.0, None, closed="left")],
         max_cluster_size=[Interval(Real, 2.0, None, closed="right")],
-        persistence_measure=[StrOptions({"size", "distance", "density", "size-distance", "size-density"})],
+        persistence_measure=[
+            StrOptions({"size", "distance", "density", "size-distance", "size-density"})
+        ],
         num_threads=[None, Interval(Integral, 1, None, closed="left")],
     )
 

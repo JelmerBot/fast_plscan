@@ -239,13 +239,9 @@ def clusters_from_spanning_forest(
     if persistence_measure == "size":
         trace = compute_size_persistence(leaf_tree)
     elif persistence_measure == "distance":
-        trace = compute_distance_persistence(
-            leaf_tree, condensed_tree, num_points
-        )
+        trace = compute_distance_persistence(leaf_tree, condensed_tree, num_points)
     elif persistence_measure == "density":
-        trace = compute_density_persistence(
-            leaf_tree, condensed_tree, num_points
-        )
+        trace = compute_density_persistence(leaf_tree, condensed_tree, num_points)
     elif persistence_measure == "size-distance":
         trace = compute_size_distance_bi_persistence(
             leaf_tree, condensed_tree, num_points
