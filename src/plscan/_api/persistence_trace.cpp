@@ -2,10 +2,27 @@
 
 #include <algorithm>
 #include <cmath>
+#include <ranges>
 
 // --- Implementation details
 
 namespace {
+
+// distances to persistence functions
+
+using persistence_fun_t = float (*)(float, float);
+
+NB_INLINE float distance_persistence(
+    float const min_dist, float const max_dist
+) {
+  return max_dist - min_dist;
+}
+
+NB_INLINE float density_persistence(
+    float const min_dist, float const max_dist
+) {
+  return std::exp(-min_dist) - std::exp(-max_dist);
+}
 
 // General persistence trace computation
 
@@ -67,44 +84,96 @@ void fill_persistences(
   }
 }
 
-[[nodiscard]] std::vector<float> compute_bi_persistences(
+void collect_leaf_children(
     LeafTreeView const leaf_tree, CondensedTreeView const condensed_tree,
-    size_t const num_points, auto &&distance_callback
+    size_t const num_points, auto &&pre_callback, auto &&post_callback
 ) {
   // Working variables.
   size_t const num_rows = condensed_tree.size();
   size_t const num_leaves = leaf_tree.size();
   std::vector collected(num_leaves, 0.0f);
-  std::vector bi_persistences(num_leaves, 0.0f);
 
-  // Iterate over the rows in reverse order.
+  // Iterate over the condensed tree rows in reverse order.
   for (size_t _i = 1; _i <= num_rows; ++_i) {
     // skip cluster rows
     size_t const idx = num_rows - _i;
     if (condensed_tree.child[idx] >= num_points)
       continue;
 
-    // aggregate point distance-persistence
+    // aggregate point sizes and track distances
     float const distance = condensed_tree.distance[idx];
-    uint64_t parent_idx = condensed_tree.parent[idx] - num_points;
+    uint64_t leaf_idx = condensed_tree.parent[idx] - num_points;
     // skip roots (i.e. direct children of the phantom root)
-    while (leaf_tree.parent[parent_idx] > 0) {
-      collected[parent_idx] += condensed_tree.child_size[idx];
-      // use greater equals here to match the min_size trace values that use
-      // birth in (birth, death] intervals!
-      if (collected[parent_idx] >= leaf_tree.min_size[parent_idx] &&
-          collected[parent_idx] < leaf_tree.max_size[parent_idx])
-        bi_persistences[parent_idx] += distance_callback(
-            distance, leaf_tree.max_distance[parent_idx]
-        );
-      parent_idx = leaf_tree.parent[parent_idx];
+    while (leaf_tree.parent[leaf_idx] > 0) {
+      float const weight = condensed_tree.child_size[idx];
+      pre_callback(leaf_idx, collected[leaf_idx], distance, weight);
+      collected[leaf_idx] += weight;
+      post_callback(leaf_idx, collected[leaf_idx], distance, weight);
+      leaf_idx = leaf_tree.parent[leaf_idx];
     }
   }
+}
+
+[[nodiscard]] std::vector<float> compute_persistences(
+    LeafTreeView const leaf_tree, CondensedTreeView const condensed_tree,
+    size_t const num_points, persistence_fun_t const to_persistence
+) {
+  // Compute leaf-cluster [birth, death) distances
+  size_t const num_leaves = leaf_tree.size();
+  std::vector min_dists(num_leaves, 0.0f);
+
+  // Visit points in the order they join leaf-clusters.
+  collect_leaf_children(
+      leaf_tree, condensed_tree, num_points,
+      // Pre-callback runs before size is updated.
+      [&min_dists, leaf_tree](  //
+          size_t const idx, float const size, float const distance,
+          float const weight
+      ) {
+        // Finds the first distance after reaching the min_size threshold!
+        if (size <= leaf_tree.min_size[idx])
+          min_dists[idx] = distance;
+      },
+      // Post-callback runs after size is updated, becomes a no-op here.
+      [](size_t, float, float, float) {}
+  );
+
+  // Convert distances to persistences
+  return std::ranges::to<std::vector>(std::views::zip_transform(
+      to_persistence, min_dists, leaf_tree.max_distance
+  ));
+}
+
+[[nodiscard]] std::vector<float> compute_bi_persistences(
+    LeafTreeView const leaf_tree, CondensedTreeView const condensed_tree,
+    size_t const num_points, persistence_fun_t const persistence_callback
+) {
+  size_t const num_leaves = leaf_tree.size();
+  std::vector bi_persistences(num_leaves, 0.0f);
+
+  // Visit points in the order they join leaf-clusters.
+  collect_leaf_children(
+      leaf_tree, condensed_tree, num_points,
+      // Pre-callback runs before size is updated, becomes a no-op here.
+      [](size_t, float, float, float) {},
+      // Post-callback runs after size is updated.
+      [&bi_persistences, leaf_tree, persistence_callback](
+          size_t const idx, float const size, float const distance,
+          float const weight
+      ) {
+        // Sum distance persistences for size thresholds in (birth, death]!
+        if (size > leaf_tree.min_size[idx] && size <= leaf_tree.max_size[idx])
+          bi_persistences[idx] += weight *
+                                  persistence_callback(
+                                      distance, leaf_tree.max_distance[idx]
+                                  );
+      }
+  );
 
   return bi_persistences;
 }
 
-// Size persistence
+// Individual persistences
 
 [[nodiscard]] size_t fill_size_persistence(
     PersistenceTraceWriteView result, LeafTreeView const leaf_tree
@@ -122,7 +191,39 @@ void fill_persistences(
   return trace_size;
 }
 
-// Size-distance bi-persistence
+[[nodiscard]] size_t fill_distance_persistence(
+    PersistenceTraceWriteView result, LeafTreeView const leaf_tree,
+    CondensedTreeView const condensed_tree, size_t const num_points
+) {
+  nb::gil_scoped_release guard{};
+  size_t const trace_size = initialize_trace(result, leaf_tree);
+  std::vector<float> const persistences = compute_persistences(
+      leaf_tree, condensed_tree, num_points, distance_persistence
+  );
+  fill_persistences(
+      result, leaf_tree, trace_size,
+      [&persistences](size_t const idx) { return persistences[idx]; }
+  );
+  return trace_size;
+}
+
+[[nodiscard]] size_t fill_density_persistence(
+    PersistenceTraceWriteView result, LeafTreeView const leaf_tree,
+    CondensedTreeView const condensed_tree, size_t const num_points
+) {
+  nb::gil_scoped_release guard{};
+  size_t const trace_size = initialize_trace(result, leaf_tree);
+  std::vector<float> const persistences = compute_persistences(
+      leaf_tree, condensed_tree, num_points, density_persistence
+  );
+  fill_persistences(
+      result, leaf_tree, trace_size,
+      [&persistences](size_t const idx) { return persistences[idx]; }
+  );
+  return trace_size;
+}
+
+// bi-persistences
 
 size_t fill_size_distance_bi_persistence(
     PersistenceTraceWriteView result, LeafTreeView const leaf_tree,
@@ -130,11 +231,8 @@ size_t fill_size_distance_bi_persistence(
 ) {
   nb::gil_scoped_release guard{};
   size_t const trace_size = initialize_trace(result, leaf_tree);
-  std::vector<float> bi_persistences = compute_bi_persistences(
-      leaf_tree, condensed_tree, num_points,
-      [](float const min_dist, float const max_dist) {
-        return max_dist - min_dist;
-      }
+  std::vector<float> const bi_persistences = compute_bi_persistences(
+      leaf_tree, condensed_tree, num_points, distance_persistence
   );
   fill_persistences(
       result, leaf_tree, trace_size,
@@ -143,19 +241,14 @@ size_t fill_size_distance_bi_persistence(
   return trace_size;
 }
 
-// Size-density bi-persistence
-
 size_t fill_size_density_bi_persistence(
     PersistenceTraceWriteView result, LeafTreeView const leaf_tree,
     CondensedTreeView const condensed_tree, size_t const num_points
 ) {
   nb::gil_scoped_release guard{};
   size_t const trace_size = initialize_trace(result, leaf_tree);
-  std::vector<float> bi_persistences = compute_bi_persistences(
-      leaf_tree, condensed_tree, num_points,
-      [](float const min_dist, float const max_dist) {
-        return std::exp(-min_dist) - std::exp(-max_dist);
-      }
+  std::vector<float> const bi_persistences = compute_bi_persistences(
+      leaf_tree, condensed_tree, num_points, density_persistence
   );
   fill_persistences(
       result, leaf_tree, trace_size,
@@ -171,13 +264,10 @@ size_t fill_size_density_bi_persistence(
     size_t const num_points, auto &&distance_callback
 ) {
   nb::gil_scoped_release guard{};
-
-  size_t const num_rows = condensed_tree.size();
-  size_t const num_leaves = leaf_tree.size();
-
   // We use re-sizeable vectors here because we don't know the number of points
   // in each leaf cluster in advance. That would require also tracking the child
   // counts in the condensed and leaf trees.
+  size_t const num_leaves = leaf_tree.size();
   using trace_t = std::unique_ptr<std::vector<float>>;
   std::vector<trace_t> sizes{num_leaves};
   std::vector<trace_t> persistences{num_leaves};
@@ -186,32 +276,26 @@ size_t fill_size_density_bi_persistence(
     persistences[idx] = std::make_unique<std::vector<float>>();
   }
 
-  // collect the child points (reverse order).
-  std::vector collected(num_leaves, 0.0f);
-  for (size_t _i = 1; _i <= num_rows; ++_i) {
-    // skip cluster rows
-    size_t const idx = num_rows - _i;
-    if (condensed_tree.child[idx] >= num_points)
-      continue;
-
-    float const distance = condensed_tree.distance[idx];
-    uint64_t parent_idx = condensed_tree.parent[idx] - num_points;
-    // skip the roots (i.e. direct children of the phantom root)
-    while (leaf_tree.parent[parent_idx] > 0) {
-      collected[parent_idx] += condensed_tree.child_size[idx];
-      // Use greater than (not greater equals) here so the icicles reflect the
-      // min_size_threshold rather than birth in (birth, death] intervals!
-      // This is possible because we also collect the size value here.
-      if (collected[parent_idx] > leaf_tree.min_size[parent_idx] and
-          leaf_tree.min_size[parent_idx] < leaf_tree.max_size[parent_idx]) {
-        sizes[parent_idx]->push_back(collected[parent_idx]);
-        persistences[parent_idx]->push_back(
-            distance_callback(distance, leaf_tree.max_distance[parent_idx])
-        );
+  // Visit points in the order they join leaf-clusters.
+  collect_leaf_children(
+      leaf_tree, condensed_tree, num_points,
+      // Pre-callback runs before size is updated, becomes a no-op here.
+      [](size_t, float, float, float) {},
+      // Post-callback runs after size is updated.
+      [&sizes, &persistences, &leaf_tree, &distance_callback](
+          size_t const idx, float const size, float const dist,
+          float const weight
+      ) {
+        // Collect all points in the leaf-cluster (birth, inf] size interval!
+        if (size > leaf_tree.min_size[idx] and
+            leaf_tree.min_size[idx] < leaf_tree.max_size[idx]) {
+          sizes[idx]->push_back(size);
+          persistences[idx]->push_back(
+              distance_callback(dist, leaf_tree.max_distance[idx])
+          );
+        }
       }
-      parent_idx = leaf_tree.parent[parent_idx];
-    }
-  }
+  );
 
   return std::make_pair(std::move(sizes), std::move(persistences));
 }
@@ -256,6 +340,30 @@ PersistenceTrace compute_size_persistence(LeafTree const leaf_tree) {
   return PersistenceTrace{trace_view, std::move(trace_cap), trace_size};
 }
 
+PersistenceTrace compute_distance_persistence(
+    LeafTree const leaf_tree, CondensedTree const condensed_tree,
+    size_t const num_points
+) {
+  size_t const buffer_size = 2 * (leaf_tree.size() - 1u);
+  auto [trace_view, trace_cap] = PersistenceTrace::allocate(buffer_size);
+  size_t const trace_size = fill_distance_persistence(
+      trace_view, leaf_tree.view(), condensed_tree.view(), num_points
+  );
+  return PersistenceTrace{trace_view, std::move(trace_cap), trace_size};
+}
+
+PersistenceTrace compute_density_persistence(
+    LeafTree const leaf_tree, CondensedTree const condensed_tree,
+    size_t const num_points
+) {
+  size_t const buffer_size = 2 * (leaf_tree.size() - 1u);
+  auto [trace_view, trace_cap] = PersistenceTrace::allocate(buffer_size);
+  size_t const trace_size = fill_density_persistence(
+      trace_view, leaf_tree.view(), condensed_tree.view(), num_points
+  );
+  return PersistenceTrace{trace_view, std::move(trace_cap), trace_size};
+}
+
 PersistenceTrace compute_size_distance_bi_persistence(
     LeafTree const leaf_tree, CondensedTree const condensed_tree,
     size_t const num_points
@@ -286,10 +394,7 @@ compute_distance_icicles(
     size_t const num_points
 ) {
   auto [sizes, stabilities] = collect_traces(
-      leaf_tree.view(), condensed_tree.view(), num_points,
-      [](float const min_dist, float const max_dist) {
-        return max_dist - min_dist;
-      }
+      leaf_tree.view(), condensed_tree.view(), num_points, distance_persistence
   );
   return vectors_to_arrays(std::move(sizes), std::move(stabilities));
 }
@@ -300,10 +405,7 @@ compute_density_icicles(
     size_t const num_points
 ) {
   auto [sizes, stabilities] = collect_traces(
-      leaf_tree.view(), condensed_tree.view(), num_points,
-      [](float const min_dist, float const max_dist) {
-        return std::exp(-min_dist) - std::exp(-max_dist);
-      }
+      leaf_tree.view(), condensed_tree.view(), num_points, density_persistence
   );
   return vectors_to_arrays(std::move(sizes), std::move(stabilities));
 }

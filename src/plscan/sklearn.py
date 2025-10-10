@@ -99,7 +99,9 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         metric=[StrOptions({*VALID_BALLTREE_METRICS, "precomputed"})],
         min_cluster_size=[None, Interval(Real, 2.0, None, closed="left")],
         max_cluster_size=[Interval(Real, 2.0, None, closed="right")],
-        persistence_measure=[StrOptions({"size", "size-distance", "size-density"})],
+        persistence_measure=[
+            StrOptions({"size", "distance", "density", "size-distance", "size-density"})
+        ],
         num_threads=[None, Interval(Integral, 1, None, closed="left")],
     )
 
@@ -146,14 +148,13 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         max_cluster_size
             The maximum size limit for clusters, by default np.inf.
         persistence_measure
-            Selects a persistence measure. Valid options are "size",
-            "size-distance", and "size-density". The "size" option computes the
-            minimum cluster size range for which clusters are leaves. The latter
-            two options compute bi-persistence values over the minimum cluster
-            size and mutual reachability distance / density. (One can think of
-            bi-persistences as an area indicating for which size and distance /
-            density values clusters exist as leaves.) Density is computed as
-            exp(-dist).
+            Selects a persistence measure. Valid options are "size", "distance",
+            "density", "size-distance", and "size-density". The "size",
+            "distance", and "density" options compute persistence as the range
+            of size/distance/density values for which clusters are leaves. The
+            "size-distance" and "size-density" options compute bi-persistence as
+            the distance/density -- minimum cluster size areas for which clusters
+            are leaves. Density is computed as exp(-dist).
         num_threads
             The number of threads to use for parallel computations, value must
             be positive. If None, OpenMP's default maximum thread count is used.

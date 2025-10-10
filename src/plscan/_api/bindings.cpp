@@ -611,6 +611,58 @@ void add_persistence_trace_bindings(nb::module_ &m) {
   );
 
   m.def(
+      "compute_distance_persistence", &compute_distance_persistence,
+      nb::arg("leaf_tree"), nb::arg("condensed_tree"), nb::arg("num_points"),
+      R"(
+        Computes the total mutual reachability distance persistence trace.
+
+        Parameters
+        ----------
+        leaf_tree
+            The input leaf tree.
+        condensed_tree
+            The input condensed tree.
+        num_points
+            The number of points in the condensed tree.
+
+        Returns
+        -------
+        persistence_trace
+            A PersistenceTrace containing arrays for the minimum cluster size
+            and total persistence values. The min_size array contains all unique
+            min_cluster_sizes at which clusters become leaves. The persistence
+            array contains the total persistence of leaf clusters at those
+            minimum size thresholds.
+      )"
+  );
+
+  m.def(
+      "compute_density_persistence", &compute_density_persistence,
+      nb::arg("leaf_tree"), nb::arg("condensed_tree"), nb::arg("num_points"),
+      R"(
+        Computes the total mutual reachability density persistence trace.
+
+        Parameters
+        ----------
+        leaf_tree
+            The input leaf tree.
+        condensed_tree
+            The input condensed tree.
+        num_points
+            The number of points in the condensed tree.
+
+        Returns
+        -------
+        persistence_trace
+            A PersistenceTrace containing arrays for the minimum cluster size
+            and total persistence values. The min_size array contains all unique
+            min_cluster_sizes at which clusters become leaves. The persistence
+            array contains the total persistence of leaf clusters at those
+            minimum size thresholds.
+      )"
+  );
+
+  m.def(
       "compute_size_distance_bi_persistence",
       &compute_size_distance_bi_persistence, nb::arg("leaf_tree"),
       nb::arg("condensed_tree"), nb::arg("num_points"),

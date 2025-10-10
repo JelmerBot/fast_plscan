@@ -1,4 +1,5 @@
 #include "space_tree.h"
+
 #include <array>
 #include <functional>
 

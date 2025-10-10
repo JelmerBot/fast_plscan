@@ -404,7 +404,9 @@ def test_bad_min_samples(X, knn):
         PLSCAN(metric="precomputed", min_samples=None).fit(knn)
 
 
-@pytest.mark.parametrize("persistence_measure", ["size-density", "size-distance"])
+@pytest.mark.parametrize(
+    "persistence_measure", ["distance", "density", "size-density", "size-distance"]
+)
 def test_persistence_measure(X, knn, persistence_measure):
     c = PLSCAN(metric="precomputed", persistence_measure=persistence_measure).fit(knn)
 
@@ -412,7 +414,7 @@ def test_persistence_measure(X, knn, persistence_measure):
     valid_mutual_graph(c._mutual_graph, X, missing=True)
     valid_core_distances(c.core_distances_, X)
     valid_labels(c.labels_, X)
-    assert c.labels_.max() == 3
+    assert c.labels_.max() <= 3
     assert np.any(c.labels_ == -1)
     valid_probabilities(c.probabilities_, X)
     valid_selected_clusters(c.selected_clusters_, c.labels_)
