@@ -3,7 +3,8 @@ The public API
 
 
 .. autosummary::
-   :toctree: _autosummary_public
+   :toctree: _autosummary
    :recursive:
 
    plscan
+   plscan.plots

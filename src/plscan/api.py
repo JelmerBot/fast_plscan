@@ -6,7 +6,7 @@ from sklearn.neighbors._kd_tree import KDTree32
 
 from ._helpers import sort_spanning_tree, most_persistent_clusters
 from ._api import (
-    get_dist as get_dist,
+    get_dist,
     LeafTree,
     compute_leaf_tree,
     Labelling,

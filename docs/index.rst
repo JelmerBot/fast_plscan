@@ -24,8 +24,10 @@
    :maxdepth: 1
    :hidden:
    
-   _autosummary_public/plscan
-   _autosummary_plots/plscan.plots
+   _autosummary/plscan
+   _autosummary/plscan.plots
+   _autosummary/plscan._api
+   _autosummary/plscan._helpers
 
 .. toctree::
    :caption: Development

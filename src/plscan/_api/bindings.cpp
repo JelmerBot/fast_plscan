@@ -538,7 +538,6 @@ void add_linkage_tree_bindings(nb::module_ &m) {
 }
 
 void add_persistence_trace_bindings(nb::module_ &m) {
-  m.doc() = "Module for persistence trace computation in PLSCAN.";
   nb::class_<PersistenceTrace>(m, "PersistenceTrace")
       .def(
           "__init__",
