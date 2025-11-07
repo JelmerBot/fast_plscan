@@ -35,7 +35,7 @@ jobs:
           echo "MACOSX_DEPLOYMENT_TARGET=${{ matrix.arch == 'arm64' && '14.0' || '13.0' }}" >> $GITHUB_ENV
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.2.0
+        uses: pypa/cibuildwheel@v3.2.1
         env:
           CIBW_ARCHS: "native"
           CIBW_BUILD: "*${{ matrix.platform }}*"
