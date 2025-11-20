@@ -100,13 +100,13 @@ def compute_mutual_spanning_tree(
 
     # This knn contains explicit self-loops (first edge on each row), increment
     # min_samples to correct for that!
-    knn = query_fun(cpp_tree, min_samples + 2, metric, metric_kws)
-    core_distances = extract_core_distances(knn, min_samples + 1, is_sorted=True)
+    knn = query_fun(cpp_tree, min_samples + 1, metric, metric_kws)
+    core_distances = extract_core_distances(knn, min_samples, is_sorted=True)
     spanning_tree = spanning_tree_fun(cpp_tree, knn, core_distances, metric, metric_kws)
 
     return (
         sort_spanning_tree(spanning_tree),
-        knn.indices.reshape(data.shape[0], min_samples + 2),
+        knn.indices.reshape(data.shape[0], min_samples + 1),
         core_distances,
     )
 
@@ -125,8 +125,8 @@ def extract_mutual_spanning_forest(
     ----------
     X
         A sparse (square) distance matrix in CSR format. Each point must have at
-        least `min_samples` neighbors. The function is most efficient when the
-        matrix is explicitly symmetric.
+        least `min_samples` neighbors, with no explicit self-loops. The function
+        is most efficient when the matrix is explicitly symmetric.
     min_samples
         Core distances are the distance to the `min_samples`-th nearest
         neighbor.
@@ -148,7 +148,7 @@ def extract_mutual_spanning_forest(
     """
     graph = SparseGraph(graph.data, graph.indices, graph.indptr)
     core_distances = extract_core_distances(
-        graph, min_samples=min_samples, is_sorted=is_sorted
+        graph, min_samples=min_samples - 1, is_sorted=is_sorted
     )
     graph = compute_mutual_reachability(graph, core_distances)
     spanning_tree = extract_spanning_forest(graph)

@@ -314,7 +314,7 @@ def test_max_cluster_size(X, knn):
     valid_mutual_graph(c._mutual_graph, X, missing=True)
     valid_core_distances(c.core_distances_, X)
     valid_labels(c.labels_, X)
-    assert c.labels_.max() in [3, 4]  # macos-latest finds 3, others find 4
+    assert c.labels_.max() == 5
     assert np.any(c.labels_ == -1)
     valid_probabilities(c.probabilities_, X)
     valid_selected_clusters(c.selected_clusters_, c.labels_)
@@ -385,7 +385,7 @@ def test_min_samples(X, dists):
 
 def test_bad_min_samples(X, knn):
     with pytest.raises(ValueError):
-        PLSCAN(min_samples=X.shape[0] - 1).fit(X)
+        PLSCAN(min_samples=X.shape[0]).fit(X)
     with pytest.raises(ValueError):
         PLSCAN(metric="precomputed", min_samples=X.shape[0] - 1).fit(knn)
     with pytest.raises(InvalidParameterError):

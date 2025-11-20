@@ -21,7 +21,7 @@ def valid_spanning_forest(msf, X):
 def valid_neighbor_indices(indices, X, min_samples):
     assert isinstance(indices, np.ndarray)
     assert indices.shape[0] == X.shape[0]
-    assert indices.shape[1] == min_samples + 2
+    assert indices.shape[1] == min_samples + 1
     assert indices.dtype == np.int32
     assert np.all(indices >= 0) and np.all(indices < X.shape[0])
 

@@ -825,7 +825,7 @@ class LeafTree(object):
         # Plot the colorbar
         if colorbar and bar is not None:
             if colorbar_kws is None:
-                colorbar_kws = dict()
+                colorbar_kws = dict(extend="max")
 
             if "fraction" in colorbar_kws:
                 bbox = plt.gca().get_window_extent()

@@ -63,8 +63,8 @@ size_t process_spanning_tree(
   nb::gil_scoped_release guard{};
   LinkageState state{num_points, mst.size(), sample_weights};
 
-  size_t idx;
-  for (idx = 0; idx < mst.size(); ++idx) {
+  size_t idx = 0;
+  for (; idx < mst.size(); ++idx) {
     size_t const next = num_points + idx;
     uint32_t const left = state.find(mst.parent[idx]);
     uint32_t const right = state.find(mst.child[idx]);
