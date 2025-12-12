@@ -7,7 +7,8 @@ from textwrap import dedent
 
 # LaTeX font sizes on 10pt document:
 # https://latex-tutorial.com/changing-font-size/
-fontsize = dict(tiny=5, script=7, footnote=8, small=9, normal=10)
+# Use fontsize = dict(tiny=5, script=7, footnote=8, small=9, normal=10) for the pre-print template!
+fontsize = dict(tiny=6, script=8, footnote=9, small=10, normal=10.95)
 
 
 def configure_matplotlib():
@@ -41,16 +42,17 @@ def configure_matplotlib():
             "text.latex.preamble": dedent(
                 r"""
                 \usepackage[english]{babel}
-                \usepackage[T1]{fontenc}
-                \usepackage[varqu,varl]{inconsolata}
-                \usepackage[
-                    theoremfont,trueslanted,largesc,p,
-                    amsthm,smallerops
-                ]{newpx}
-                \usepackage[scr=rsfso]{mathalpha}
                 \usepackage[stretch=10,shrink=10,tracking,spacing,kerning,babel]{microtype}
                 """
             ),
+            # Additional packages used for the preprint template:
+            # \usepackage[T1]{fontenc}
+            # \usepackage[varqu,varl]{inconsolata}
+            # \usepackage[
+            #     theoremfont,trueslanted,largesc,p,
+            #     amsthm,smallerops
+            # ]{newpx}
+            # \usepackage[scr=rsfso]{mathalpha}
         }
     )
 
@@ -61,7 +63,7 @@ def sized_fig(width=0.5, aspect=0.618, dpi=None):
     """Create a figure with width as fraction of A4 page."""
     if dpi is None:
         dpi = 150
-    page_width_inch = 6.9305
+    page_width_inch = 6.00117  # Use 6.9305 for the pre-print template
     w = width * page_width_inch
     h = aspect * w
     return plt.figure(figsize=(w, h), dpi=dpi)
