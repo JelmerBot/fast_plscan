@@ -39,7 +39,6 @@ jobs:
         env:
           CIBW_ARCHS: "native"
           CIBW_BUILD: "*${{ matrix.platform }}*"
-          CIBW_SKIP: "*314*"                               # no scikit-learn wheels for Python 3.14(t) (yet)
           CIBW_BUILD_VERBOSITY : "1"                       # show build output for debugging
           PIP_ONLY_BINARY: ":all:"                         # avoid compiling dependencies
           CIBW_ENVIRONMENT_PASS_LINUX: "PIP_ONLY_BINARY"   # also in the manylinux container
