@@ -11,7 +11,9 @@ from plscan import PLSCAN
 )
 def test_condensed_tree_dist(knn):
     plt.figure()
-    PLSCAN(metric="precomputed").fit(knn).condensed_tree_.plot(select_clusters=True)
+    PLSCAN(min_samples=7, metric="precomputed").fit(knn).condensed_tree_.plot(
+        select_clusters=True
+    )
 
 
 @image_comparison(
@@ -19,7 +21,7 @@ def test_condensed_tree_dist(knn):
 )
 def test_condensed_tree_dens(knn):
     plt.figure()
-    PLSCAN(metric="precomputed").fit(knn).condensed_tree_.plot(
+    PLSCAN(min_samples=7, metric="precomputed").fit(knn).condensed_tree_.plot(
         y="density", select_clusters=True
     )
 
@@ -29,7 +31,7 @@ def test_condensed_tree_dens(knn):
 )
 def test_condensed_tree_rank(knn):
     plt.figure()
-    PLSCAN(metric="precomputed").fit(knn).condensed_tree_.plot(
+    PLSCAN(min_samples=7, metric="precomputed").fit(knn).condensed_tree_.plot(
         y="ranks", select_clusters=True
     )
 
@@ -39,7 +41,7 @@ def test_condensed_tree_rank(knn):
 )
 def test_condensed_tree_args(knn):
     plt.figure()
-    PLSCAN(metric="precomputed").fit(knn).condensed_tree_.plot(
+    PLSCAN(min_samples=7, metric="precomputed").fit(knn).condensed_tree_.plot(
         leaf_separation=0.5,
         cmap="turbo",
         colorbar=False,
@@ -58,7 +60,7 @@ def test_condensed_tree_args(knn):
 )
 def test_leaf_tree(knn):
     plt.figure()
-    PLSCAN(metric="precomputed").fit(knn).leaf_tree_.plot()
+    PLSCAN(min_samples=7, metric="precomputed").fit(knn).leaf_tree_.plot()
 
 
 @image_comparison(
@@ -66,7 +68,7 @@ def test_leaf_tree(knn):
 )
 def test_leaf_tree_args(knn):
     plt.figure()
-    PLSCAN(metric="precomputed").fit(knn).leaf_tree_.plot(
+    PLSCAN(min_samples=7, metric="precomputed").fit(knn).leaf_tree_.plot(
         leaf_separation=0.5,
         width="density",
         cmap="turbo",
@@ -86,7 +88,7 @@ def test_leaf_tree_args(knn):
 )
 def test_persistence_trace(knn):
     plt.figure()
-    PLSCAN(metric="precomputed").fit(knn).persistence_trace_.plot()
+    PLSCAN(min_samples=7, metric="precomputed").fit(knn).persistence_trace_.plot()
 
 
 @image_comparison(
@@ -97,6 +99,6 @@ def test_persistence_trace(knn):
 )
 def test_persistence_trace_args(knn):
     plt.figure()
-    PLSCAN(metric="precomputed").fit(knn).persistence_trace_.plot(
+    PLSCAN(min_samples=7, metric="precomputed").fit(knn).persistence_trace_.plot(
         line_kws=dict(color="black", linewidth=0.5)
     )

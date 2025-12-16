@@ -12,6 +12,3 @@ cmake-build*/
 __pycache__/
 **/_version.py
 result_images/
-debug/macos/
-debug/windows/
-debug/analyse.ipynb

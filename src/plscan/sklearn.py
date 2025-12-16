@@ -476,8 +476,11 @@ class PLSCAN(ClusterMixin, BaseEstimator):
 
         """
         check_is_fitted(self, "_persistence_trace")
+        # Pad persistence with zero so maxima at the edges can be detected as peaks
         x, y = self._persistence_trace
-        peaks = find_peaks(y, height=height, threshold=threshold, **kwargs)[0]
+        zero = np.array([0], dtype=y.dtype)
+        signal = np.hstack((zero, y, zero))
+        peaks = find_peaks(signal, height=height, threshold=threshold, **kwargs)[0] - 1
 
         if min_size is not None:
             peaks = peaks[x[peaks] >= min_size]

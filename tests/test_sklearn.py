@@ -579,7 +579,7 @@ def test_bad_attrs():
 
 
 def test_cluster_layers(X, knn):
-    c = PLSCAN(metric="precomputed").fit(knn)
+    c = PLSCAN(min_samples=7, metric="precomputed").fit(knn)
     layers = c.cluster_layers()
     assert isinstance(layers, list)
     assert len(layers) == 1
@@ -590,7 +590,7 @@ def test_cluster_layers(X, knn):
 
 
 def test_cluster_layers_params(X, knn):
-    c = PLSCAN(metric="precomputed").fit(knn)
+    c = PLSCAN(min_samples=7, metric="precomputed").fit(knn)
     layers = c.cluster_layers(
         max_peaks=2, min_size=4.0, max_size=10.0, height=0.1, threshold=0.05
     )
