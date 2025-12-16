@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install linters
-        run: pip install black[jupyter]==25.1 
+        run: pip install black[jupyter]==25.1
       - uses: wearerequired/lint-action@v2
         with:
           black: true

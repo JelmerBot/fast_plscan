@@ -36,7 +36,7 @@
    
    local_development
 
-|PyPI version|
+|PyPI version| |Conda version| |DOI badge|
 
 Persistent Leaves Spatial Clustering of Applications with Noise
 ===============================================================
@@ -126,7 +126,20 @@ strengths.
 Citing
 ------
 
-TODO
+When using this work, please cite our (upcoming) preprint:
+
+.. code-block:: bibtex
+
+   @article{bot2025plscan,
+      title         = {Persistent Multiscale Density-based Clustering},
+      author        = {Dani{\"{e}}l M. Bot and Leland McInnes and Jan Aerts},
+      year          = {2025},
+      month         = {12},
+      archiveprefix = {arXiv},
+      eprint        = {TODO},
+      primaryclass  = {cs.CL}
+   }
+
 
 Licensing
 ---------
@@ -135,4 +148,7 @@ The ``plscan`` package has a 3-Clause BSD license.
 
 .. |PyPI version| image:: https://badge.fury.io/py/plscan.svg
    :target: https://badge.fury.io/py/plscan
-
+.. |Conda version| image:: https://anaconda.org/conda-forge/plscan/badges/version.svg
+   :target: https://anaconda.org/conda-forge/plscan
+.. |DOI badge| image:: https://zenodo.org/badge/xxx.svg
+   :target: https://zenodo.org/doi/xxx/zenodo.yyy

@@ -20,13 +20,14 @@ dependencies = [
     "scikit-learn>=1.6,<2",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
@@ -36,7 +37,14 @@ classifiers = [
 
 [project.optional-dependencies]
 tests = ["pytest", "networkx", "pandas"]
-docs = ["furo", "sphinx", "pandoc", "nbsphinx", "sphinx-copybutton"]
+docs = [
+    "furo",
+    "sphinx",
+    "pandoc",
+    "nbsphinx",
+    "sphinx-copybutton",
+    "sphinx_autodoc_typehints",
+]
 
 [project.urls]
 Documentation = "https://JelmerBot.github.io/plscan"
@@ -48,7 +56,7 @@ minimum-version = "0.4"
 build-dir = "build/{wheel_tag}"
 wheel.py-api = "cp312"
 wheel.exclude = ["**.h", "**.cpp", "**/CMakeLists.txt"]
-sdist.exclude = [".*", ".*/", "docs/data/", "docs/lib/", "docs/images/"]
+sdist.exclude = [".*", ".*/", "docs/"]
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 
 [tool.setuptools_scm]

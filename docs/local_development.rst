@@ -50,6 +50,14 @@ Also update the ``~/.zshrc`` config file with:
 
   export OpenMP_ROOT=$(brew --prefix)/opt/libomp
 
+or pass `OpenMP_ROOT` as cmake argument:
+
+.. code-block:: bash
+
+  pip install --no-deps --no-build-isolation \
+    -C cmake.args="-DOpenMP_ROOT=$(brew --prefix)/opt/libomp" \
+    -ve .
+
 Windows
 -------
 
