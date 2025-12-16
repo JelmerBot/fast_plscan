@@ -29,7 +29,7 @@ jobs:
           black: true
           black_extensions: py, ipynb
           continue_on_error: false
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v5
         id: cache
         with:
           key: wheels-${{ hashFiles('src/**', 'tests/**', 'pyproject.toml', 'CMakeLists.txt', '.github/workflows/_build_wheels.yml') }}
@@ -61,7 +61,7 @@ jobs:
           }
           exit_on_result "pre_build" "${{ needs.pre_build.result }}"
           exit_on_result "build_wheels" "${{ needs.build_wheels.result }}"
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v5
         if: needs.pre_build.outputs.cache-hit != 'true'
         with:
           key: ${{ needs.pre_build.outputs.cache-key }}
