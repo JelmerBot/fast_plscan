@@ -37,7 +37,14 @@ classifiers = [
 
 [project.optional-dependencies]
 tests = ["pytest", "networkx", "pandas"]
-docs = ["furo", "sphinx", "pandoc", "nbsphinx", "sphinx-copybutton"]
+docs = [
+    "furo",
+    "sphinx",
+    "pandoc",
+    "nbsphinx",
+    "sphinx-copybutton",
+    "sphinx_autodoc_typehints",
+]
 
 [project.urls]
 Documentation = "https://JelmerBot.github.io/plscan"
