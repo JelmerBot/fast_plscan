@@ -1,4 +1,6 @@
 [![PyPi version](https://badge.fury.io/py/plscan.svg)](https://badge.fury.io/py/plscan)
+![Conda version](https://anaconda.org/conda-forge/plscan/badges/version.svg)
+[![Repository DOI](https://zenodo.org/badge/xxx.svg)](https://zenodo.org/doi/xxx/zenodo.yyy)
 
 # Persistent Leaf Spatial Clustering for Applications with Noise
 
@@ -6,8 +8,8 @@ This library provides a new clustering algorithm based on HDBSCAN*. The primary
 advantages of PLSCAN over the standard ``hdbscan`` library are:
 
  - PLSCAN automatically finds the optimal minimum cluster size.
- - PLSCAN can easily use all available cores to speed up computation;
- - PLSCAN has much faster implementations of tree condensing and cluster extraction;
+ - PLSCAN can easily use all available cores to speed up computation.
+ - PLSCAN has much faster implementations of tree condensing and cluster extraction.
  - PLSCAN does not rely on JIT compilation.
 
 To use PLSCAN, you only need to set the ``min_samples`` parameter. This
@@ -130,6 +132,14 @@ Also update the `~/.zshrc` config file with:
 export OpenMP_ROOT=$(brew --prefix)/opt/libomp
 ```
 
+or pass `OpenMP_ROOT` as cmake argument:
+
+```bash
+pip install --no-deps --no-build-isolation \
+  -C cmake.args="-DOpenMP_ROOT=$(brew --prefix)/opt/libomp" \
+  -ve .
+```
+
 ### Windows
 
 The default MSVC C++ compiler on windows does not support
@@ -160,7 +170,19 @@ with the optional Clang compiler support enabled.
 
 ## Citing
 
-TODO
+When using this work, please cite our (upcoming) preprint:
+
+```bibtex
+@article{bot2025plscan,
+  title         = {Persistent Multiscale Density-based Clustering},
+  author        = {Dani{\"{e}}l M. Bot and Leland McInnes and Jan Aerts},
+  year          = {2025},
+  month         = {12},
+  archiveprefix = {arXiv},
+  eprint        = {TODO},
+  primaryclass  = {cs.CL}
+}
+```
 
 ## Licensing
 
