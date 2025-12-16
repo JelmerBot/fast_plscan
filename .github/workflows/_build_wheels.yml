@@ -46,7 +46,7 @@ jobs:
           PIP_ONLY_BINARY: ":all:"                         # avoid compiling dependencies
           CIBW_ENVIRONMENT_PASS_LINUX: "PIP_ONLY_BINARY"   # also in the manylinux container
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: cibw-wheels-${{ matrix.platform }}_${{ matrix.arch }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
