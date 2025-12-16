@@ -10,93 +10,59 @@ on:
       - main
 
 jobs:
-  # pre_build:
-  #   name: Check file changes
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     checks: write
-  #     contents: read
-  #     pull-requests: read
-  #   outputs:
-  #     cache-hit: ${{ steps.cache.outputs.cache-hit }}
-  #     cache-key: ${{ steps.cache.outputs.cache-primary-key }}
-  #   steps:
-  #     - uses: actions/checkout@v5
-  #     - name: Install linters
-  #       run: pip install black[jupyter]==25.1
-  #     - uses: wearerequired/lint-action@v2
-  #       with:
-  #         black: true
-  #         black_extensions: py, ipynb
-  #         continue_on_error: false
-  #     - uses: actions/cache/restore@v4
-  #       id: cache
-  #       with:
-  #         key: wheels-${{ hashFiles('src/**', 'tests/**', 'pyproject.toml', 'CMakeLists.txt', '.github/workflows/_build_wheels.yml') }}
-  #         path: /dev/null
-  #         lookup-only: true
-
-  # build_wheels:
-  #   name: Build wheels
-  #   needs: pre_build
-  #   if: needs.pre_build.outputs.cache-hit != 'true'
-  #   permissions:
-  #     contents: read
-  #   uses: ./.github/workflows/_build_wheels.yml
-  #   secrets: inherit
-
-  # pr_status:
-  #   name: PR status
-  #   needs: [pre_build, build_wheels]
-  #   if: always()
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Check Workflow Status
-  #       run: |
-  #         exit_on_result() {
-  #           if [[ "$2" == "failure" || "$2" == "cancelled" ]]; then
-  #             echo "Job '$1' failed or was cancelled."
-  #             exit 1
-  #           fi
-  #         }
-  #         exit_on_result "pre_build" "${{ needs.pre_build.result }}"
-  #         exit_on_result "build_wheels" "${{ needs.build_wheels.result }}"
-  #     - uses: actions/cache/save@v4
-  #       if: needs.pre_build.outputs.cache-hit != 'true'
-  #       with:
-  #         key: ${{ needs.pre_build.outputs.cache-key }}
-  #         path: /dev/null
-  
-  test_macos:
-    name: Debug macOS build
-    runs-on: macos-latest
+  pre_build:
+    name: Check file changes
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: read
+    outputs:
+      cache-hit: ${{ steps.cache.outputs.cache-hit }}
+      cache-key: ${{ steps.cache.outputs.cache-primary-key }}
     steps:
       - uses: actions/checkout@v5
-      - name: OpenMP setup
-        run: |
-          brew install libomp
-          echo "OpenMP_ROOT=$(brew --prefix libomp)" >> $GITHUB_ENV
-          echo "MACOSX_DEPLOYMENT_TARGET=13.0" >> $GITHUB_ENV
-      - uses: actions/setup-python@v6
+      - name: Install linters
+        run: pip install black[jupyter]==25.1
+      - uses: wearerequired/lint-action@v2
         with:
-          python-version: '3.10'
-      - name: Install deps
-        run: pip install numpy scipy matplotlib scikit-learn scikit-build-core nanobind setuptools_scm pytest
-      - name: Install project
-        run: pip install --no-deps --no-build-isolation -ve .
-      - name: Test
-        run: |
-          pytest . || true
-      - uses: actions/upload-artifact@v5
+          black: true
+          black_extensions: py, ipynb
+          continue_on_error: false
+      - uses: actions/cache/restore@v4
+        id: cache
         with:
-          name: debug-outputs-macos
-          path: ./result_images/test_plots/*.png
+          key: wheels-${{ hashFiles('src/**', 'tests/**', 'pyproject.toml', 'CMakeLists.txt', '.github/workflows/_build_wheels.yml') }}
+          path: /dev/null
+          lookup-only: true
+
+  build_wheels:
+    name: Build wheels
+    needs: pre_build
+    if: needs.pre_build.outputs.cache-hit != 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/_build_wheels.yml
+    secrets: inherit
 
   pr_status:
     name: PR status
-    needs: [test_macos]
+    needs: [pre_build, build_wheels]
+    if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: PR always success
-        run: echo "This is a placeholder job that always succeeds."
-          
+      - name: Check Workflow Status
+        run: |
+          exit_on_result() {
+            if [[ "$2" == "failure" || "$2" == "cancelled" ]]; then
+              echo "Job '$1' failed or was cancelled."
+              exit 1
+            fi
+          }
+          exit_on_result "pre_build" "${{ needs.pre_build.result }}"
+          exit_on_result "build_wheels" "${{ needs.build_wheels.result }}"
+      - uses: actions/cache/save@v4
+        if: needs.pre_build.outputs.cache-hit != 'true'
+        with:
+          key: ${{ needs.pre_build.outputs.cache-key }}
+          path: /dev/null
