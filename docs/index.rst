@@ -152,5 +152,5 @@ The ``fast-plscan`` package has a 3-Clause BSD license.
    :target: https://badge.fury.io/py/fast-plscan
 .. |Conda version| image:: https://anaconda.org/conda-forge/fast-plscan/badges/version.svg
    :target: https://anaconda.org/conda-forge/fast-plscan
-.. |DOI badge| image:: https://zenodo.org/badge/xxx.svg
-   :target: https://zenodo.org/doi/xxx/zenodo.yyy
+.. |DOI badge| image:: https://zenodo.org/badge/1022168364.svg
+  :target: https://doi.org/10.5281/zenodo.17964285 

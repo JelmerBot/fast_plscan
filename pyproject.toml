@@ -47,7 +47,7 @@ docs = [
 ]
 
 [project.urls]
-Documentation = "https://fast_plscan.readthedocs.io"
+Documentation = "https://fast-plscan.readthedocs.io"
 Homepage = "https://github.com/JelmerBot/fast_plscan"
 Issues = "https://github.com/JelmerBot/fast_plscan/issues"
 
