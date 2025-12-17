@@ -1,4 +1,4 @@
-[![PyPi version](https://badge.fury.io/py/fast-plscan.svg)](https://badge.fury.io/py/plscan)
+[![PyPi version](https://badge.fury.io/py/fast-plscan.svg)](https://badge.fury.io/py/fast-plscan)
 ![Conda version](https://anaconda.org/conda-forge/fast-plscan/badges/version.svg)
 [![Repository DOI](https://zenodo.org/badge/xxx.svg)](https://zenodo.org/doi/xxx/zenodo.yyy)
 
