@@ -8,7 +8,7 @@ readme = "README.md"
 dynamic = ["version"]
 license = "BSD-3-Clause"
 license-files = ["LICEN[CS]E*"]
-description = "Persistent Leaf Clustering"
+description = "Persistent Leaves Clustering"
 keywords = ["density", "cluster", "clustering", "hierarchical", "persistent"]
 authors = [{ name = "Jelmer Bot", email = "jelmerbot@gmail.com" }]
 maintainers = [{ name = "Jelmer Bot", email = "jelmerbot@gmail.com" }]

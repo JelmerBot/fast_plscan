@@ -2,7 +2,7 @@
 ![Conda version](https://anaconda.org/conda-forge/plscan/badges/version.svg)
 [![Repository DOI](https://zenodo.org/badge/xxx.svg)](https://zenodo.org/doi/xxx/zenodo.yyy)
 
-# Persistent Leaf Spatial Clustering for Applications with Noise
+# Persistent Leaves Spatial Clustering for Applications with Noise
 
 This library provides a new clustering algorithm based on HDBSCAN*. The primary
 advantages of PLSCAN over the standard ``hdbscan`` library are:
