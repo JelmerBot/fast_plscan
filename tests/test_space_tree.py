@@ -5,8 +5,8 @@ import numpy as np
 from sklearn.neighbors._kd_tree import KDTree32
 from sklearn.neighbors._ball_tree import BallTree32
 
-from plscan import PLSCAN
-from plscan._api import SpaceTree, kdtree_query, balltree_query, check_node_data
+from fast_plscan import PLSCAN
+from fast_plscan._api import SpaceTree, kdtree_query, balltree_query, check_node_data
 
 from .conftest import numerical_balltree_metrics, duplicate_metrics, boolean_metrics
 from .checks import *

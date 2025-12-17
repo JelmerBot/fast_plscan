@@ -24,10 +24,10 @@
    :maxdepth: 1
    :hidden:
    
-   _autosummary/plscan
-   _autosummary/plscan.plots
-   _autosummary/plscan._api
-   _autosummary/plscan._helpers
+   _autosummary/fast_plscan
+   _autosummary/fast_plscan.plots
+   _autosummary/fast_plscan._api
+   _autosummary/fast_plscan._helpers
 
 .. toctree::
    :caption: Development
@@ -42,7 +42,9 @@ Persistent Leaves Spatial Clustering of Applications with Noise
 ===============================================================
 
 This library provides a new clustering algorithm based on HDBSCAN*. The primary
-advantages of PLSCAN over the standard ``hdbscan`` library are:
+advantages of PLSCAN over the `hdbscan
+<https://github.com/scikit-learn-contrib/hdbscan>`_ and `fast_hdbscan
+<https://github.com/TutteInstitute/fast_hdbscan>`_ libraries are:
 
  - PLSCAN automatically finds the optimal minimum cluster size.
  - PLSCAN can easily use all available cores to speed up computation;
@@ -60,7 +62,7 @@ stable clusters.
     import numpy as np
     import matplotlib.pyplot as plt
 
-    from plscan import PLSCAN
+    from fast_plscan import PLSCAN
 
     data = np.load("docs/data/data.npy")
 
@@ -144,11 +146,11 @@ When using this work, please cite our (upcoming) preprint:
 Licensing
 ---------
 
-The ``plscan`` package has a 3-Clause BSD license.
+The ``fast-plscan`` package has a 3-Clause BSD license.
 
-.. |PyPI version| image:: https://badge.fury.io/py/plscan.svg
-   :target: https://badge.fury.io/py/plscan
-.. |Conda version| image:: https://anaconda.org/conda-forge/plscan/badges/version.svg
-   :target: https://anaconda.org/conda-forge/plscan
+.. |PyPI version| image:: https://badge.fury.io/py/fast-plscan.svg
+   :target: https://badge.fury.io/py/fast-plscan
+.. |Conda version| image:: https://anaconda.org/conda-forge/fast-plscan/badges/version.svg
+   :target: https://anaconda.org/conda-forge/fast-plscan
 .. |DOI badge| image:: https://zenodo.org/badge/xxx.svg
    :target: https://zenodo.org/doi/xxx/zenodo.yyy

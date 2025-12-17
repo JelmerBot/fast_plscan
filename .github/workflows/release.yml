@@ -40,6 +40,6 @@ jobs:
       run: |
         TAG=${{ github.ref }}
         VERSION=${TAG#refs/tags/v}
-        gh release create -R JelmerBot/plscan -t "Version $VERSION" -n "**Full Changelog**: https://github.com/JelmerBot/plscan/commits/$TAG" "$TAG" dist/*.whl dist/*.tar.gz
+        gh release create -R JelmerBot/fast_plscan -t "Version $VERSION" -n "**Full Changelog**: https://github.com/JelmerBot/fast_plscan/commits/$TAG" "$TAG" dist/*.whl dist/*.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  

@@ -21,13 +21,13 @@ setattr(builtins, "--BUILDING-DOCS--", True)
 
 # -- Project information -----------------------------------------------------
 
-project = "plscan"
+project = "fast_plscan"
 copyright = "2025, Jelmer Bot"
 author = "Jelmer Bot"
 
 # -- General configuration ---------------------------------------------------
 
-release = get_version("plscan")
+release = get_version("fast_plscan")
 version = ".".join(release.split(".")[:2])
 master_doc = "index"
 templates_path = ["_templates"]
@@ -61,4 +61,4 @@ intersphinx_mapping = {
 # -- Options for HTML output -------------------------------------------------
 
 html_theme = "furo"
-htmlhelp_basename = "plscan_doc"
+htmlhelp_basename = "fast_plscan_doc"

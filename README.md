@@ -1,11 +1,13 @@
-[![PyPi version](https://badge.fury.io/py/plscan.svg)](https://badge.fury.io/py/plscan)
-![Conda version](https://anaconda.org/conda-forge/plscan/badges/version.svg)
+[![PyPi version](https://badge.fury.io/py/fast-plscan.svg)](https://badge.fury.io/py/plscan)
+![Conda version](https://anaconda.org/conda-forge/fast-plscan/badges/version.svg)
 [![Repository DOI](https://zenodo.org/badge/xxx.svg)](https://zenodo.org/doi/xxx/zenodo.yyy)
 
-# Persistent Leaf Spatial Clustering for Applications with Noise
+# Persistent Leaves Spatial Clustering for Applications with Noise
 
 This library provides a new clustering algorithm based on HDBSCAN*. The primary
-advantages of PLSCAN over the standard ``hdbscan`` library are:
+advantages of PLSCAN over the
+[``hdbscan``](https://github.com/scikit-learn-contrib/hdbscan) and
+[``fast_hdbscan``](https://github.com/TutteInstitute/fast_hdbscan) libraries are:
 
  - PLSCAN automatically finds the optimal minimum cluster size.
  - PLSCAN can easily use all available cores to speed up computation.
@@ -22,7 +24,7 @@ stable clusters.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from plscan import PLSCAN
+from fast_plscan import PLSCAN
 
 data = np.load("docs/data/data.npy")
 
@@ -186,4 +188,4 @@ When using this work, please cite our (upcoming) preprint:
 
 ## Licensing
 
-The ``plscan`` package has a 3-Clause BSD license.
+The ``fast-plscan`` package has a 3-Clause BSD license.

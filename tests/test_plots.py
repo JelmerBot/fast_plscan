@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.testing.decorators import image_comparison
 
-from plscan import PLSCAN
+from fast_plscan import PLSCAN
 
 
 @image_comparison(

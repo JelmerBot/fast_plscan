@@ -3,12 +3,12 @@ requires = ["scikit-build-core", "nanobind", "setuptools_scm"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "plscan"
+name = "fast_plscan"
 readme = "README.md"
 dynamic = ["version"]
 license = "BSD-3-Clause"
 license-files = ["LICEN[CS]E*"]
-description = "Persistent Leaf Clustering"
+description = "A fast multi-core implementation of the PLSCAN clustering algorithm."
 keywords = ["density", "cluster", "clustering", "hierarchical", "persistent"]
 authors = [{ name = "Jelmer Bot", email = "jelmerbot@gmail.com" }]
 maintainers = [{ name = "Jelmer Bot", email = "jelmerbot@gmail.com" }]
@@ -47,9 +47,9 @@ docs = [
 ]
 
 [project.urls]
-Documentation = "https://JelmerBot.github.io/plscan"
-Homepage = "https://github.com/JelmerBot/plscan"
-Issues = "https://github.com/JelmerBot/plscan/issues"
+Documentation = "https://fast_plscan.readthedocs.io"
+Homepage = "https://github.com/JelmerBot/fast_plscan"
+Issues = "https://github.com/JelmerBot/fast_plscan/issues"
 
 [tool.scikit-build]
 minimum-version = "0.4"
@@ -60,7 +60,7 @@ sdist.exclude = [".*", ".*/", "docs/"]
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 
 [tool.setuptools_scm]
-write_to = "src/plscan/_version.py"
+write_to = "src/fast_plscan/_version.py"
 
 [tool.cibuildwheel]
 test-extras = ["tests"]

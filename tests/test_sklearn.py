@@ -18,7 +18,7 @@ try:
 except ImportError:
     pd = None
 
-from plscan import PLSCAN
+from fast_plscan import PLSCAN
 
 from .checks import *
 from .conftest import numerical_balltree_metrics, boolean_metrics

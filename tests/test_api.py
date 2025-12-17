@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from plscan import (
+from fast_plscan import (
     extract_mutual_spanning_forest,
     clusters_from_spanning_forest,
     compute_mutual_spanning_tree,

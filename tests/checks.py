@@ -1,6 +1,6 @@
 import numpy as np
 
-from plscan._api import (
+from fast_plscan._api import (
     SparseGraph,
     SpanningTree,
     LinkageTree,

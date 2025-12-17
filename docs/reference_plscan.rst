@@ -6,5 +6,5 @@ The public API
    :toctree: _autosummary
    :recursive:
 
-   plscan
-   plscan.plots
+   fast_plscan
+   fast_plscan.plots
