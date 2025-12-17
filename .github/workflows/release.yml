@@ -32,7 +32,9 @@ jobs:
         merge-multiple: true
 
     - name: Build SDist
-      run: python -m build --sdist
+      run: |
+        pip install build
+        python -m build --sdist
 
     - uses: pypa/gh-action-pypi-publish@release/v1
 
