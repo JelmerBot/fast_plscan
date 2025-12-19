@@ -125,21 +125,35 @@ strengths.
    :alt: layers scatterplot
 
 
+Installation instructions
+-------------------------
+
+Pre-build binaries are available on
+`pypi <https://badge.fury.io/py/fast-plscan>`_, so the package can be installed
+with `pip` and similar package managers on most systems:
+
+.. code-block:: bash
+
+   pip install fast-plscan
+
+Conda forge builds are in progress. See `our documentation <local_development.html>`_
+for instructions on compiling the package locally.
+
 Citing
 ------
 
-When using this work, please cite our (upcoming) preprint:
+When using this work, please cite our preprint:
 
 .. code-block:: bibtex
 
-   @article{bot2025plscan,
+   @misc{bot2025plscan,
       title         = {Persistent Multiscale Density-based Clustering},
-      author        = {Dani{\"{e}}l M. Bot and Leland McInnes and Jan Aerts},
+      author        = {Dani{\"{e}}l Bot and Leland McInnes and Jan Aerts},
       year          = {2025},
-      month         = {12},
+      eprint        = {2512.16558},
       archiveprefix = {arXiv},
-      eprint        = {TODO},
-      primaryclass  = {cs.CL}
+      primaryclass  = {cs.LG},
+      url           = {https://arxiv.org/abs/2512.16558}
    }
 
 
