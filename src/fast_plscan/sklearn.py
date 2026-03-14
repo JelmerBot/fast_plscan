@@ -289,12 +289,12 @@ class PLSCAN(ClusterMixin, BaseEstimator):
                 raise InvalidParameterError(
                     "Minkowski distance requires a `metric_kws` 'p' parameter >= 1."
                 )
-        else:
+        elif self.metric not in ["seuclidean", "mahalanobis"]:
             if self.metric_kws is not None and len(self.metric_kws) > 0:
                 raise InvalidParameterError(
-                    "Metric keyword arguments are only supported for Minkowski "
-                    "distance. Got `metric_kws` for metric "
-                    f"{self.metric} instead."
+                    "Metric keyword arguments are only supported for the "
+                    "'minkowski', 'seuclidean', and 'mahalanobis' metrics. "
+                    f"Got `metric_kws` for metric '{self.metric}' instead."
                 )
 
         if self.metric != "precomputed":
@@ -653,6 +653,11 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         """Checks and converts the input to a CSR sparse matrix."""
         # Check kNN / MST inputs
         if isinstance(X, tuple):
+            if len(X) < 2:
+                raise ValueError(
+                    "Input tuple must have at least 2 elements, "
+                    f"got {len(X)} instead."
+                )
             if isinstance(X[1], np.ndarray):
                 return knn_to_csr(*self._check_knn(X)), X[0].shape[0], True, False
             else:

@@ -1,5 +1,6 @@
 """Tests for the sklearn interface."""
 
+import pickle
 import pytest
 import warnings
 import numpy as np
@@ -151,7 +152,55 @@ def test_sparse_matrix(X, g_knn):
     valid_linkage(c._linkage_tree, X)
 
 
+# Invalid precomputed inputs
+
+
+def test_bad_mst_input(mst):
+    with pytest.raises(ValueError):
+        PLSCAN(metric="precomputed").fit((mst,))
+    with pytest.raises(ValueError):
+        PLSCAN(metric="precomputed").fit((mst, 200, "extra"))
+
+
+def test_bad_mst_num_points(mst):
+    with pytest.raises(ValueError):
+        PLSCAN(metric="precomputed", min_samples=5).fit((mst, 5))
+
+
+def test_bad_mst_edge_shape(X):
+    with pytest.raises(ValueError):
+        PLSCAN(metric="precomputed").fit((np.ones((5, 2)), X.shape[0]))
+    with pytest.raises(ValueError):
+        PLSCAN(metric="precomputed").fit((np.ones((X.shape[0] + 1, 3)), X.shape[0]))
+
+
+def test_bad_knn_input(knn):
+    with pytest.raises(ValueError):
+        PLSCAN(metric="precomputed").fit((knn[0],))
+
+
+def test_bad_knn_shape_mismatch(X):
+    n = X.shape[0]
+    with pytest.raises(ValueError):
+        PLSCAN(metric="precomputed").fit(
+            (np.ones((n, 8), dtype=np.float32), np.ones((n, 9), dtype=np.int32))
+        )
+
+
+def test_non_square_distance_matrix(X):
+    with pytest.raises(ValueError):
+        PLSCAN(metric="precomputed").fit(np.ones((X.shape[0], X.shape[0] + 1)))
+
+
 # Feature vector inputs with metrics valid in both space trees
+
+
+def test_feature_vector_spanning_tree(X):
+    """Feature vector input always produces a full spanning tree (n-1 edges), not a forest."""
+    c = PLSCAN().fit(X)
+    assert c._minimum_spanning_tree.parent.size == X.shape[0] - 1
+    valid_spanning_forest(c._minimum_spanning_tree, X)
+    valid_labels(c.labels_, X)
 
 
 @pytest.mark.parametrize("metric", PLSCAN.VALID_KDTREE_METRICS)
@@ -266,6 +315,22 @@ def test_equal_core_distances_boolean(X_bool, metric):
         dists = pairwise_distances(X_bool, metric=metric, **metric_kws)
     c1 = PLSCAN(metric="precomputed").fit(dists)
     c2 = PLSCAN(metric=metric, metric_kws=metric_kws).fit(X_bool)
+    assert np.allclose(c1.core_distances_, c2.core_distances_)
+
+
+def test_seuclidean_user_V(X):
+    """User-supplied V should produce the same core distances as auto-computed V."""
+    V = np.var(X, axis=0)
+    c1 = PLSCAN(metric="seuclidean").fit(X)
+    c2 = PLSCAN(metric="seuclidean", metric_kws={"V": V}).fit(X)
+    assert np.allclose(c1.core_distances_, c2.core_distances_, atol=2e-3)
+
+
+def test_mahalanobis_user_VI(X):
+    """User-supplied VI should produce the same core distances as auto-computed VI."""
+    VI = np.linalg.inv(np.cov(X, rowvar=False))
+    c1 = PLSCAN(metric="mahalanobis").fit(X)
+    c2 = PLSCAN(metric="mahalanobis", metric_kws={"VI": VI}).fit(X)
     assert np.allclose(c1.core_distances_, c2.core_distances_)
 
 
@@ -522,6 +587,36 @@ def test_export_networkx(knn):
     assert isinstance(g, nx.DiGraph)
 
 
+@pytest.mark.skipif(nx is None, reason="networkx not installed")
+def test_condensed_tree_networkx_attributes(knn):
+    c = PLSCAN(metric="precomputed").fit(knn)
+    g = c.condensed_tree_.to_networkx()
+    # Every edge not from the phantom root must have distance and density attributes
+    for u, v, data in g.edges(data=True):
+        if u != c._num_points:
+            assert "distance" in data
+            assert "density" in data
+            assert data["distance"] >= 0
+            assert 0 < data["density"] <= 1
+
+
+@pytest.mark.skipif(nx is None, reason="networkx not installed")
+def test_leaf_tree_networkx_attributes(knn):
+    c = PLSCAN(metric="precomputed").fit(knn)
+    g = c.leaf_tree_.to_networkx()
+    # Every edge must have size and distance attributes
+    for u, v, data in g.edges(data=True):
+        assert "size" in data
+        assert "distance" in data
+    # Segment nodes (source nodes, id >= num_points) must have geometry attributes
+    source_nodes = [n for n in g.nodes if n >= c._num_points]
+    assert len(source_nodes) > 0
+    for node in source_nodes:
+        attrs = g.nodes[node]
+        for key in ("min_size", "max_size", "min_distance", "max_distance"):
+            assert key in attrs
+
+
 @pytest.mark.skipif(pd is None, reason="pandas not installed")
 def test_export_pandas(knn):
     c = PLSCAN(metric="precomputed").fit(knn)
@@ -602,9 +697,28 @@ def test_cluster_layers_params(X, knn):
         valid_probabilities(probabilities, X)
 
 
+def test_cluster_layers_no_peaks(X, knn):
+    c = PLSCAN(min_samples=7, metric="precomputed").fit(knn)
+    layers = c.cluster_layers(height=np.inf)
+    assert layers == []
+
+
 def test_distance_cut(X, knn):
     c = PLSCAN(metric="precomputed").fit(knn)
     labels, probs = c.distance_cut(0.5)
+    valid_labels(labels, X)
+    valid_probabilities(probs, X)
+
+
+def test_distance_cut_edge_values(X, knn):
+    c = PLSCAN(metric="precomputed").fit(knn)
+    # epsilon=0 → no cluster has birth ≤ 0, so all points are noise
+    labels, probs = c.distance_cut(0.0)
+    valid_labels(labels, X)
+    valid_probabilities(probs, X)
+    assert np.all(labels == -1)
+    # epsilon=inf → all leaf clusters are selected
+    labels, probs = c.distance_cut(np.inf)
     valid_labels(labels, X)
     valid_probabilities(probs, X)
 
@@ -616,7 +730,36 @@ def test_min_cluster_size_cut(X, knn):
     valid_probabilities(probs, X)
 
 
+def test_min_cluster_size_cut_edge_values(X, knn):
+    c = PLSCAN(metric="precomputed").fit(knn)
+    # cut_size at minimum possible value
+    labels, probs = c.min_cluster_size_cut(2.0)
+    valid_labels(labels, X)
+    valid_probabilities(probs, X)
+    # cut_size beyond all cluster sizes → all noise
+    labels, probs = c.min_cluster_size_cut(1e9)
+    valid_labels(labels, X)
+    valid_probabilities(probs, X)
+    assert np.all(labels == -1)
+
+
+
+
 # Sklearn Estimator
+
+
+def test_pickle_fitted(X, knn):
+    c = PLSCAN(metric="precomputed").fit(knn)
+    loaded = pickle.loads(pickle.dumps(c))
+    assert np.array_equal(c.labels_, loaded.labels_)
+    assert np.allclose(c.probabilities_, loaded.probabilities_)
+    valid_leaf(loaded._leaf_tree)
+    valid_condensed(loaded._condensed_tree, X)
+    valid_linkage(loaded._linkage_tree, X)
+    # Post-fit methods must still work after unpickling
+    labels, probs = loaded.distance_cut(0.5)
+    valid_labels(labels, X)
+    valid_probabilities(probs, X)
 
 
 def test_hdbscan_is_sklearn_estimator():
