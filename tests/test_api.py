@@ -108,7 +108,7 @@ def test_compute_msf_partial_and_missing(X, g_knn):
     ) = clusters_from_spanning_forest(msf, X.shape[0])
 
     valid_spanning_forest(msf, X)
-    valid_mutual_graph(mut_graph, X, missing=True)
+    valid_mutual_graph(mut_graph, X)
     valid_core_distances(cd, X)
     valid_labels(labels, X)
     assert labels.max() == 3

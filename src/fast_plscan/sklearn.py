@@ -840,7 +840,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
             accept_sparse="csr",
             ensure_2d=False,
             ensure_non_negative=True,
-            ensure_all_finite=False,
+            ensure_all_finite=True,
             ensure_min_samples=self.min_samples + 1,
             input_name="X",
         )

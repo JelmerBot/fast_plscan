@@ -26,11 +26,10 @@ def valid_neighbor_indices(indices, X, min_samples):
     assert np.all(indices >= 0) and np.all(indices < X.shape[0])
 
 
-def valid_mutual_graph(mut_graph, X, *, missing=False):
+def valid_mutual_graph(mut_graph, X):
     assert isinstance(mut_graph, SparseGraph)
     assert mut_graph.indptr.shape[0] == X.shape[0] + 1
-    if not missing:
-        assert np.all(mut_graph.indices >= 0)
+    assert np.all(mut_graph.indices >= 0)
     for start, end in zip(mut_graph.indptr[:-1], mut_graph.indptr[1:]):
         assert np.all(np.diff(mut_graph.data[start:end]) >= 0.0)
 

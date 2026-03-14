@@ -56,7 +56,7 @@ def test_knn_graph(X, knn):
     assert np.allclose(knn[1], _in[1])
 
     valid_spanning_forest(c._minimum_spanning_tree, X)
-    valid_mutual_graph(c._mutual_graph, X, missing=True)
+    valid_mutual_graph(c._mutual_graph, X)
     assert c._neighbors is None
     valid_core_distances(c.core_distances_, X)
     valid_labels(c.labels_, X)
@@ -79,7 +79,7 @@ def test_knn_graph_no_loops(X, knn_no_loops):
     assert np.allclose(knn_no_loops[1], _in[1])
 
     valid_spanning_forest(c._minimum_spanning_tree, X)
-    valid_mutual_graph(c._mutual_graph, X, missing=True)
+    valid_mutual_graph(c._mutual_graph, X)
     assert c._neighbors is None
     valid_core_distances(c.core_distances_, X)
     valid_labels(c.labels_, X)
@@ -138,7 +138,7 @@ def test_sparse_matrix(X, g_knn):
     assert np.allclose(g_knn.indices, _in.indices)
 
     valid_spanning_forest(c._minimum_spanning_tree, X)
-    valid_mutual_graph(c._mutual_graph, X, missing=True)
+    valid_mutual_graph(c._mutual_graph, X)
     assert c._neighbors is None
     valid_core_distances(c.core_distances_, X)
     valid_labels(c.labels_, X)
@@ -376,7 +376,7 @@ def test_max_cluster_size(X, knn):
     c = PLSCAN(metric="precomputed", min_samples=4, max_cluster_size=5).fit(knn)
 
     valid_spanning_forest(c._minimum_spanning_tree, X)
-    valid_mutual_graph(c._mutual_graph, X, missing=True)
+    valid_mutual_graph(c._mutual_graph, X)
     valid_core_distances(c.core_distances_, X)
     valid_labels(c.labels_, X)
     assert c.labels_.max() in [5, 6]  # ties can change whether we get 5 or 6 clusters
@@ -406,7 +406,7 @@ def test_min_cluster_size(X, dists):
     c = PLSCAN(metric="precomputed", min_cluster_size=15).fit(dists)
 
     valid_spanning_forest(c._minimum_spanning_tree, X)
-    valid_mutual_graph(c._mutual_graph, X, missing=True)
+    valid_mutual_graph(c._mutual_graph, X)
     valid_core_distances(c.core_distances_, X)
     valid_labels(c.labels_, X)
     assert c.labels_.max() == 2
@@ -436,7 +436,7 @@ def test_min_samples(X, dists):
     c = PLSCAN(metric="precomputed", min_samples=70).fit(dists)
 
     valid_spanning_forest(c._minimum_spanning_tree, X)
-    valid_mutual_graph(c._mutual_graph, X, missing=True)
+    valid_mutual_graph(c._mutual_graph, X)
     valid_core_distances(c.core_distances_, X)
     valid_labels(c.labels_, X)
     assert np.all(c.labels_ == -1)
@@ -476,7 +476,7 @@ def test_persistence_measure(X, knn, persistence_measure):
     c = PLSCAN(metric="precomputed", persistence_measure=persistence_measure).fit(knn)
 
     valid_spanning_forest(c._minimum_spanning_tree, X)
-    valid_mutual_graph(c._mutual_graph, X, missing=True)
+    valid_mutual_graph(c._mutual_graph, X)
     valid_core_distances(c.core_distances_, X)
     valid_labels(c.labels_, X)
     assert c.labels_.max() <= 3
@@ -506,7 +506,7 @@ def test_num_threads(X, knn):
     c = PLSCAN(metric="precomputed", num_threads=2).fit(knn)
 
     valid_spanning_forest(c._minimum_spanning_tree, X)
-    valid_mutual_graph(c._mutual_graph, X, missing=True)
+    valid_mutual_graph(c._mutual_graph, X)
     valid_core_distances(c.core_distances_, X)
     valid_labels(c.labels_, X)
     assert c.labels_.max() == 3
@@ -539,7 +539,7 @@ def test_sample_weights(X, knn):
     c = PLSCAN(metric="precomputed").fit(knn, sample_weights=sample_weights)
 
     valid_spanning_forest(c._minimum_spanning_tree, X)
-    valid_mutual_graph(c._mutual_graph, X, missing=True)
+    valid_mutual_graph(c._mutual_graph, X)
     valid_core_distances(c.core_distances_, X)
     valid_labels(c.labels_, X)
     assert c.labels_.max() == 3

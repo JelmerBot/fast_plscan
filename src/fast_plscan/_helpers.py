@@ -80,12 +80,19 @@ def knn_to_csr(
     graph
         A sparse distance matrix in CSR format.
     """
-    indices = indices.astype(np.int32)
-    distances = distances.astype(np.float32)
-    num_points, num_neighbors = distances.shape
-    indptr = np.arange(num_points + 1, dtype=np.int32) * num_neighbors
+    indices = indices.astype(np.int32, copy=False)
+    distances = distances.astype(np.float32, copy=False)
+    num_points, _ = distances.shape
+
+    # Drop explicit missing neighbors and non-finite distances at input time.
+    valid = (indices >= 0) & np.isfinite(distances)
+    counts = valid.sum(axis=1, dtype=np.int32)
+    indptr = np.empty(num_points + 1, dtype=np.int32)
+    indptr[0] = 0
+    np.cumsum(counts, out=indptr[1:])
+
     g = csr_array(
-        (distances.reshape(-1), indices.reshape(-1), indptr),
+        (distances[valid], indices[valid], indptr),
         shape=(num_points, num_points),
     )
     g.eliminate_zeros()
@@ -199,18 +206,6 @@ def resolve_metric_kws(data, metric, metric_kws):
 
 def to_scipy_csr(graph) -> csr_array:
     """
-    Converts _api.SparseGraph to a scipy sparse CSR matrix, removing any
-    explicit invalid neighbors.
+    Converts _api.SparseGraph to a scipy sparse CSR matrix.
     """
-    # Remove explicit invalid neighbors (indices == -1)
-    data, indices, indptr = tuple(graph)
-    invalid = indices == -1
-    if np.any(invalid):
-        keep = ~invalid
-        invalid_per_row = np.add.reduceat(invalid.astype(np.intp), indptr[:-1])
-        indptr = indptr - np.concatenate(([0], np.cumsum(invalid_per_row)))
-        data = data[keep]
-        indices = indices[keep]
-
-    # Convert to scipy sparse formats
-    return csr_array((data, indices, indptr))
+    return csr_array(tuple(graph))
