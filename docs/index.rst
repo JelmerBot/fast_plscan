@@ -28,9 +28,8 @@
    :hidden:
    
    _autosummary/fast_plscan
+   _autosummary/fast_plscan.prediction
    _autosummary/fast_plscan.plots
-   _autosummary/fast_plscan._api
-   _autosummary/fast_plscan._helpers
 
 .. toctree::
    :caption: Development
@@ -87,14 +86,14 @@ clusters by requiring stronger local density support.
 .. figure:: _static/readme.png
    :alt: scatterplot
 
-The algorithm creates a hierarchy of leaf clusters by sweeping the minimum
-cluster size threshold. A leaf cluster is a cluster with no child clusters in
-the density cluster hierarchy. As the threshold changes, leaf clusters appear
-and disappear. PLSCAN measures persistence, the range of threshold values over
-which each leaf cluster remains alive, and selects the threshold with the
-highest total persistence. You can visualize this hierarchy using the
-``leaf_tree_`` attribute, which provides an alternative to HDBSCAN*'s condensed
-tree visualization.
+The algorithm creates a hierarchy of leaf clusters by identifying the minimum
+cluster size threshold at which local density maxima change. A leaf cluster is a
+cluster with no child clusters in the density cluster hierarchy. As the
+threshold changes, leaf clusters appear and disappear. PLSCAN measures
+persistence, the range of threshold values over which each leaf cluster remains
+alive, and selects the threshold with the highest total persistence. You can
+visualize this hierarchy using the ``leaf_tree_`` attribute, which provides an
+alternative to HDBSCAN*'s condensed tree visualization.
 
 .. code:: python
 
@@ -142,8 +141,14 @@ with `pip` and similar package managers on most systems:
 
    pip install fast-plscan
 
-Conda forge builds are in progress. See `our documentation <local_development.html>`_
-for instructions on compiling the package locally.
+Conda forge builds are also available:
+
+.. code-block:: bash
+
+   conda install conda-forge::fast-plscan
+
+See `our documentation <local_development.html>`_ for instructions on compiling
+the package locally.
 
 Citing
 ------
