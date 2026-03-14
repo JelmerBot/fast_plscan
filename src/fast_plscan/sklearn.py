@@ -58,14 +58,34 @@ class PLSCAN(ClusterMixin, BaseEstimator):
     """
 
     labels_: np.ndarray[tuple[int], np.dtype[np.int64]] = None
-    """The computed cluster labels."""
+    """Cluster label for each point, shape ``(n_samples,)``.
+
+    Points that do not belong to any cluster are assigned label ``-1``
+    (noise). Cluster labels are zero-indexed non-negative integers.
+    """
     probabilities_: np.ndarray[tuple[int], np.dtype[np.float32]] = None
-    """The computed cluster membership probabilities."""
+    """Cluster membership probability for each point, shape ``(n_samples,)``.
+
+    Values are in ``[0, 1]``. A value of ``1.0`` indicates full membership;
+    lower values indicate that the point lies in a less dense region of its
+    cluster and was assigned to it by the falling-out rule. Noise points
+    (``labels_ == -1``) have probability ``0.0``.
+    """
     selected_clusters_: np.ndarray[tuple[int], np.dtype[np.intp]] = None
-    """The computed leaf tree indices of the selected clusters."""
+    """Leaf-tree node indices of the selected clusters, shape ``(n_clusters,)``.
+
+    Each entry is the index into the internal leaf tree that corresponds to one
+    of the chosen leaf-clusters. The length equals ``labels_.max() + 1`` unless
+    all points are noise, in which case the array may be empty.
+    """
     core_distances_: np.ndarray[tuple[int], np.dtype[np.float32]] = None
-    """The computed core distances. These are the distances to the
-    `min_samples`-th nearest neighbor."""
+    """Core distance for each point, shape ``(n_samples,)``.
+
+    The core distance of a point is its distance to its
+    ``min_samples``-th nearest neighbor (including itself). It is the
+    per-point bandwidth for the mutual reachability distance. Not available
+    (``None``) when the input was a precomputed MST edge list.
+    """
     VALID_KDTREE_METRICS = [
         "euclidean",
         "l2",
@@ -77,7 +97,14 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         "minkowski",
         "p",
     ]
-    """The distance metrics implemented for use with KDTrees."""
+    """The distance metrics implemented for use with KDTrees.
+
+    These metrics can be used with either ``space_tree="kd_tree"`` or
+    ``space_tree="ball_tree"``: ``euclidean``, ``l2``, ``manhattan``,
+    ``cityblock``, ``l1``, ``chebyshev``, ``infinity``, ``minkowski``, ``p``.
+    The ``p`` and ``minkowski`` names are equivalent and require
+    ``metric_kws={"p": <value>}`` with ``p >= 1``.
+    """
     VALID_BALLTREE_METRICS = VALID_KDTREE_METRICS + [
         "seuclidean",
         "braycurtis",
@@ -91,7 +118,14 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         "rogerstanimoto",
         "sokalsneath",
     ]
-    "The distance metrics implemented for use with BallTrees."
+    """The distance metrics implemented for use with BallTrees.
+
+    A superset of :py:attr:`VALID_KDTREE_METRICS` that adds metrics only
+    available on BallTrees: ``seuclidean``, ``braycurtis``, ``canberra``,
+    ``haversine``, ``mahalanobis``, and all boolean metrics (``hamming``,
+    ``dice``, ``jaccard``, ``russellrao``, ``rogerstanimoto``,
+    ``sokalsneath``).
+    """
 
     _parameter_constraints = dict(
         min_samples=[Interval(Integral, 2, None, closed="left")],
@@ -359,20 +393,41 @@ class PLSCAN(ClusterMixin, BaseEstimator):
 
     @property
     def persistence_trace_(self) -> plots.PersistenceTrace:
-        """
-        A trace of the total (bi-)persistence per minimum cluster size. sizes
-        represent births in (birth, death] intervals.
+        """The total persistence signal over all minimum cluster sizes.
+
+        Each point on the trace records the summed persistence of all
+        leaf-clusters that are alive at a given minimum cluster size value.
+        The optimal minimum cluster size — used by :py:meth:`fit` — is the
+        one that maximises this signal.
+
+        For standard persistence measures (``"size"``, ``"distance"``,
+        ``"density"``), the trace is 1-D (one value per minimum cluster size).
+        For bi-persistence measures (``"size-distance"``,
+        ``"size-density"``), the trace integrates over the secondary axis,
+        still yielding a 1-D signal. The object supports
+        :py:meth:`~fast_plscan.plots.PersistenceTrace.plot`,
+        :py:meth:`~fast_plscan.plots.PersistenceTrace.to_numpy`, and
+        :py:meth:`~fast_plscan.plots.PersistenceTrace.to_pandas`.
         """
         check_is_fitted(self, "_persistence_trace")
         return plots.PersistenceTrace(self._persistence_trace)
 
     @property
     def leaf_tree_(self) -> plots.LeafTree:
-        """
-        The minimum cluster size leaf-cluster tree showing which condensed tree
-        segments are leaves at each minimum cluster size value. The object has
-        as plotting function and conversion methods for networkx, pandas, and
-        numpy.
+        """The leaf-cluster hierarchy across all minimum cluster sizes.
+
+        The leaf tree tracks which HDBSCAN* condensed-tree segments are
+        *leaves* (i.e. have no child clusters) as the minimum cluster size
+        parameter varies. It is an alternative visualisation to
+        :py:attr:`condensed_tree_` that makes the PLSCAN filtration explicit.
+
+        Selected clusters (those corresponding to the fitted
+        ``min_cluster_size``) are highlighted when plotted. The object
+        supports
+        :py:meth:`~fast_plscan.plots.LeafTree.plot`,
+        :py:meth:`~fast_plscan.plots.LeafTree.to_networkx`,
+        :py:meth:`~fast_plscan.plots.LeafTree.to_numpy`, and
+        :py:meth:`~fast_plscan.plots.LeafTree.to_pandas`.
         """
         check_is_fitted(self, ("_leaf_tree"))
         return plots.LeafTree(
@@ -385,10 +440,20 @@ class PLSCAN(ClusterMixin, BaseEstimator):
 
     @property
     def condensed_tree_(self) -> plots.CondensedTree:
-        """
-        The condensed cluster tree showing which distance-contour clusters exist
-        in the data. The object has as plotting function and conversion methods
-        for networkx, pandas, and numpy.
+        """The HDBSCAN* condensed cluster tree.
+
+        The condensed tree is built by collapsing the full single-linkage
+        dendrogram: only splits where at least one child has at least
+        ``min_samples`` members are retained. Each remaining segment
+        represents a cluster that persists across a range of distance
+        (epsilon) values.
+
+        Selected clusters (the fitted leaf-cluster segmentation) are
+        highlighted when plotted. The object supports
+        :py:meth:`~fast_plscan.plots.CondensedTree.plot`,
+        :py:meth:`~fast_plscan.plots.CondensedTree.to_networkx`,
+        :py:meth:`~fast_plscan.plots.CondensedTree.to_numpy`, and
+        :py:meth:`~fast_plscan.plots.CondensedTree.to_pandas`.
         """
         check_is_fitted(self, ("_condensed_tree"))
         return plots.CondensedTree(
@@ -402,10 +467,18 @@ class PLSCAN(ClusterMixin, BaseEstimator):
     def single_linkage_tree_(
         self,
     ) -> np.ndarray[tuple[int, int], np.dtype[np.float64]]:
-        """
-        A single linkage dendrogram in scipy format. The first column represents
-        the link's parent, the second column represents the link's child, and
-        the third column represents the link's distance.
+        """The full single-linkage dendrogram in scipy linkage format.
+
+        A float64 array of shape ``(n_samples - 1, 4)`` (or fewer rows when
+        the input contains multiple connected components). Columns are:
+
+        - ``0`` — parent node index
+        - ``1`` — child node index (leaf indices are in ``[0, n_samples)``)
+        - ``2`` — merge distance (mutual reachability distance)
+        - ``3`` — size of the child subtree
+
+        This format is compatible with :py:func:`scipy.cluster.hierarchy.dendrogram`
+        and related scipy functions.
         """
         check_is_fitted(self, ("_linkage_tree"))
         return np.column_stack(
@@ -421,11 +494,18 @@ class PLSCAN(ClusterMixin, BaseEstimator):
     def minimum_spanning_tree_(
         self,
     ) -> np.ndarray[tuple[int, int], np.dtype[np.float64]]:
-        """
-        A minimum spanning tree in scipy format. The first column represents the
-        edge's parent, the second column represents the edge's child, and the
-        third column represents the edge's distance. May be a spanning forest if
-        the input contained multiple connected components.
+        """The mutual reachability minimum spanning tree (or forest).
+
+        A float64 array of shape ``(n_edges, 3)`` with columns:
+
+        - ``0`` — parent point index
+        - ``1`` — child point index
+        - ``2`` — mutual reachability edge weight
+
+        Edges are sorted by distance in ascending order. When the input data
+        forms multiple connected components (e.g. a sparse distance graph with
+        disconnected subgraphs), the result is a spanning *forest* with fewer
+        than ``n_samples - 1`` edges.
         """
         check_is_fitted(self, "_minimum_spanning_tree")
         return np.column_stack(tuple(self._minimum_spanning_tree))
@@ -439,41 +519,53 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         threshold: float = 0.0,
         **kwargs,
     ) -> list[tuple[np.float32, Labelling]]:
-        """
-        Computes cluster labels and membership probabilities for the peaks in
-        the persistence trace.
+        """Return cluster labels and probabilities at each persistence peak.
+
+        The persistence trace (:py:attr:`persistence_trace_`) may have multiple
+        local maxima, each corresponding to a stable minimum cluster size at
+        which a distinct set of leaf-clusters is well-separated. This method
+        detects those peaks via :py:func:`scipy.signal.find_peaks` and returns
+        cluster segmentations for each one, ordered from lowest to highest
+        minimum cluster size.
 
         Parameters
         ----------
         max_peaks
-            The maximum number of peaks to return. If None, all peaks are
-            returned. If specified, the ``max_peaks`` most persistent peaks are
-            returned. The selection is performed after all other thresholds.
+            Maximum number of peaks to return. If ``None``, all detected peaks
+            are returned. When specified, only the ``max_peaks`` peaks with the
+            highest persistence are kept. Applied after all other filters.
         min_size
-            The minimum cluster size to consider for the cluster layers. If
-            None, all clusters are considered.
+            Discard peaks whose minimum cluster size is below this value.
         max_size
-            The maximum cluster size to consider for the cluster layers. If
-            None, all clusters are considered.
+            Discard peaks whose minimum cluster size is above this value.
         height
-            Suppress peak with a persistence below this value, default 0.0.
+            Minimum persistence height a peak must exceed to be included,
+            default ``0.0``. Equivalent to the ``height`` parameter of
+            :py:func:`scipy.signal.find_peaks`.
         threshold
-            Suppress peak with a persistence change below this value, default
-            0.0.
+            Minimum required persistence drop on at least one side of the peak,
+            default ``0.0``. Equivalent to the ``threshold`` parameter of
+            :py:func:`scipy.signal.find_peaks`.
         **kwargs
-            Additional parameters for the `scipy.signal.find_peaks` function.
-            Note that the persistence signal is defined on irregularly spaced
-            minimum cluster size values. So the parameters relating to the
-            distance between peaks in samples (e.g., `distance`) do not provide
-            a uniform meaning.
+            Additional keyword arguments forwarded directly to
+            :py:func:`scipy.signal.find_peaks`. Note that the persistence
+            signal is sampled at irregularly spaced minimum cluster size values,
+            so sample-distance parameters (e.g. ``distance``) do not correspond
+            to a uniform spacing.
 
         Returns
         -------
-        peaks
-            Cluster labels and membership probabilities for the detected peaks.
-            Each item contains the minimum cluster size, cluster labels, and
-            membership probabilities for the corresponding peak.
+        list of (min_cluster_size, labels, probabilities)
+            One entry per detected peak. Each entry is a 3-tuple of:
 
+            - ``min_cluster_size`` — the :py:class:`numpy.float32` minimum
+              cluster size at the peak.
+            - ``labels`` — int64 array of shape ``(n_samples,)`` giving the
+              cluster label for each point (``-1`` for noise).
+            - ``probabilities`` — float32 array of shape ``(n_samples,)`` with
+              cluster membership probabilities.
+
+            Returns an empty list when no peaks are found.
         """
         check_is_fitted(self, "_persistence_trace")
         # Pad persistence with zero so maxima at the edges can be detected as peaks
@@ -493,21 +585,30 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         return [(x[peak], *self.min_cluster_size_cut(x[peak])) for peak in peaks]
 
     def distance_cut(self, epsilon: float) -> Labelling:
-        """
-        Computes (DBSCAN*-like) cluster labels and membership probabilities at
-        the given distance threshold (epsilon).
+        """Return a DBSCAN*-style clustering at a fixed distance threshold.
+
+        Selects all leaf-clusters whose birth distance is at most ``epsilon``
+        and returns labels and membership probabilities for those clusters.
+        This is equivalent to running DBSCAN* with ``eps = epsilon`` and
+        ``min_samples`` equal to the fitted value: points that fall outside
+        every selected cluster are labelled as noise (``-1``).
 
         Parameters
         ----------
-        birth_size
-            The birth size threshold for the cluster labels and membership
-            probabilities.
+        epsilon
+            Distance threshold. Only leaf-clusters with birth distance
+            ``≤ epsilon`` are selected. Use ``epsilon = 0`` to select no
+            clusters (all noise) and ``epsilon = np.inf`` to select all
+            leaf-clusters.
 
         Returns
         -------
-        labelling
-            Effectively a tuple of cluster labels and membership probability
-            vectors.
+        labels
+            int64 array of shape ``(n_samples,)``. Cluster indices are
+            zero-based; noise points are ``-1``.
+        probabilities
+            float32 array of shape ``(n_samples,)`` with cluster membership
+            probabilities in ``[0, 1]``.
         """
         check_is_fitted(self, "_leaf_tree")
         selected_clusters = apply_distance_cut(self._leaf_tree, epsilon)
@@ -516,21 +617,31 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         )
 
     def min_cluster_size_cut(self, cut_size: float) -> Labelling:
-        """
-        Computes cluster labels and membership probabilities at the given cut
-        size threshold (cut_size) in a left-open (birth, death] size interval.
+        """Return the clustering produced by a specific minimum cluster size.
+
+        Selects all leaf-clusters that are alive at ``cut_size`` in the
+        left-open interval ``(birth, death]``, i.e. clusters whose birth size
+        is strictly less than ``cut_size`` and whose death size is at least
+        ``cut_size``. This is the same selection rule used internally by
+        :py:meth:`fit` for the automatically chosen minimum cluster size.
+
+        Use :py:attr:`persistence_trace_` to identify candidate cut sizes, or
+        use :py:meth:`cluster_layers` to obtain clusterings for all persistence
+        peaks at once.
 
         Parameters
         ----------
         cut_size
-            The birth size threshold for the cluster labels and membership
-            probabilities.
+            Minimum cluster size threshold. Must be ``≥ 2.0``.
 
         Returns
         -------
-        labelling
-            Effectively a tuple of cluster labels and membership probability
-            vectors.
+        labels
+            int64 array of shape ``(n_samples,)``. Cluster indices are
+            zero-based; noise points are ``-1``.
+        probabilities
+            float32 array of shape ``(n_samples,)`` with cluster membership
+            probabilities in ``[0, 1]``.
         """
         check_is_fitted(self, "_leaf_tree")
         selected_clusters = apply_size_cut(self._leaf_tree, cut_size)

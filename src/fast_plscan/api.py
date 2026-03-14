@@ -123,7 +123,7 @@ def extract_mutual_spanning_forest(
 
     Parameters
     ----------
-    X
+    graph
         A sparse (square) distance matrix in CSR format. Each point must have at
         least `min_samples` neighbors, with no explicit self-loops. The function
         is most efficient when the matrix is explicitly symmetric.
