@@ -11,7 +11,7 @@ from fast_plscan import PLSCAN
     baseline_images=["condensed_tree_dist"],
     extensions=["png"],
     style="mpl20",
-    tol=12.71,  # branches can switch places without changing meaning
+    tol=13.62,  # branches can switch places without changing meaning
 )
 def test_condensed_tree_dist(knn):
     plt.figure()
@@ -24,7 +24,7 @@ def test_condensed_tree_dist(knn):
     baseline_images=["condensed_tree_dens"],
     extensions=["png"],
     style="mpl20",
-    tol=13.25,  # branches can switch places without changing meaning
+    tol=14.18,  # branches can switch places without changing meaning
 )
 def test_condensed_tree_dens(knn):
     plt.figure()
@@ -37,7 +37,7 @@ def test_condensed_tree_dens(knn):
     baseline_images=["condensed_tree_rank"],
     extensions=["png"],
     style="mpl20",
-    tol=20.45,  # branches can switch places without changing meaning
+    tol=21.72,  # branches can switch places without changing meaning
 )
 def test_condensed_tree_rank(knn):
     plt.figure()

@@ -82,6 +82,8 @@ Implement the feature to make the tests pass:
 3. Add parameters to `PLSCAN` with `_parameter_constraints` entries; call `self._validate_params()` first in `fit()`.
 4. Ensure all C++ inputs satisfy the preconditions documented in the Python API instructions.
 
+**Stop here. Let the user review the implementation. Continue on approval, or refine when requested.**
+
 ## Phase 4 — Documentation
 
 Document every new public feature (parameters, methods, attributes, or functional API):
