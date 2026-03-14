@@ -27,6 +27,10 @@ from .api import (
     compute_mutual_spanning_tree,
     extract_mutual_spanning_forest,
     clusters_from_spanning_forest,
+    compute_centroids_from_features,
+    compute_exemplar_indices_from_trees,
+    compute_medoid_indices_from_features,
+    compute_medoid_indices_from_graph,
 )
 from . import plots
 
@@ -322,8 +326,10 @@ class PLSCAN(ClusterMixin, BaseEstimator):
                 dtype=np.float32,
                 ensure_min_samples=self.min_samples + 1,
             )
-            self._num_points = X.shape[0]
+            self._X = X
+            self._num_points = self._X.shape[0]
         else:
+            self._X = None
             X, self._num_points, is_sorted, is_mst = self._check_input(X)
 
         if sample_weights is not None:
@@ -509,6 +515,165 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         """
         check_is_fitted(self, "_minimum_spanning_tree")
         return np.column_stack(tuple(self._minimum_spanning_tree))
+
+    def compute_centroids(
+        self,
+        labels: np.ndarray[tuple[int], np.dtype[np.int64]] | None = None,
+    ) -> np.ndarray[tuple[int, int], np.dtype[np.float32]]:
+        """Return the probability-weighted centroid of each cluster.
+
+        For each cluster the centroid is the membership-probability-weighted
+        mean of the feature vectors of all cluster members (noise points with
+        label ``-1`` are excluded). The result has shape
+        ``(n_clusters, n_features)``.
+
+        Only available for feature-vector input (``metric != "precomputed"``).
+        Raises :py:exc:`ValueError` for precomputed inputs and
+        :py:exc:`~sklearn.exceptions.NotFittedError` before fitting.
+
+        Parameters
+        ----------
+        labels
+            An optional integer array of shape ``(n_samples,)`` with cluster
+            labels. When ``None`` (default), the fitted ``labels_`` are used.
+
+        Returns
+        -------
+        centroids
+            Float32 array of shape ``(n_clusters, n_features)``.
+        """
+        check_is_fitted(self, "_minimum_spanning_tree")
+        if self._X is None:
+            raise ValueError(
+                "compute_centroids is only available for feature-vector input "
+                "(metric != 'precomputed')."
+            )
+        if labels is None:
+            labels = self.labels_
+        return compute_centroids_from_features(self._X, self.probabilities_, labels)
+
+    def compute_medoid_indices(
+        self,
+        labels: np.ndarray[tuple[int], np.dtype[np.int64]] | None = None,
+    ) -> np.ndarray[tuple[int], np.dtype[np.intp]]:
+        """Return the index of the medoid point for each cluster.
+
+        For each cluster the medoid is the cluster member whose
+        probability-weighted sum of pairwise within-cluster distances is
+        smallest — the point ``i*`` in cluster ``c`` that minimises:
+
+        .. math::
+
+            i^* = \\operatorname{arg\\,min}_{i \\in c}
+                  \\sum_{j \\in c} p_j \\cdot d(x_i, x_j)
+
+        where :math:`p_j` is the cluster-membership probability of point
+        :math:`j` and :math:`d` is the fitted distance metric.
+
+        For feature-vector inputs, exact pairwise distances are used. For
+        precomputed sparse distance inputs, the average mutual reachability
+        distances are used to compensate for variations in the sparsity of the
+        input graph.
+
+        Returns one index per cluster into the original input, making it simple
+        to retrieve any attribute of the medoid point.
+
+        Only available for feature-vector or (sparse) precomputed distance
+        inputs. Raises :py:exc:`ValueError` for precomputed MST inputs and
+        :py:exc:`~sklearn.exceptions.NotFittedError` before fitting.
+
+        Parameters
+        ----------
+        labels
+            An optional integer array of shape ``(n_samples,)`` with cluster
+            labels. When ``None`` (default), the fitted ``labels_`` are used.
+
+        Returns
+        -------
+        medoid_indices
+            Integer array of shape ``(n_clusters,)`` with the index of the
+            medoid point for each cluster.
+        """
+        check_is_fitted(self, "_minimum_spanning_tree")
+        if self._X is None and self._mutual_graph is None:
+            raise ValueError(
+                "compute_medoid_indices is not available for precomputed MST input. "
+                "Provide a distance matrix or kNN graph instead."
+            )
+        if labels is None:
+            labels = self.labels_
+
+        if self._X is not None:
+            medoid_indices = compute_medoid_indices_from_features(
+                self._X,
+                self.core_distances_,
+                self.probabilities_,
+                labels,
+                metric=self.metric,
+                metric_kws=self.metric_kws,
+            )
+        else:
+            medoid_indices = compute_medoid_indices_from_graph(
+                self._mutual_graph,
+                self.probabilities_,
+                labels,
+            )
+
+        return medoid_indices
+
+    def compute_exemplar_indices(
+        self,
+        labels: np.ndarray[tuple[int], np.dtype[np.int64]] | None = None,
+    ) -> list[np.ndarray]:
+        """Return the exemplar point indices for each cluster.
+
+        For each leaf-cluster segment, exemplars are the points whose dropout
+        distance in the condensed tree equals the segment's minimum distance --
+        the densest points within that segment.
+
+        Parameters
+        ----------
+        labels
+            An optional integer array of shape ``(n_samples,)`` with cluster
+            labels for each point. When ``None`` (default), the fitted
+            ``labels_`` are used. Labels must be dense and zero-indexed
+            (cluster labels are ``0, 1, ..., n_clusters - 1``), with ``-1``
+            for noise points.
+
+        Returns
+        -------
+        exemplars_per_cluster
+            A list of length ``n_clusters``. Each entry is an integer array
+            of point indices that are exemplars for the corresponding cluster.
+            Returns an empty list when no clusters exist (all noise).
+
+        Raises
+        ------
+        NotFittedError
+            If the estimator has not been fitted yet.
+        ValueError
+            If the shape of ``labels`` does not match the number of samples.
+        """
+        check_is_fitted(self, "_leaf_tree")
+        if labels is None:
+            labels = self.labels_
+        if len(labels) != self._num_points:
+            raise ValueError("labels must match the number of samples")
+
+        n_unique = int(np.unique(labels[labels >= 0]).size)
+        n_clusters = int(labels.max()) + 1
+        if n_clusters <= 0:
+            return []
+        if n_unique != n_clusters:
+            raise ValueError(
+                "labels must be dense: cluster indices must be contiguous from 0."
+            )
+        return compute_exemplar_indices_from_trees(
+            self._leaf_tree,
+            self._condensed_tree,
+            labels,
+            self._num_points,
+        )
 
     def cluster_layers(
         self,

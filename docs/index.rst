@@ -5,6 +5,7 @@
 
    using_basic_api
    using_exploration_plots
+   using_centroids_medoids
    using_other_distances
    using_multiple_components
    using_sample_weights

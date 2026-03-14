@@ -668,6 +668,64 @@ def test_bad_attrs():
         c.single_linkage_tree_
     with pytest.raises(NotFittedError):
         c.minimum_spanning_tree_
+    with pytest.raises(NotFittedError):
+        c.compute_centroids()
+    with pytest.raises(NotFittedError):
+        c.compute_medoid_indices()
+    with pytest.raises(NotFittedError):
+        c.compute_exemplar_indices()
+
+
+def test_centroids(X):
+    c = PLSCAN().fit(X)
+    centroids = c.compute_centroids()
+    expected = np.array(
+        [[-0.08430787, 1.345701], [-1.1071285, -0.3461533], [1.1412238, -1.0004447]],
+        dtype=np.float32,
+    )
+    valid_centroids(centroids, X, c.labels_)
+    assert np.allclose(centroids, expected)
+
+
+def test_medoid_indices(X):
+    c = PLSCAN().fit(X)
+    medoid_indices = c.compute_medoid_indices()
+    valid_medoid_indices(medoid_indices, X, c.labels_)
+    medoids = X[medoid_indices]
+    expected = np.array(
+        [[0.00993452, 1.3416245], [-1.0467163, -0.35027868], [1.0851778, -1.0181298]],
+        dtype=np.float32,
+    )
+    assert np.allclose(medoids, expected)
+
+
+def test_centroids_precomputed_raises(knn):
+    c = PLSCAN(metric="precomputed").fit(knn)
+    with pytest.raises(ValueError):
+        c.compute_centroids()
+
+
+def test_medoid_indices_precomputed(X, g_knn):
+    c = PLSCAN(metric="precomputed").fit(g_knn)
+    medoid_indices = c.compute_medoid_indices()
+    valid_medoid_indices(medoid_indices, X, c.labels_)
+    medoids = X[medoid_indices]
+    expected = np.array(
+        [
+            [-1.1092567, -0.3553962],
+            [1.0363107, -1.0481606],
+            [-0.35863242, 1.4287035],
+            [0.03159973, 1.3125954],
+        ],
+        dtype=np.float32,
+    )
+    assert np.allclose(medoids, expected)
+
+
+def test_medoid_indices_mst_raises(X, mst):
+    c = PLSCAN(metric="precomputed").fit((mst, X.shape[0]))
+    with pytest.raises(ValueError):
+        c.compute_medoid_indices()
 
 
 # Methods
@@ -743,6 +801,33 @@ def test_min_cluster_size_cut_edge_values(X, knn):
     assert np.all(labels == -1)
 
 
+def test_compute_exemplar_indices_basic(X):
+    c = PLSCAN().fit(X)
+    exemplars_per_cluster = c.compute_exemplar_indices()
+    valid_exemplar_indices(exemplars_per_cluster, X, c.labels_)
+
+
+def test_compute_exemplar_indices_with_custom_labels(X, knn):
+    c = PLSCAN(metric="precomputed").fit(knn)
+    labels, _ = c.min_cluster_size_cut(c._persistence_trace.min_size[0])
+    exemplars_per_cluster = c.compute_exemplar_indices(labels)
+    valid_exemplar_indices(exemplars_per_cluster, X, labels)
+
+
+def test_compute_exemplar_indices_all_noise(X):
+    c = PLSCAN(min_cluster_size=X.shape[0]).fit(X)
+    exemplars_per_cluster = c.compute_exemplar_indices()
+    assert exemplars_per_cluster == []
+
+
+def test_bad_compute_exemplar(X):
+    c = PLSCAN().fit(X)
+    labels = c.labels_.copy()
+    labels[labels == 1] = 2
+    with pytest.raises(ValueError):
+        c.compute_exemplar_indices(np.zeros(5, dtype=np.int64))
+    with pytest.raises(ValueError):
+        c.compute_exemplar_indices(labels)
 
 
 # Sklearn Estimator

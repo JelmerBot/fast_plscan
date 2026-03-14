@@ -149,3 +149,68 @@ def remove_self_loops(graph: csr_array) -> csr_array:
         shape=graph.shape,
     )
     return graph
+
+
+def resolve_metric(metric: str) -> str:
+    """
+    Resolves metric aliases to names recognized by `pairwise-distances`.
+
+    Parameters
+    ----------
+    metric
+        The distance metric to resolve.
+
+    Returns
+    -------
+    resolved_metric
+        The resolved distance metric name.
+    """
+    return {"p": "minkowski", "infinity": "chebyshev"}.get(metric, metric)
+
+
+def resolve_metric_kws(data, metric, metric_kws):
+    """
+    Resolves the metric keyword arguments based on the metric and data.
+
+    Parameters
+    ----------
+    data
+        The input data array.
+    metric
+        The distance metric for which to resolve keyword arguments.
+    metric_kws
+        The initial metric keyword arguments.
+
+    Returns
+    -------
+    resolved_metric_kws
+        A dictionary of resolved metric keyword arguments.
+    """
+    if metric_kws is None:
+        metric_kws = dict()
+
+    if metric == "seuclidean" and "V" not in metric_kws:
+        metric_kws["V"] = np.var(data, axis=0)
+    elif metric == "mahalanobis" and "VI" not in metric_kws:
+        metric_kws["VI"] = np.linalg.inv(np.cov(data, rowvar=False))
+
+    return metric_kws
+
+
+def to_scipy_csr(graph) -> csr_array:
+    """
+    Converts _api.SparseGraph to a scipy sparse CSR matrix, removing any
+    explicit invalid neighbors.
+    """
+    # Remove explicit invalid neighbors (indices == -1)
+    data, indices, indptr = tuple(graph)
+    invalid = indices == -1
+    if np.any(invalid):
+        keep = ~invalid
+        invalid_per_row = np.add.reduceat(invalid.astype(np.intp), indptr[:-1])
+        indptr = indptr - np.concatenate(([0], np.cumsum(invalid_per_row)))
+        data = data[keep]
+        indices = indices[keep]
+
+    # Convert to scipy sparse formats
+    return csr_array((data, indices, indptr))
