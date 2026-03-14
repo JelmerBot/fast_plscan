@@ -6,6 +6,10 @@ from .api import (
     extract_mutual_spanning_forest,
     compute_mutual_spanning_tree,
     get_distance_callback,
+    compute_centroids_from_features,
+    compute_exemplar_indices_from_trees,
+    compute_medoid_indices_from_features,
+    compute_medoid_indices_from_graph,
 )
 
 __all__ = [
@@ -14,4 +18,8 @@ __all__ = [
     "extract_mutual_spanning_forest",
     "compute_mutual_spanning_tree",
     "get_distance_callback",
+    "compute_centroids_from_features",
+    "compute_exemplar_indices_from_trees",
+    "compute_medoid_indices_from_features",
+    "compute_medoid_indices_from_graph",
 ]

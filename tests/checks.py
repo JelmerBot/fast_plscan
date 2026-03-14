@@ -127,3 +127,35 @@ def valid_condensed(condensed_tree, X):
     assert isinstance(condensed_tree.child_size, np.ndarray)
     assert condensed_tree.child_size.dtype == np.float32
     assert np.all(condensed_tree.child_size >= 0)
+
+
+def valid_centroids(centroids, X, labels):
+    n_clusters = int(labels.max()) + 1
+    assert isinstance(centroids, np.ndarray)
+    assert centroids.dtype == np.float32
+    assert centroids.shape == (n_clusters, X.shape[1])
+    assert np.all(np.isfinite(centroids))
+
+
+def valid_medoid_indices(medoid_indices, X, labels):
+    n_clusters = int(labels.max()) + 1
+    assert isinstance(medoid_indices, np.ndarray)
+    assert medoid_indices.dtype.kind in ("i", "u")
+    assert medoid_indices.shape == (n_clusters,)
+    assert np.all(medoid_indices >= 0)
+    assert np.all(medoid_indices < X.shape[0])
+    for c, idx in enumerate(medoid_indices):
+        assert labels[idx] == c
+
+
+def valid_exemplar_indices(exemplars_per_cluster, X, labels):
+    n_clusters = max(0, int(labels.max()) + 1)
+    assert isinstance(exemplars_per_cluster, list)
+    assert len(exemplars_per_cluster) == n_clusters
+    for c, exemplars in enumerate(exemplars_per_cluster):
+        assert isinstance(exemplars, np.ndarray)
+        assert exemplars.ndim == 1
+        assert exemplars.dtype.kind in ("i", "u")
+        assert np.all(exemplars >= 0)
+        assert np.all(exemplars < X.shape[0])
+        assert np.all(labels[exemplars] == c)

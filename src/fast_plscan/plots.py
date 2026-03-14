@@ -482,7 +482,7 @@ class LeafTree(object):
             The leaf tree parent IDs for the selected clusters.
         persistence_trace
             The persistence trace for the leaf tree.
-        _num_points
+        num_points
             The number of points in the leaf tree.
         """
         self._tree = leaf_tree
@@ -917,7 +917,12 @@ class LeafTree(object):
 
 class PersistenceTrace(object):
     """
-    A trace of the persistence of clusters in a condensed tree.
+    A trace of total leaf cluster persistence across size thresholds.
+
+    For each tested minimum cluster size value, this object stores the total
+    persistence contribution of all leaf clusters alive at that threshold.
+    It can be exported with ``to_numpy`` and ``to_pandas`` or visualized with
+    ``plot``.
     """
 
     def __init__(self, trace: PersistenceTraceTuple):
@@ -932,7 +937,7 @@ class PersistenceTrace(object):
     def to_numpy(self) -> np.ndarray:
         """Returns a numpy array of the persistence trace.
 
-        The total persistence is computed over the leaf-clusters' left-open
+        The total persistence is computed over the leaf clusters' left-open
         (birth, death] intervals. `min_size` contains all unique birth minimum
         cluster size thresholds. It should not be confused with the
         `minimum_cluster_size` threshold, as `min_size` refers to the last value
@@ -950,7 +955,7 @@ class PersistenceTrace(object):
     def to_pandas(self):
         """Returns a pandas dataframe representation of the persistence trace.
 
-        The total persistence is computed over the leaf-clusters' left-open
+        The total persistence is computed over the leaf clusters' left-open
         (birth, death] intervals. `min_size` contains all unique birth minimum
         cluster size thresholds. It should not be confused with the
         `minimum_cluster_size` threshold, as `min_size` refers to the last value

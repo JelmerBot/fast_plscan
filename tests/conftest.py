@@ -1,6 +1,5 @@
 import pytest
 import numpy as np
-from pathlib import Path
 from scipy import sparse as sp
 from scipy.spatial.distance import pdist, squareform
 from sklearn.neighbors import NearestNeighbors
@@ -14,9 +13,6 @@ from sklearn.utils import shuffle
 from fast_plscan import PLSCAN
 from fast_plscan._helpers import distance_matrix_to_csr, knn_to_csr
 from fast_plscan._api import set_num_threads, get_max_threads
-
-# Ensure random data does not change on different OSes
-datapath = Path(__file__).parent / "data"
 
 # used to select which input the algorithm should use (X or X_bool)
 boolean_metrics = {
@@ -67,7 +63,7 @@ def dists(con_dists):
 
 @pytest.fixture(scope="session")
 def knn(X):
-    knn = NearestNeighbors(n_neighbors=8).fit(X).kneighbors(X, return_distance=True)
+    knn = NearestNeighbors(n_neighbors=10).fit(X).kneighbors(X, return_distance=True)
     knn[0][0:5, -1] = np.inf
     knn[1][0:5, -1] = -1
     return knn

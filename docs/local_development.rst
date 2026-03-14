@@ -83,6 +83,6 @@ the first time the package is installed:
 
 The ``-C cmake.args=...`` option does not have to be repeated on rebuilds.
 
-You may need to install the [visual studio build
-tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022)
+You may need to install the `visual studio build tools
+<https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022>`_
 with the optional Clang compiler support enabled.

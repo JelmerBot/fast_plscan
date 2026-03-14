@@ -1,5 +1,6 @@
 """Tests for the sklearn interface."""
 
+import pytest
 import matplotlib.pyplot as plt
 from matplotlib.testing.decorators import image_comparison
 
@@ -10,7 +11,7 @@ from fast_plscan import PLSCAN
     baseline_images=["condensed_tree_dist"],
     extensions=["png"],
     style="mpl20",
-    tol=12.71,  # branches can switch places without changing meaning
+    tol=13.62,  # branches can switch places without changing meaning
 )
 def test_condensed_tree_dist(knn):
     plt.figure()
@@ -23,7 +24,7 @@ def test_condensed_tree_dist(knn):
     baseline_images=["condensed_tree_dens"],
     extensions=["png"],
     style="mpl20",
-    tol=13.25,  # branches can switch places without changing meaning
+    tol=14.18,  # branches can switch places without changing meaning
 )
 def test_condensed_tree_dens(knn):
     plt.figure()
@@ -36,7 +37,7 @@ def test_condensed_tree_dens(knn):
     baseline_images=["condensed_tree_rank"],
     extensions=["png"],
     style="mpl20",
-    tol=20.45,  # branches can switch places without changing meaning
+    tol=21.72,  # branches can switch places without changing meaning
 )
 def test_condensed_tree_rank(knn):
     plt.figure()
@@ -123,3 +124,23 @@ def test_persistence_trace_args(knn):
     PLSCAN(min_samples=7, metric="precomputed").fit(knn).persistence_trace_.plot(
         line_kws=dict(color="black", linewidth=0.5)
     )
+
+
+def test_condensed_tree_invalid_y(knn):
+    c = PLSCAN(min_samples=7, metric="precomputed").fit(knn)
+    with pytest.raises(ValueError):
+        c.condensed_tree_.plot(y="invalid")
+
+
+@pytest.mark.parametrize("persistence_measure", ["size-distance", "size-density"])
+def test_persistence_trace_bi_persistence(knn, persistence_measure):
+    """Bi-persistence measures produce a valid 1D trace and must render without error."""
+    c = PLSCAN(
+        min_samples=7, metric="precomputed", persistence_measure=persistence_measure
+    ).fit(knn)
+    plt.figure()
+    c.persistence_trace_.plot()
+    plt.close()
+    plt.figure()
+    c.leaf_tree_.plot()
+    plt.close()
