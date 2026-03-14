@@ -25,8 +25,21 @@ def _build_point_arrays(condensed_tree, n_points: int) -> tuple[
     return child_to_leaf_tree, child_to_dist
 
 
-def _compute_distance_weights(X, core_dists, exemplars_per_cluster, metric, metric_kws):
+def _compute_distance_weights(
+    X,
+    core_dists,
+    exemplars_per_cluster,
+    metric,
+    metric_kws,
+    exemplar_core_dists=None,
+    exemplar_X=None,
+):
     """Compute distance-based weights towards each cluster."""
+    if exemplar_core_dists is None:
+        exemplar_core_dists = core_dists
+    if exemplar_X is None:
+        exemplar_X = X
+
     # Compute distances to closest exemplars
     D = np.empty((X.shape[0], len(exemplars_per_cluster)), dtype=np.float32)
     with warnings.catch_warnings():
@@ -34,8 +47,8 @@ def _compute_distance_weights(X, core_dists, exemplars_per_cluster, metric, metr
         for c, exc in enumerate(exemplars_per_cluster):
             D[:, c] = np.maximum(
                 np.maximum(
-                    pairwise_distances(X, X[exc], metric=metric, **metric_kws),
-                    core_dists[exc],
+                    pairwise_distances(X, exemplar_X[exc], metric=metric, **metric_kws),
+                    exemplar_core_dists[exc],
                 ),
                 core_dists[:, None],
             ).min(axis=1)
@@ -176,6 +189,9 @@ def _compute_topological_weights(
     labels: np.ndarray[tuple[int], np.dtype[np.int64]],
     n_clusters: int,
     selected_clusters: np.ndarray[tuple[int], np.dtype[np.intp]] | None,
+    *,
+    best_neighbors: np.ndarray[tuple[int], np.dtype[np.intp]] | None = None,
+    new_core_dists: np.ndarray[tuple[int], np.dtype[np.float32]] | None = None,
 ) -> tuple[
     np.ndarray[tuple[int, int], np.dtype[np.float32]],
     np.ndarray[tuple[int], np.dtype[np.float32]],
@@ -188,10 +204,19 @@ def _compute_topological_weights(
     child_to_leaf_tree, child_to_dist = _build_point_arrays(
         clusterer._condensed_tree, clusterer._num_points
     )
+
+    # Compute selected clusters if not provided
     if selected_clusters is None:
         selected_clusters = _derive_selected_clusters(
             child_to_leaf_tree, labels, n_clusters
         )
+
+    # If approximate neighbors and core distances are provided, use them to update
+    # the child-to-leaf-tree mapping and child-to-distance for the new points.
+    if best_neighbors is not None and new_core_dists is not None:
+        child_to_leaf_tree = child_to_leaf_tree[best_neighbors]
+        child_to_dist = np.minimum(child_to_dist[best_neighbors], new_core_dists)
+
     d_merge = _compute_merge_distances(
         clusterer._leaf_tree, child_to_leaf_tree, child_to_dist, selected_clusters
     )
@@ -246,6 +271,31 @@ def _all_points_prob_in_some_cluster(
     min_dist_best = leaf_tree.min_distance[selected_clusters[j_best]]
     normalizer = np.minimum(min_dist_best, child_to_dist)
     return np.clip(normalizer / d_merge_best, 0.0, 1.0)
+
+
+def _query_approximate_neighbors(
+    clusterer: PLSCAN,
+    X: np.ndarray[tuple[int, int], np.dtype[np.float32]],
+) -> tuple[
+    np.ndarray[tuple[int], np.dtype[np.float32]],
+    np.ndarray[tuple[int], np.dtype[np.intp]],
+]:
+    """Return query core distances and nearest mutual-reachability neighbors."""
+    n_points = X.shape[0]
+    k = min(clusterer.min_samples, clusterer._num_points)
+    dists, indices = clusterer._space_tree.query(X, k=k, return_distance=True)
+    dists = dists.astype(np.float32, copy=False)
+
+    # Approximate new-point core distance from the kth training neighbor.
+    core_dists = dists[:, -1]
+    core_neighbor = clusterer.core_distances_[indices]
+
+    # Label by nearest mutual-reachability neighbor's cluster.
+    mreach = np.maximum(np.maximum(dists, core_neighbor), core_dists[:, None])
+    best_idx = mreach.argmin(axis=1)
+    rows = np.arange(n_points)
+    best_neighbor = indices[rows, best_idx]
+    return core_dists, best_neighbor
 
 
 def all_points_membership_vectors(
@@ -324,6 +374,105 @@ def all_points_membership_vectors(
     return normalized * probability_in_some_cluster[:, np.newaxis]
 
 
+def membership_vectors(
+    clusterer: PLSCAN,
+    X: np.ndarray[tuple[int, int], np.dtype[np.float32]],
+    labels: np.ndarray[tuple[int], np.dtype[np.int64]] | None = None,
+) -> np.ndarray[tuple[int, int], np.dtype[np.float32]]:
+    """Approximate soft cluster membership vectors for unseen points.
+
+    This adapts HDBSCAN-style prediction to PLSCAN in distance space. Each new
+    point is attached through its nearest mutual-reachability training neighbor,
+    then blended distance and topology weights are scaled by the probability of
+    belonging to any selected cluster.
+
+    Parameters
+    ----------
+    clusterer
+        A fitted :py:class:`~fast_plscan.PLSCAN` estimator trained on
+        feature-vector input.
+    X
+        New feature vectors with shape ``(n_samples_new, n_features)``.
+    labels
+        Optional cluster labels of shape ``(n_samples,)`` used to define the
+        selected clusters and exemplars on the fitted data. When ``None``
+        (default), fitted ``labels_`` are used.
+
+    Returns
+    -------
+    membership_vectors
+        Float32 array of shape ``(n_samples_new, n_clusters)``. Entry
+        ``[i, c]`` is the approximate soft membership of unseen point ``i`` in
+        cluster ``c``. Row sums are less than or equal to 1.
+
+    Raises
+    ------
+    NotFittedError
+        If ``clusterer`` has not been fitted.
+    ValueError
+        If ``clusterer`` was fitted with precomputed input, or if ``X`` has an
+        invalid number of features.
+    ValueError
+        If the shape of ``labels`` does not match the fitted number of
+        samples.
+    """
+    check_is_fitted(clusterer, "_minimum_spanning_tree")
+    if clusterer._X is None or clusterer._space_tree is None:
+        raise ValueError(
+            "membership_vectors is only available for feature-vector input."
+        )
+
+    X = check_array(X, dtype=np.float32, ensure_2d=True)
+    if X.shape[1] != clusterer._X.shape[1]:
+        raise ValueError(
+            "X must have the same number of features as the fitted data: "
+            f"expected {clusterer._X.shape[1]}, got {X.shape[1]}."
+        )
+
+    selected_clusters = None
+    if labels is None:
+        labels = clusterer.labels_
+        selected_clusters = clusterer.selected_clusters_
+
+    elif len(labels) != clusterer._num_points:
+        raise ValueError("labels must match the number of samples")
+
+    n_clusters = int(labels.max()) + 1
+    if n_clusters <= 0:
+        return np.zeros((X.shape[0], 0), dtype=np.float32)
+
+    core_dists, best_neighbor = _query_approximate_neighbors(clusterer, X)
+
+    # 1. Distance-to-exemplar term.
+    exemplars_per_cluster = clusterer.compute_exemplar_indices(labels)
+    distance_weights = _compute_distance_weights(
+        X,
+        core_dists,
+        exemplars_per_cluster,
+        resolve_metric(clusterer.metric),
+        resolve_metric_kws(clusterer._X, clusterer.metric, clusterer.metric_kws),
+        exemplar_core_dists=clusterer.core_distances_,
+        exemplar_X=clusterer._X,
+    )
+
+    # 2. Topology term from nearest fitted neighbors and their core distances.
+    outlier_weights, probability_in_some_cluster = _compute_topological_weights(
+        clusterer,
+        labels,
+        n_clusters,
+        selected_clusters,
+        best_neighbors=best_neighbor,
+        new_core_dists=core_dists,
+    )
+
+    # 3. Blend and normalize.
+    weights = distance_weights * outlier_weights
+    totals = weights.sum(axis=1, keepdims=True)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        normalized = np.nan_to_num(weights / totals, nan=0.0)
+    return normalized * probability_in_some_cluster[:, np.newaxis]
+
+
 def approximate_predict(
     clusterer: PLSCAN,
     X: np.ndarray[tuple[int, int], np.dtype[np.float32]],
@@ -381,19 +530,7 @@ def approximate_predict(
     if n_clusters <= 0:
         return labels, probabilities
 
-    k = min(clusterer.min_samples, clusterer._num_points)
-    dists, indices = clusterer._space_tree.query(X, k=k, return_distance=True)
-    dists = dists.astype(np.float32, copy=False)
-
-    # Approximate new-point core distance from the kth training neighbor.
-    core_dists = dists[:, -1]
-    core_neighbor = clusterer.core_distances_[indices]
-
-    # Label by nearest mutual-reachability neighbor's cluster
-    mreach = np.maximum(np.maximum(dists, core_neighbor), core_dists[:, None])
-    best_idx = mreach.argmin(axis=1)
-    rows = np.arange(n_points)
-    best_neighbor = indices[rows, best_idx]
+    core_dists, best_neighbor = _query_approximate_neighbors(clusterer, X)
     labels = clusterer.labels_[best_neighbor]
 
     # PLSCAN-style probability proxy in distance space.
