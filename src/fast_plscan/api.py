@@ -49,6 +49,7 @@ def compute_mutual_spanning_tree(
     metric: str = "euclidean",
     metric_kws: dict[str, Any] | None = None,
 ) -> tuple[
+    KDTree32 | BallTree32,
     SpanningTree,
     np.ndarray[tuple[int, int], np.dtype[np.int32]],
     np.ndarray[tuple[int], np.dtype[np.float32]],
@@ -78,6 +79,8 @@ def compute_mutual_spanning_tree(
 
     Returns
     -------
+    space_tree
+        The fitted kd or ball tree object.
     spanning_tree
         A spanning tree of the input sparse distance matrix.
     indices
@@ -108,6 +111,7 @@ def compute_mutual_spanning_tree(
     spanning_tree = spanning_tree_fun(cpp_tree, knn, core_distances, metric, metric_kws)
 
     return (
+        tree,
         sort_spanning_tree(spanning_tree),
         knn.indices.reshape(data.shape[0], min_samples + 1),
         core_distances,

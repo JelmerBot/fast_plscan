@@ -6,6 +6,8 @@
    using_basic_api
    using_exploration_plots
    using_centroids_medoids
+   using_membership_vectors
+   using_approximate_prediction
    using_other_distances
    using_multiple_components
    using_sample_weights

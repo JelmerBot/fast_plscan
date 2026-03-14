@@ -159,3 +159,13 @@ def valid_exemplar_indices(exemplars_per_cluster, X, labels):
         assert np.all(exemplars >= 0)
         assert np.all(exemplars < X.shape[0])
         assert np.all(labels[exemplars] == c)
+
+
+def valid_membership_vectors(mv, X, labels):
+    n_clusters = max(0, int(labels.max()) + 1)
+    assert isinstance(mv, np.ndarray)
+    assert mv.dtype == np.float32
+    assert mv.shape == (X.shape[0], n_clusters)
+    assert np.all(mv >= 0.0)
+    assert np.all(np.isfinite(mv))
+    assert np.all(mv.sum(axis=1) <= 1.0 + 1e-5)
