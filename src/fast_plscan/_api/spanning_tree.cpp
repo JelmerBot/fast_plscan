@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <array>
 #include <numeric>
-#include <ranges>
 #include <vector>
 
 #include "distances.h"

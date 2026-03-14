@@ -3,8 +3,6 @@
 #include <cstring>
 #include <map>
 
-#include "array.h"
-
 // --- Implementation details
 
 namespace {
