@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <ranges>
 
 // --- Implementation details
 
@@ -284,8 +283,7 @@ size_t fill_size_density_bi_persistence(
       [](size_t, float, float, float) {},
       // Post-callback runs after size is updated.
       [&sizes, &persistences, &leaf_tree, &distance_callback](
-          size_t const idx, float const size, float const dist,
-          float const weight
+          size_t const idx, float const size, float const dist, float const
       ) {
         // Collect all points in the leaf-cluster (birth, inf] size interval!
         if (size > leaf_tree.min_size[idx] and

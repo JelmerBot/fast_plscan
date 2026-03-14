@@ -347,16 +347,20 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         # Compute / extract MST
         if self.metric != "precomputed":
             self._mutual_graph = None
-            self._minimum_spanning_tree, self._neighbors, self.core_distances_ = (
-                compute_mutual_spanning_tree(
-                    X,
-                    space_tree=space_tree,
-                    min_samples=self.min_samples,
-                    metric=self.metric,
-                    metric_kws=self.metric_kws,
-                )
+            (
+                self._space_tree,
+                self._minimum_spanning_tree,
+                self._neighbors,
+                self.core_distances_,
+            ) = compute_mutual_spanning_tree(
+                X,
+                space_tree=space_tree,
+                min_samples=self.min_samples,
+                metric=self.metric,
+                metric_kws=self.metric_kws,
             )
         elif is_mst:
+            self._space_tree = None
             self.core_distances_ = None
             self._mutual_graph = None
             self._neighbors = None
@@ -366,6 +370,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
                 X[:, 2].astype(np.float32, copy=False),
             )
         else:
+            self._space_tree = None
             self._neighbors = None
             (
                 self._minimum_spanning_tree,
@@ -835,7 +840,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
             accept_sparse="csr",
             ensure_2d=False,
             ensure_non_negative=True,
-            ensure_all_finite=False,
+            ensure_all_finite=True,
             ensure_min_samples=self.min_samples + 1,
             input_name="X",
         )

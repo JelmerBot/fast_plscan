@@ -19,7 +19,7 @@ from .checks import *
 
 @pytest.mark.parametrize("space_tree", ["kd_tree", "ball_tree"])
 def test_one_component_space_tree(X, space_tree):
-    mst, neighbors, cd = compute_mutual_spanning_tree(X, space_tree=space_tree)
+    _, mst, neighbors, cd = compute_mutual_spanning_tree(X, space_tree=space_tree)
     (
         (labels, probabilities),
         selected_clusters,
@@ -47,7 +47,7 @@ def test_one_component_space_tree(X, space_tree):
     ["size", "distance", "density", "size-distance", "size-density"],
 )
 def test_one_component(X, persistence_measure):
-    mst, neighbors, cd = compute_mutual_spanning_tree(X)
+    _, mst, neighbors, cd = compute_mutual_spanning_tree(X)
     (
         (labels, probabilities),
         selected_clusters,
@@ -108,7 +108,7 @@ def test_compute_msf_partial_and_missing(X, g_knn):
     ) = clusters_from_spanning_forest(msf, X.shape[0])
 
     valid_spanning_forest(msf, X)
-    valid_mutual_graph(mut_graph, X, missing=True)
+    valid_mutual_graph(mut_graph, X)
     valid_core_distances(cd, X)
     valid_labels(labels, X)
     assert labels.max() == 3
@@ -132,7 +132,7 @@ def test_compute_msf_partial_and_missing(X, g_knn):
     ],
 )
 def test_compute_mst_metrics(X, space_tree, metric, metric_kws):
-    mst, neighbors, cd = compute_mutual_spanning_tree(
+    _, mst, neighbors, cd = compute_mutual_spanning_tree(
         X, space_tree=space_tree, metric=metric, metric_kws=metric_kws
     )
     valid_spanning_forest(mst, X)
@@ -148,7 +148,7 @@ def test_msf_non_default_min_samples(X, g_dists):
 
 
 def test_clusters_from_forest_sample_weights(X):
-    mst, _, _ = compute_mutual_spanning_tree(X)
+    _, mst, _, _ = compute_mutual_spanning_tree(X)
     sample_weights = np.full(X.shape[0], 0.5, dtype=np.float32)
     (
         (labels, probabilities),
@@ -168,7 +168,7 @@ def test_clusters_from_forest_sample_weights(X):
 
 
 def test_clusters_from_forest_min_cluster_size(X):
-    mst, _, _ = compute_mutual_spanning_tree(X)
+    _, mst, _, _ = compute_mutual_spanning_tree(X)
     (
         (labels, probabilities),
         selected_clusters,
@@ -187,7 +187,7 @@ def test_clusters_from_forest_min_cluster_size(X):
 
 
 def test_clusters_from_forest_max_cluster_size(X):
-    mst, _, _ = compute_mutual_spanning_tree(X)
+    _, mst, _, _ = compute_mutual_spanning_tree(X)
     (
         (labels, probabilities),
         selected_clusters,
