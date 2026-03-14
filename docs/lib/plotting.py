@@ -10,7 +10,7 @@ from textwrap import dedent
 # for the pre-print template!
 # fontsize = dict(tiny=5, script=7, footnote=8, small=9, normal=10)
 # for the journal template!
-fontsize = dict(tiny=6, script=8, footnote=9, small=10, normal=10.95)
+fontsize = dict(tiny=5, script=7, footnote=8, small=9, normal=10)
 
 
 def configure_matplotlib():
@@ -60,6 +60,10 @@ def configure_matplotlib():
                 r"""
                 \usepackage[english]{babel}
                 \usepackage[stretch=10,shrink=10,tracking,spacing,kerning,babel]{microtype}
+                \renewcommand{\sfdefault}{phv}
+                \renewcommand{\rmdefault}{ppl}
+                \renewcommand{\ttdefault}{pcr}
+                \normalfont\selectfont
                 """
             ),
         }
@@ -73,7 +77,7 @@ def sized_fig(width=0.5, aspect=0.618, dpi=None):
     if dpi is None:
         dpi = 150
     # page_width_inch = 6.93050  # For the pre-print template
-    page_width_inch = 6.00117  # For the journal template
+    page_width_inch = 7.16808  # For the journal template
     w = width * page_width_inch
     h = aspect * w
     return plt.figure(figsize=(w, h), dpi=dpi)
