@@ -3,6 +3,7 @@ description: "Use when writing, editing, or reviewing documentation, docstrings,
 applyTo:
   - "docs/**"
   - "src/fast_plscan/*.py"
+  - "src/fast_plscan/**/*.py"
   - "src/fast_plscan/_api/**"
 ---
 
