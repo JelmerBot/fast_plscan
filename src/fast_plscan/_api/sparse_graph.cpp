@@ -9,8 +9,9 @@
 
 namespace {
 
-// Extract core distances
+// ---- Extract core distances
 
+// Extracts core distances from unsorted rows in parallel.
 void fill_distances_unsorted(
     std::span<float> distances, SparseGraphView const graph,
     int32_t const min_samples
@@ -36,6 +37,7 @@ void fill_distances_unsorted(
   }
 }
 
+// Extracts core distances from pre-sorted rows in parallel.
 void fill_distances_sorted(
     std::span<float> distances, SparseGraphView const graph,
     int32_t const min_samples
@@ -51,8 +53,9 @@ void fill_distances_sorted(
       distances[row] = graph.data[start + min_samples];
 }
 
-// Compute mutual reachability
+// ---- Compute mutual reachability
 
+// Re-weights edges by mutual reachability and resorts each sparse row.
 void apply_core_distances(
     SparseGraphWriteView graph, std::span<float> const core_distances,
     std::span<float> data, std::span<int32_t> indices

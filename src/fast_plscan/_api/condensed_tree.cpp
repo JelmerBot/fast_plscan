@@ -37,6 +37,7 @@ struct CondenseState {
         pending_idx(num_points - 1u),
         pending_distance(num_points - 1u) {}
 
+  // Scans linkage rows bottom-up and emits condensed rows plus cluster rows.
   template <typename function_t>
   auto process_rows(
       size_t const num_points, float const min_size, function_t get_row
@@ -62,6 +63,7 @@ struct CondenseState {
     return std::make_pair(idx, cluster_count);
   }
 
+  // Collects linkage and spanning metadata for one merge row.
   [[nodiscard]] RowInfo get_row(  //
       size_t const node_idx, size_t const num_points
   ) const {
@@ -80,6 +82,7 @@ struct CondenseState {
     };
   }
 
+  // Collects weighted metadata for one merge row.
   [[nodiscard]] RowInfo get_row(
       size_t const node_idx, size_t const num_points,
       std::span<float> const weights
@@ -102,6 +105,7 @@ struct CondenseState {
   }
 
  private:
+  // Chooses append or reserved slots depending on branch pruning status.
   size_t update_output_index(
       RowInfo &row, size_t &idx, size_t const node_idx, float const min_size
   ) const {
@@ -120,6 +124,7 @@ struct CondenseState {
     return out_idx;
   }
 
+  // Writes point rows now and propagates deferred placement for cluster rows.
   void store_or_delay(
       RowInfo const &row, size_t &out_idx, size_t const num_points,
       float const min_cluster_size
@@ -143,6 +148,7 @@ struct CondenseState {
       );
   }
 
+  // Appends one condensed-tree row and advances the output cursor.
   void write_row(
       size_t &out_idx, uint32_t const parent, float const distance,
       uint32_t const child, float const child_size
@@ -154,6 +160,7 @@ struct CondenseState {
     ++out_idx;
   }
 
+  // Carries parent/index state forward for descendants of pruned branches.
   void delay_row(
       size_t &out_idx, uint32_t const parent, float const distance,
       uint32_t const child, uint32_t const child_count, float const child_size,
@@ -170,6 +177,7 @@ struct CondenseState {
     }
   }
 
+  // Emits cluster-segment rows and assigns new condensed labels.
   void write_merge(
       RowInfo const &row, size_t &idx, size_t &cluster_count,
       uint32_t &next_label, size_t const num_points
@@ -187,6 +195,7 @@ struct CondenseState {
   }
 };
 
+// Orchestrates condensed-tree construction for weighted and unweighted inputs.
 std::pair<size_t, size_t> process_hierarchy(
     CondensedTreeWriteView tree, LinkageTreeView const linkage,
     SpanningTreeView const mst, size_t const num_points, float const min_size,

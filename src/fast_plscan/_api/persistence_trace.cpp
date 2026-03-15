@@ -7,24 +7,27 @@
 
 namespace {
 
-// distances to persistence functions
+// ---- distances to persistence functions
 
 using persistence_fun_t = float (*)(float, float);
 
+// Converts a distance interval into scalar persistence.
 NB_INLINE float distance_persistence(
     float const min_dist, float const max_dist
 ) {
   return max_dist - min_dist;
 }
 
+// Converts a distance interval into density-space persistence.
 NB_INLINE float density_persistence(
     float const min_dist, float const max_dist
 ) {
   return std::exp(-min_dist) - std::exp(-max_dist);
 }
 
-// General persistence trace computation
+// ---- General persistence trace computation
 
+// Builds sorted unique size thresholds and zero-initialized trace storage.
 size_t initialize_trace(
     PersistenceTraceWriteView result, LeafTreeView const leaf_tree
 ) {
@@ -48,6 +51,7 @@ size_t initialize_trace(
   return trace_size;
 }
 
+// Locates the trace interval affected by one segment lifetime.
 [[nodiscard]] auto find_fill_range(
     std::span<float> min_sizes, size_t const trace_size, float const birth,
     float const death
@@ -63,6 +67,7 @@ size_t initialize_trace(
   );
 }
 
+// Adds each segment's persistence contribution over its active size range.
 template <typename function_t>
 void fill_persistences(
     PersistenceTraceWriteView result, LeafTreeView const leaf_tree,
@@ -83,6 +88,7 @@ void fill_persistences(
   }
 }
 
+// Iterates point rows bottom-up and visits ancestor segments per point.
 void collect_leaf_children(
     LeafTreeView const leaf_tree, CondensedTreeView const condensed_tree,
     size_t const num_points, auto &&pre_callback, auto &&post_callback
@@ -113,6 +119,7 @@ void collect_leaf_children(
   }
 }
 
+// Computes per-segment persistence values from inferred birth/death distances.
 [[nodiscard]] std::vector<float> compute_persistences(
     LeafTreeView const leaf_tree, CondensedTreeView const condensed_tree,
     size_t const num_points, persistence_fun_t const to_persistence
@@ -145,6 +152,7 @@ void collect_leaf_children(
   return persistences;
 }
 
+// Integrates weighted persistence contributions over segment size lifetimes.
 [[nodiscard]] std::vector<float> compute_bi_persistences(
     LeafTreeView const leaf_tree, CondensedTreeView const condensed_tree,
     size_t const num_points, persistence_fun_t const persistence_callback
@@ -174,8 +182,9 @@ void collect_leaf_children(
   return bi_persistences;
 }
 
-// Individual persistences
+// ---- Individual persistences
 
+// Fills trace values with size-based persistence.
 [[nodiscard]] size_t fill_size_persistence(
     PersistenceTraceWriteView result, LeafTreeView const leaf_tree
 ) {
@@ -191,6 +200,7 @@ void collect_leaf_children(
   return trace_size;
 }
 
+// Fills trace values with distance-based persistence.
 [[nodiscard]] size_t fill_distance_persistence(
     PersistenceTraceWriteView result, LeafTreeView const leaf_tree,
     CondensedTreeView const condensed_tree, size_t const num_points
@@ -207,6 +217,7 @@ void collect_leaf_children(
   return trace_size;
 }
 
+// Fills trace values with density-based persistence.
 [[nodiscard]] size_t fill_density_persistence(
     PersistenceTraceWriteView result, LeafTreeView const leaf_tree,
     CondensedTreeView const condensed_tree, size_t const num_points
@@ -223,8 +234,9 @@ void collect_leaf_children(
   return trace_size;
 }
 
-// bi-persistences
+// ---- Bi-persistences
 
+// Fills trace values with size-distance bi-persistence.
 size_t fill_size_distance_bi_persistence(
     PersistenceTraceWriteView result, LeafTreeView const leaf_tree,
     CondensedTreeView const condensed_tree, size_t const num_points
@@ -241,6 +253,7 @@ size_t fill_size_distance_bi_persistence(
   return trace_size;
 }
 
+// Fills trace values with size-density bi-persistence.
 size_t fill_size_density_bi_persistence(
     PersistenceTraceWriteView result, LeafTreeView const leaf_tree,
     CondensedTreeView const condensed_tree, size_t const num_points
@@ -257,8 +270,9 @@ size_t fill_size_density_bi_persistence(
   return trace_size;
 }
 
-// Compute leaf tree icicles
+// ---- Compute leaf tree icicles
 
+// Collects (size, persistence) traces of all segments used for icicle plotting.
 [[nodiscard]] auto collect_traces(
     LeafTreeView const leaf_tree, CondensedTreeView const condensed_tree,
     size_t const num_points, auto &&distance_callback
@@ -299,6 +313,7 @@ size_t fill_size_density_bi_persistence(
   return std::make_pair(std::move(sizes), std::move(persistences));
 }
 
+// Moves collected trace vectors into nanobind arrays with owned lifetimes.
 [[nodiscard]] std::pair<
     std::vector<array_ref<float>>, std::vector<array_ref<float>>>
 vectors_to_arrays(

@@ -6,7 +6,7 @@
 
 namespace {
 
-// Reinterprets 64bit float array view as an array of NodeData objects
+// Reinterprets sklearn node metadata buffer as strongly-typed NodeData rows.
 std::span<NodeData const> convert_node_data(
     array_ref<double const> const &node_data
 ) {
@@ -15,7 +15,7 @@ std::span<NodeData const> convert_node_data(
   };
 }
 
-// General space tree query
+// ---- General space tree query
 
 template <typename rdist_fun_t, typename min_rdist_fun_t>
 class RowQueryState {
@@ -45,6 +45,7 @@ class RowQueryState {
         rdist_fun(std::move(rdist_fun)),
         min_rdist_fun(std::move(min_rdist_fun)) {}
 
+  // Runs one nearest-neighbor row query and sorts the row output.
   void perform_query() const {
     constexpr size_t node_idx = 0ul;
     float const lower_bound = min_rdist_fun(tree, point, node_idx);
@@ -53,6 +54,7 @@ class RowQueryState {
   }
 
  private:
+  // Traverses the tree depth-first with bound-based pruning.
   void recursive_query(float const lower_bound, size_t const node_idx) const {
     if (lower_bound > row_dists[0])
       return;
@@ -64,6 +66,7 @@ class RowQueryState {
       traverse_node(node_idx);
   }
 
+  // Evaluates candidate points in a leaf node and pushes better neighbors.
   void process_leaf(int64_t const idx_start, int64_t const idx_end) const {
     for (int64_t _i = idx_start; _i < idx_end; ++_i) {
       int64_t const idx = tree.idx_array[_i];
@@ -73,6 +76,7 @@ class RowQueryState {
     }
   }
 
+  // Visits children in increasing lower-bound order for stronger pruning.
   void traverse_node(size_t const node_idx) const {
     size_t left = node_idx * 2 + 1;
     size_t right = left + 1;
@@ -88,6 +92,7 @@ class RowQueryState {
     recursive_query(right_lower_bound, right);
   }
 
+  // Maintains a max-heap of current best neighbors for the query row.
   void heap_push(float const dist, int32_t const neighbor) const {
     size_t idx = 0ul;
     size_t const num_neighbors = row_dists.size();
@@ -121,6 +126,7 @@ class RowQueryState {
     row_indices[idx] = neighbor;
   }
 
+  // Converts the row heap into ascending distance order.
   void deheap_sort() const {
     size_t const num_neighbors = row_dists.size();
     for (size_t _i = 1ul; _i <= num_neighbors; ++_i) {
@@ -131,6 +137,7 @@ class RowQueryState {
     }
   }
 
+  // Restores max-heap property after removing the root element.
   void siftdown(size_t const idx) const {
     std::span<float> sub_dists = row_dists.subspan(0, idx);
     std::span<int32_t> sub_indices = row_indices.subspan(0, idx);
@@ -157,6 +164,7 @@ class RowQueryState {
   }
 };
 
+// Executes tree queries for all points in parallel.
 template <typename rdist_fun_t, typename min_rdist_fun_t>
 void parallel_query(
     SparseGraphWriteView const knn, SpaceTreeView const tree,
@@ -174,8 +182,9 @@ void parallel_query(
 using parallel_query_fun_t =
     void (*)(SparseGraphWriteView, SpaceTreeView, nb::dict);
 
-// KDTree specific query
+// ---- KDTree specific query
 
+// Dispatches the generic parallel query with KDTree bounds.
 template <Metric metric>
 void run_parallel_kdtree_query(
     SparseGraphWriteView const knn, SpaceTreeView const tree,
@@ -187,6 +196,7 @@ void run_parallel_kdtree_query(
   );
 }
 
+// Selects the KDTree query executor matching the requested metric.
 parallel_query_fun_t get_kdtree_executor(char const *const metric) {
   // Must match Metric enumeration order!
   constexpr static std::array lookup = {
@@ -205,8 +215,9 @@ parallel_query_fun_t get_kdtree_executor(char const *const metric) {
   return lookup[idx];
 }
 
-// Ball specific query
+// ---- BallTree specific query
 
+// Dispatches the generic parallel query with BallTree bounds.
 template <Metric metric>
 void run_parallel_balltree_query(
     SparseGraphWriteView const knn, SpaceTreeView const tree,
@@ -218,6 +229,7 @@ void run_parallel_balltree_query(
   );
 }
 
+// Selects the BallTree query executor matching the requested metric.
 parallel_query_fun_t get_balltree_executor(char const *const metric) {
   // Must match Metric enumeration order!
   constexpr static std::array lookup = {
@@ -273,6 +285,7 @@ SparseGraph balltree_query(
   return {knn_view, knn_cap};
 }
 
+// Exposes parsed node metadata for validation and tests.
 std::vector<NodeData> check_node_data(array_ref<double const> const node_data) {
   auto range = convert_node_data(node_data);
   return {range.begin(), range.end()};
