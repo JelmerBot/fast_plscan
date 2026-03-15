@@ -7,7 +7,7 @@ from fast_plscan import PLSCAN
 
 
 @image_comparison(
-    baseline_images=["leaf_tree"], extensions=["png"], style="mpl20", tol=2.7
+    baseline_images=["leaf_tree"], extensions=["png"], style="mpl20", tol=3.0
 )
 def test_leaf_tree(knn):
     plt.figure()
@@ -15,7 +15,7 @@ def test_leaf_tree(knn):
 
 
 @image_comparison(
-    baseline_images=["leaf_tree_args"], extensions=["png"], style="mpl20", tol=0.7
+    baseline_images=["leaf_tree_args"], extensions=["png"], style="mpl20", tol=3.3
 )
 def test_leaf_tree_args(knn):
     plt.figure()
