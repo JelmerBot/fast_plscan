@@ -8,10 +8,7 @@ from fast_plscan import PLSCAN
 
 
 @image_comparison(
-    baseline_images=["condensed_tree_dist"],
-    extensions=["png"],
-    style="mpl20",
-    tol=13.62,  # branches can switch places without changing meaning
+    baseline_images=["condensed_tree_dist"], extensions=["png"], style="mpl20"
 )
 def test_condensed_tree_dist(knn):
     plt.figure()
@@ -21,10 +18,7 @@ def test_condensed_tree_dist(knn):
 
 
 @image_comparison(
-    baseline_images=["condensed_tree_dens"],
-    extensions=["png"],
-    style="mpl20",
-    tol=14.18,  # branches can switch places without changing meaning
+    baseline_images=["condensed_tree_dens"], extensions=["png"], style="mpl20"
 )
 def test_condensed_tree_dens(knn):
     plt.figure()
@@ -34,10 +28,7 @@ def test_condensed_tree_dens(knn):
 
 
 @image_comparison(
-    baseline_images=["condensed_tree_rank"],
-    extensions=["png"],
-    style="mpl20",
-    tol=21.72,  # branches can switch places without changing meaning
+    baseline_images=["condensed_tree_rank"], extensions=["png"], style="mpl20"
 )
 def test_condensed_tree_rank(knn):
     plt.figure()
@@ -47,10 +38,7 @@ def test_condensed_tree_rank(knn):
 
 
 @image_comparison(
-    baseline_images=["condensed_tree_args"],
-    extensions=["png"],
-    style="mpl20",
-    tol=2.32,  # branches can switch places without changing meaning
+    baseline_images=["condensed_tree_args"], extensions=["png"], style="mpl20"
 )
 def test_condensed_tree_args(knn):
     plt.figure()
