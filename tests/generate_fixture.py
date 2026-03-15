@@ -43,5 +43,6 @@ indices_nl[0:5, -1] = -1
 np.savez_compressed(
     "tests/data/knn_no_loops.npz", distances=distances_nl, indices=indices_nl
 )
-print(f"Saved knn_no_loops.npz  distances{distances_nl.shape}  indices{indices_nl.shape}")
-
+print(
+    f"Saved knn_no_loops.npz  distances{distances_nl.shape}  indices{indices_nl.shape}"
+)
