@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.sparse.csgraph import connected_components
 
 from fast_plscan._api import (
     SparseGraph,
@@ -8,6 +9,7 @@ from fast_plscan._api import (
     LeafTree,
     PersistenceTrace,
 )
+from fast_plscan._helpers import to_scipy_csr
 
 
 def valid_spanning_forest(msf, X):
@@ -112,6 +114,61 @@ def valid_linkage(linkage_tree, X):
     assert np.all(np.isfinite(linkage_tree.child_size))
 
 
+def valid_cluster_outputs(
+    labels,
+    probabilities,
+    selected_clusters,
+    persistence_trace,
+    leaf_tree,
+    condensed_tree,
+    linkage_tree,
+    X,
+):
+    valid_labels(labels, X)
+    valid_probabilities(probabilities, X)
+    valid_selected_clusters(selected_clusters, labels)
+    valid_persistence_trace(persistence_trace)
+    valid_leaf(leaf_tree)
+    valid_condensed(condensed_tree, X)
+    valid_linkage(linkage_tree, X)
+
+
+def valid_fitted_clustering_state(
+    clusterer,
+    X,
+    expect_mutual_graph=None,
+    expect_neighbors=None,
+    expect_core_distances=True,
+):
+    valid_spanning_forest(clusterer._minimum_spanning_tree, X)
+
+    if expect_mutual_graph is True:
+        valid_mutual_graph(clusterer._mutual_graph, X)
+    elif expect_mutual_graph is False:
+        assert clusterer._mutual_graph is None
+
+    if expect_neighbors is True:
+        valid_neighbor_indices(clusterer._neighbors, X, clusterer.min_samples)
+    elif expect_neighbors is False:
+        assert clusterer._neighbors is None
+
+    if expect_core_distances:
+        valid_core_distances(clusterer.core_distances_, X)
+    else:
+        assert clusterer.core_distances_ is None
+
+    valid_cluster_outputs(
+        clusterer.labels_,
+        clusterer.probabilities_,
+        clusterer.selected_clusters_,
+        clusterer._persistence_trace,
+        clusterer._leaf_tree,
+        clusterer._condensed_tree,
+        clusterer._linkage_tree,
+        X,
+    )
+
+
 def valid_condensed(condensed_tree, X):
     assert isinstance(condensed_tree, CondensedTree)
     assert isinstance(condensed_tree.parent, np.ndarray)
@@ -168,3 +225,24 @@ def valid_membership_vectors(mv, X, labels):
     assert np.all(mv >= 0.0)
     assert np.all(np.isfinite(mv))
     assert np.all(mv.sum(axis=1) <= 1.0 + 1e-5)
+
+
+def assert_zero_membership_across_components(c, mv):
+    labels = c.labels_
+    n_clusters = int(labels.max()) + 1
+    if n_clusters <= 0:
+        return
+
+    g = to_scipy_csr(c._mutual_graph)
+    g = g.maximum(g.T)
+    _, component = connected_components(g, directed=False, return_labels=True)
+    all_clusters = set(range(n_clusters))
+
+    for comp in np.unique(component):
+        point_mask = component == comp
+        component_clusters = set(labels[point_mask][labels[point_mask] >= 0])
+        other_clusters = sorted(all_clusters - component_clusters)
+        if other_clusters:
+            assert np.all(
+                mv[point_mask][:, other_clusters] == 0
+            ), "Memberships to clusters in other connected components should be zero"

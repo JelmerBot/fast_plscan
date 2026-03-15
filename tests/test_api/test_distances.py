@@ -6,7 +6,7 @@ from sklearn.exceptions import DataConversionWarning
 
 from fast_plscan import get_distance_callback
 
-from .conftest import numerical_balltree_metrics, duplicate_metrics, boolean_metrics
+from ..conftest import numerical_balltree_metrics, duplicate_metrics, boolean_metrics
 
 
 @pytest.mark.parametrize("metric", [*numerical_balltree_metrics - duplicate_metrics])
