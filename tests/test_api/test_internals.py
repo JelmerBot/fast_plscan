@@ -7,9 +7,20 @@ from sklearn.neighbors._ball_tree import BallTree32
 
 from fast_plscan import PLSCAN
 from fast_plscan._api import SpaceTree, kdtree_query, balltree_query, check_node_data
+from fast_plscan.api import clusters_from_spanning_forest
 
-from .conftest import numerical_balltree_metrics, duplicate_metrics, boolean_metrics
-from .checks import *
+from ..conftest import numerical_balltree_metrics, duplicate_metrics, boolean_metrics
+from ..checks import *
+
+
+def test_clusters_from_empty_mst():
+    empty = SpanningTree(
+        np.array([], dtype=np.uint32),
+        np.array([], dtype=np.uint32),
+        np.array([], dtype=np.float32),
+    )
+    with pytest.raises(ValueError):
+        clusters_from_spanning_forest(empty, 10)
 
 
 def test_node_data_conversion(kdtree):
