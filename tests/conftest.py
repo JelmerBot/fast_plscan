@@ -62,11 +62,10 @@ def dists(con_dists):
 
 
 @pytest.fixture(scope="session")
-def knn(X):
-    knn = NearestNeighbors(n_neighbors=10).fit(X).kneighbors(X, return_distance=True)
-    knn[0][0:5, -1] = np.inf
-    knn[1][0:5, -1] = -1
-    return knn
+def knn():
+    # See generate_fixture.py for how this was generated.
+    data = np.load("tests/data/fixture_knn.npz")
+    return data["distances"], data["indices"]
 
 
 @pytest.fixture(scope="session")
