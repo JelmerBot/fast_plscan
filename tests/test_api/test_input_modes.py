@@ -126,4 +126,3 @@ def test_compute_msf_partial_and_missing(X, g_knn):
         linkage_tree,
         X,
     )
-

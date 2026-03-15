@@ -42,4 +42,3 @@ def test_not_fitted_compute_exemplar_indices_method():
     c = PLSCAN()
     with pytest.raises(NotFittedError):
         c.compute_exemplar_indices()
-

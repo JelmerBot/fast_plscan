@@ -53,4 +53,3 @@ def test_not_fitted_leaf_tree_attribute():
     c = PLSCAN()
     with pytest.raises(NotFittedError):
         c.leaf_tree_
-

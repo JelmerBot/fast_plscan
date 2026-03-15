@@ -18,4 +18,3 @@ def test_not_fitted_minimum_spanning_tree_attribute():
     c = PLSCAN()
     with pytest.raises(NotFittedError):
         c.minimum_spanning_tree_
-

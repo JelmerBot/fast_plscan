@@ -32,4 +32,3 @@ def test_not_fitted_persistence_trace_attribute():
     c = PLSCAN()
     with pytest.raises(NotFittedError):
         c.persistence_trace_
-

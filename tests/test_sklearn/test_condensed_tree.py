@@ -49,4 +49,3 @@ def test_not_fitted_condensed_tree_attribute():
     c = PLSCAN()
     with pytest.raises(NotFittedError):
         c.condensed_tree_
-

@@ -45,4 +45,3 @@ def test_bad_num_threads_string(knn):
 def test_bad_num_threads_list(knn):
     with pytest.raises(InvalidParameterError):
         PLSCAN(metric="precomputed", num_threads=[0.1, 0.2]).fit(knn)
-

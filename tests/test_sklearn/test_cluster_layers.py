@@ -43,4 +43,3 @@ def test_not_fitted_cluster_layers_method():
     c = PLSCAN()
     with pytest.raises(NotFittedError):
         c.cluster_layers()
-

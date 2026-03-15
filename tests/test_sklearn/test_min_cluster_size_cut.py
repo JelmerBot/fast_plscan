@@ -31,4 +31,3 @@ def test_not_fitted_min_cluster_size_cut_method():
     c = PLSCAN()
     with pytest.raises(NotFittedError):
         c.min_cluster_size_cut(6.0)
-
