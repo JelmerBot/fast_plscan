@@ -6,11 +6,59 @@ from sklearn.neighbors._kd_tree import KDTree32
 from sklearn.neighbors._ball_tree import BallTree32
 
 from fast_plscan import PLSCAN
-from fast_plscan._api import SpaceTree, kdtree_query, balltree_query, check_node_data
+from fast_plscan._api import (
+    SpaceTree,
+    SpanningTree,
+    kdtree_query,
+    balltree_query,
+    check_node_data,
+    compute_linkage_tree,
+    compute_condensed_tree,
+)
 from fast_plscan.api import clusters_from_spanning_forest
 
 from ..conftest import numerical_balltree_metrics, duplicate_metrics, boolean_metrics
 from ..checks import *
+
+
+def _condensed_from_mst(parent, child, distance, num_points, min_cluster_size):
+    """Build a condensed tree from raw MST arrays (must be sorted by distance)."""
+    mst = SpanningTree(
+        np.array(parent, dtype=np.uint32),
+        np.array(child, dtype=np.uint32),
+        np.array(distance, dtype=np.float32),
+    )
+    linkage = compute_linkage_tree(mst, num_points)
+    return compute_condensed_tree(linkage, mst, num_points, min_cluster_size)
+
+
+def test_equal_distance_edge_order():
+    """Condensed tree should contain only the maximal connected components at each distance"""
+    num_points = 8
+    chains = [
+        (0, 1, 0.5),
+        (1, 2, 0.5),
+        (2, 3, 0.5),
+        (4, 5, 0.5),
+        (5, 6, 0.5),
+        (6, 7, 0.5),
+        (3, 4, 0.5),
+    ]
+    groups = [
+        (0, 1, 0.5),
+        (2, 3, 0.5),
+        (1, 2, 0.5),
+        (4, 5, 0.5),
+        (6, 7, 0.5),
+        (5, 6, 0.5),
+        (3, 4, 0.5),
+    ]
+    ct_a = _condensed_from_mst(*zip(*chains), num_points, min_cluster_size=2)
+    ct_b = _condensed_from_mst(*zip(*groups), num_points, min_cluster_size=2)
+
+    # Both orderings must produce the same number of cluster-segment rows.
+    assert ct_a.cluster_rows.size == 2
+    assert ct_a.cluster_rows.size == ct_b.cluster_rows.size
 
 
 def test_clusters_from_empty_mst():
