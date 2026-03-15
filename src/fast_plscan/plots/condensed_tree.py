@@ -437,7 +437,6 @@ class CondensedTree(object):
         size_trace = size_trace[select]
         return dist_trace, size_trace
 
-    @classmethod
     def _x_coords(self, parents: np.ndarray[tuple[int], np.dtype[np.uint32]]):
         """Get the x-coordinates of the segments in the condensed tree."""
         children = dict()
@@ -445,7 +444,11 @@ class CondensedTree(object):
             if parent_idx not in children:
                 children[parent_idx] = []
             children[parent_idx].append(child_idx)
-
+        min_pts = LeafTree._min_point_per_segment(
+            self._tree, self._leaf_tree.parent, self._num_points
+        )
+        for segments in children.values():
+            segments.sort(key=lambda i: min_pts[i])
         x_coords = np.zeros(parents.shape[0])
         LeafTree._df_leaf_order(x_coords, children, 0, 0)
         return x_coords
