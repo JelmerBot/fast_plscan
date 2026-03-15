@@ -6,6 +6,7 @@
 
 namespace {
 
+// Propagates a dense output label to each segment from parent.
 [[nodiscard]] std::vector<int64_t> compute_segment_labels(
     LeafTreeView const leaf_tree, std::span<uint32_t const> const selected
 ) {
@@ -28,6 +29,7 @@ namespace {
   return segment_labels;
 }
 
+// Precomputes per-cluster persistence spans used for probability computation.
 [[nodiscard]] std::vector<float> compute_leaf_persistence(
     LeafTreeView const leaf_tree, std::span<uint32_t const> const selected
 ) {
@@ -41,6 +43,7 @@ namespace {
   return leaf_persistence;
 }
 
+// Labels points from condensed rows and computes cluster membership strength.
 void fill_labels(
     LabellingWriteView result, LeafTreeView const leaf_tree,
     CondensedTreeView const condensed_tree,
@@ -72,6 +75,7 @@ void fill_labels(
   }
 }
 
+// Orchestrates labeling computation.
 void compute_labels(
     LabellingWriteView result, LeafTreeView const leaf_tree,
     CondensedTreeView const condensed_tree,

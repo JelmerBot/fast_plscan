@@ -6,6 +6,7 @@
 
 namespace {
 
+// Record birth distances.
 void fill_min_dist(
     LeafTreeWriteView leaf_tree, CondensedTreeView const condensed_tree,
     size_t const num_points
@@ -17,6 +18,7 @@ void fill_min_dist(
   }
 }
 
+// Record parent links and death distances.
 void fill_parent_and_max_dist(
     LeafTreeWriteView leaf_tree, CondensedTreeView const condensed_tree,
     size_t const num_points
@@ -36,6 +38,7 @@ void fill_parent_and_max_dist(
   }
 }
 
+// Propagates min-cluster-size intervals.
 void fill_sizes(
     LeafTreeWriteView leaf_tree, CondensedTreeView const condensed_tree,
     size_t const num_points, float const min_size
@@ -76,6 +79,7 @@ void fill_sizes(
       leaf_tree.max_size[idx] = leaf_tree.min_size[0];
 }
 
+// Orchestrate full leaf-tree construction.
 void process_clusters(
     LeafTreeWriteView leaf_tree, CondensedTreeView const condensed_tree,
     size_t const num_points, float const min_size

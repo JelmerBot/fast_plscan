@@ -11,7 +11,7 @@
 
 namespace {
 
-// General spanning forest construction helpers
+// ---- General spanning forest construction helpers
 
 struct Edge {
   int32_t parent = -1;
@@ -39,6 +39,7 @@ struct SpanningState {
     std::ranges::copy(parent, component.begin());
   }
 
+  // Rebuilds component labels and candidate buffers for the next Boruvka pass.
   NB_INLINE void update(size_t const num_components) {
     // Prepare buffers for new iteration
     candidates.resize(num_components);
@@ -55,6 +56,7 @@ struct SpanningState {
     }
   }
 
+  // Returns component representative with path compression.
   NB_INLINE uint32_t find(uint32_t x) {
     while (parent[x] != x) {
       x = parent[x];
@@ -63,7 +65,8 @@ struct SpanningState {
     return x;
   }
 
-  NB_INLINE auto link(uint32_t x, uint32_t y) {
+  // Unites two components by rank.
+  NB_INLINE void link(uint32_t x, uint32_t y) {
     if (rank[x] < rank[y])
       std::swap(x, y);
     parent[y] = x;
@@ -72,6 +75,7 @@ struct SpanningState {
   }
 };
 
+// Commits the best outgoing edge per component that connects new components.
 [[nodiscard]] size_t apply_candidates(
     SpanningTreeWriteView mst, SpanningState &state, size_t &num_edges
 ) {
@@ -91,6 +95,7 @@ struct SpanningState {
   return num_edges - start_count;
 }
 
+// OpenMP reduction function to keep smallest edge distances across threads.
 void combine_vectors(std::vector<Edge> &dest, std::vector<Edge> const &src) {
   for (size_t idx = 0; idx < src.size(); ++idx)
     if (src[idx].distance < dest[idx].distance)
@@ -101,8 +106,9 @@ void combine_vectors(std::vector<Edge> &dest, std::vector<Edge> const &src) {
         merge_edges : std::vector<Edge> : combine_vectors(omp_out, omp_in) \
 ) initializer(omp_priv = omp_orig)
 
-// Extract spanning forest from sparse graph
+// ---- Extract spanning forest from sparse graph
 
+// Finds each component's best outgoing edge from current sparse rows.
 void find_candidates(SpanningState &state, SparseGraphWriteView const graph) {
   std::vector<Edge> &candidates = state.candidates;
   std::span<int64_t const> const component = state.component;
@@ -118,6 +124,7 @@ void find_candidates(SpanningState &state, SparseGraphWriteView const graph) {
   }
 }
 
+// Drops cross-component edges after each Boruvka merge round.
 void update_graph(
     SpanningState const &state, SparseGraphWriteView const graph
 ) {
@@ -147,6 +154,7 @@ void update_graph(
   }
 }
 
+// Runs Boruvka iterations on a sparse graph until components stop merging.
 size_t process_graph(
     SpanningTreeWriteView mst, SparseGraphWriteView const graph
 ) {
@@ -169,7 +177,7 @@ size_t process_graph(
   return num_edges;
 }
 
-// Spanning forest from general space tree helpers
+// ---- Spanning forest from general space tree helpers
 
 struct TraversalState {
   std::vector<int64_t> node_component;
@@ -183,6 +191,7 @@ struct TraversalState {
         candidate_dist(tree.data.shape(0)),
         candidate_idx(tree.data.shape(0)) {}
 
+  // Refreshes per-node and per-point traversal state after component merges.
   NB_INLINE void update(
       SpanningState const &state, SpaceTreeView const tree,
       size_t const num_components
@@ -194,6 +203,8 @@ struct TraversalState {
     std::ranges::fill(candidate_dist, std::numeric_limits<float>::infinity());
     std::ranges::fill(candidate_idx, -1);
 
+    // Propagate component labels bottom-up so each tree node knows whether
+    // its entire subtree currently belongs to a single connected component.
     size_t const num_nodes = node_component.size();
     std::span const component = state.component;
     for (size_t _i = 1; _i <= num_nodes; ++_i) {
@@ -254,6 +265,7 @@ class RowQueryState {
         rdist_fun(std::move(rdist_fun)),
         min_rdist_fun(std::move(min_rdist_fun)) {}
 
+  // Performs one component-aware nearest-neighbor search for a point.
   void perform_query() {
     constexpr size_t node_idx = 0ull;
     float const lower_bound = min_rdist_fun(tree, point, node_idx);
@@ -261,6 +273,7 @@ class RowQueryState {
   }
 
  private:
+  // Traverses subtree only when it can still improve current best candidates.
   void recursive_query(float const lower_bound, size_t const node_idx) {
     // Cannot improve downstream this node (wrap in read-lock)
     if (lower_bound > std::min(candidate_dist, component_nn_dist) or
@@ -275,6 +288,7 @@ class RowQueryState {
       traverse_node(node_idx);
   }
 
+  // Evaluates candidate cross-component neighbors inside a leaf node.
   void process_leaf(int64_t const idx_start, int64_t const idx_end) const {
     for (int64_t _i = idx_start; _i < idx_end; ++_i) {
       int64_t const idx = tree.idx_array[_i];
@@ -305,6 +319,7 @@ class RowQueryState {
     }
   }
 
+  // Visits children in increasing lower-bound order for pruning efficiency.
   void traverse_node(size_t const node_idx) {
     size_t left = node_idx * 2 + 1;
     size_t right = left + 1;
@@ -321,6 +336,7 @@ class RowQueryState {
   }
 };
 
+// Seeds Boruvka with guaranteed valid same-core-distance edges from kNN rows.
 size_t initialize_mst_from_knn(
     SpanningTreeWriteView mst, SpanningState &state, SparseGraphView const knn,
     std::span<float> const core_distances, size_t &num_edges
@@ -337,6 +353,7 @@ size_t initialize_mst_from_knn(
   return apply_candidates(mst, state, num_edges);
 }
 
+// Runs one component-aware spatial query per point in parallel.
 template <typename rdist_fun_t, typename min_rdist_fun_t>
 void component_aware_query(
     SpanningState const &state, TraversalState &traversal_state,
@@ -353,6 +370,7 @@ void component_aware_query(
   }
 }
 
+// Selects the best per-component edge discovered by component-aware queries.
 void find_candidates(
     SpanningState &state, TraversalState const &traversal_state
 ) {
@@ -371,6 +389,7 @@ void find_candidates(
   }
 }
 
+// Runs Boruvka using spatial pruning to connect remaining components.
 template <
     typename rdist_fun_t, typename min_rdist_fun_t, typename to_dist_fun_t>
 size_t space_tree_boruvka(
@@ -421,8 +440,9 @@ using space_tree_boruvka_fun_t = size_t (*)(
     nb::dict
 );
 
-// Spanning forest from kdtree
+// ---- Spanning forest from kdtree
 
+// Specializes space-tree Boruvka for KDTree metric bounds.
 template <Metric metric>
 size_t run_kdtree_boruvka(
     SpanningTreeWriteView mst, SpaceTreeView const tree,
@@ -436,6 +456,7 @@ size_t run_kdtree_boruvka(
   );
 }
 
+// Selects the KDTree Boruvka executor matching the requested metric.
 space_tree_boruvka_fun_t get_kdtree_executor(char const *const metric) {
   // Must match Metric enumeration order!
   constexpr static std::array lookup = {
@@ -454,8 +475,9 @@ space_tree_boruvka_fun_t get_kdtree_executor(char const *const metric) {
   return lookup[idx];
 }
 
-// Spanning forest from balltree
+// ---- Spanning forest from balltree
 
+// Specializes space-tree Boruvka for BallTree metric bounds.
 template <Metric metric>
 size_t run_balltree_boruvka(
     SpanningTreeWriteView mst, SpaceTreeView const tree,
@@ -469,6 +491,7 @@ size_t run_balltree_boruvka(
   );
 }
 
+// Selects the BallTree Boruvka executor matching the requested metric.
 space_tree_boruvka_fun_t get_balltree_executor(char const *const metric) {
   // Must match Metric enumeration order!
   constexpr static std::array lookup = {
@@ -538,16 +561,6 @@ SpanningTree compute_spanning_tree_balltree(
 
 // --- Class API
 
-size_t SpanningTreeWriteView::size() const {
-  return parent.size();
-}
-
-size_t SpanningTreeView::size() const {
-  return parent.size();
-}
-
-// SpanningTree constructors and member functions
-
 SpanningTree::SpanningTree(
     array_ref<uint32_t const> const parent,
     array_ref<uint32_t const> const child, array_ref<float const> const distance
@@ -576,6 +589,14 @@ std::pair<SpanningTreeWriteView, SpanningTreeCapsule> SpanningTree::allocate(
 
 SpanningTreeView SpanningTree::view() const {
   return {to_view(parent), to_view(child), to_view(distance)};
+}
+
+size_t SpanningTreeWriteView::size() const {
+  return parent.size();
+}
+
+size_t SpanningTreeView::size() const {
+  return parent.size();
 }
 
 size_t SpanningTree::size() const {
