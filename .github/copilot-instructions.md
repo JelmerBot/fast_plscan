@@ -6,13 +6,13 @@ fast-plscan implements a density-based clustering algorithm based on HDBSCAN*.
 
 The library is split into a Python layer and a C++ core:
 
-- `src/fast_plscan/_api/` — C++ extension compiled with **nanobind** and OpenMP (C++23).
-- `src/fast_plscan/api.py` — Functional Python API of the main algorithm.
-- `src/fast_plscan/sklearn.py` — Scikit-learn-compatible `PLSCAN` estimator (`BaseEstimator`, `ClusterMixin`).
-- `src/fast_plscan/prediction.py` — Additional functional Python API for specialized prediction tasks.
-- `src/fast_plscan/plots.py` — Visualization and conversion classes for the main PLSCAN data structures.
-- `src/fast_plscan/_helpers.py` — Internal utilities for the Python layer.
 - `src/fast_plscan/__init__.py` — Public API; all exported symbols listed in `__all__`.
+- `src/fast_plscan/sklearn.py` — Scikit-learn-compatible `PLSCAN` estimator (`BaseEstimator`, `ClusterMixin`).
+- `src/fast_plscan/api.py` — Functional Python API of the main algorithm.
+- `src/fast_plscan/prediction/` — Additional functional Python API for specialized prediction tasks.
+- `src/fast_plscan/plots/` — Additional visualization classes for the main data structures.
+- `src/fast_plscan/_helpers.py` — Internal utilities for the Python layer.
+- `src/fast_plscan/_api/` — C++ extension compiled with **nanobind** and OpenMP (C++23).
 
 Public entry-point: `from fast_plscan import PLSCAN` (sklearn interface) or the functional API functions.
 
