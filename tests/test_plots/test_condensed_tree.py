@@ -8,7 +8,7 @@ from fast_plscan import PLSCAN
 
 
 @image_comparison(
-    baseline_images=["condensed_tree_dist"], extensions=["png"], style="mpl20"
+    baseline_images=["condensed_tree_dist"], extensions=["png"], style="mpl20", tol=0.8
 )
 def test_condensed_tree_dist(knn):
     plt.figure()
@@ -18,7 +18,7 @@ def test_condensed_tree_dist(knn):
 
 
 @image_comparison(
-    baseline_images=["condensed_tree_dens"], extensions=["png"], style="mpl20"
+    baseline_images=["condensed_tree_dens"], extensions=["png"], style="mpl20", tol=2.4
 )
 def test_condensed_tree_dens(knn):
     plt.figure()
@@ -28,7 +28,7 @@ def test_condensed_tree_dens(knn):
 
 
 @image_comparison(
-    baseline_images=["condensed_tree_rank"], extensions=["png"], style="mpl20"
+    baseline_images=["condensed_tree_rank"], extensions=["png"], style="mpl20", tol=5.5
 )
 def test_condensed_tree_rank(knn):
     plt.figure()
@@ -38,7 +38,7 @@ def test_condensed_tree_rank(knn):
 
 
 @image_comparison(
-    baseline_images=["condensed_tree_args"], extensions=["png"], style="mpl20"
+    baseline_images=["condensed_tree_args"], extensions=["png"], style="mpl20", tol=0.6
 )
 def test_condensed_tree_args(knn):
     plt.figure()

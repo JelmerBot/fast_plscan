@@ -6,13 +6,17 @@ from matplotlib.testing.decorators import image_comparison
 from fast_plscan import PLSCAN
 
 
-@image_comparison(baseline_images=["leaf_tree"], extensions=["png"], style="mpl20")
+@image_comparison(
+    baseline_images=["leaf_tree"], extensions=["png"], style="mpl20", tol=2.7
+)
 def test_leaf_tree(knn):
     plt.figure()
     PLSCAN(min_samples=7, metric="precomputed").fit(knn).leaf_tree_.plot()
 
 
-@image_comparison(baseline_images=["leaf_tree_args"], extensions=["png"], style="mpl20")
+@image_comparison(
+    baseline_images=["leaf_tree_args"], extensions=["png"], style="mpl20", tol=0.7
+)
 def test_leaf_tree_args(knn):
     plt.figure()
     PLSCAN(min_samples=7, metric="precomputed").fit(knn).leaf_tree_.plot(

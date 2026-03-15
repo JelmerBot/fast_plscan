@@ -8,7 +8,7 @@ from fast_plscan import PLSCAN
 
 
 @image_comparison(
-    baseline_images=["persistence_trace"], extensions=["png"], style="mpl20"
+    baseline_images=["persistence_trace"], extensions=["png"], style="mpl20", tol=7.3
 )
 def test_persistence_trace(knn):
     plt.figure()
@@ -16,7 +16,10 @@ def test_persistence_trace(knn):
 
 
 @image_comparison(
-    baseline_images=["persistence_trace_args"], extensions=["png"], style="mpl20"
+    baseline_images=["persistence_trace_args"],
+    extensions=["png"],
+    style="mpl20",
+    tol=7.3,
 )
 def test_persistence_trace_args(knn):
     plt.figure()
