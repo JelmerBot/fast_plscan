@@ -25,7 +25,12 @@ def sort_spanning_tree(spanning_tree: SpanningTree) -> SpanningTree:
     sorted_mst
         A new spanning tree with sorted edges.
     """
-    order = np.argsort(spanning_tree.distance)
+    # Use lexsort with a deterministic tie-break on (min, max) endpoint indices
+    # so equal-distance edges always appear in the same order regardless of
+    # platform or the order Borůvka produced them.
+    lo = np.minimum(spanning_tree.parent, spanning_tree.child)
+    hi = np.maximum(spanning_tree.parent, spanning_tree.child)
+    order = np.lexsort((hi, lo, spanning_tree.distance))
     return SpanningTree(
         parent=spanning_tree.parent[order],
         child=spanning_tree.child[order],
