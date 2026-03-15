@@ -30,4 +30,3 @@ def test_not_fitted_compute_centroids_method():
     c = PLSCAN()
     with pytest.raises(NotFittedError):
         c.compute_centroids()
-

@@ -48,4 +48,3 @@ def test_equal_core_distances_boolean(X_bool, metric):
     c1 = PLSCAN(metric="precomputed").fit(dists)
     c2 = PLSCAN(metric=metric, metric_kws=metric_kws).fit(X_bool)
     assert np.allclose(c1.core_distances_, c2.core_distances_)
-

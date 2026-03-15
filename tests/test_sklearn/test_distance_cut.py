@@ -31,4 +31,3 @@ def test_not_fitted_distance_cut_method():
     c = PLSCAN()
     with pytest.raises(NotFittedError):
         c.distance_cut(0.5)
-

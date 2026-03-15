@@ -57,4 +57,3 @@ def test_bad_sample_weights_exceeds_min_cluster_size(X, knn):
         PLSCAN(metric="precomputed", min_cluster_size=5.0).fit(
             knn, sample_weights=sample_weights
         )
-

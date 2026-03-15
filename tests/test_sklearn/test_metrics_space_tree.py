@@ -132,4 +132,3 @@ def test_mahalanobis_user_VI(X):
     c1 = PLSCAN(metric="mahalanobis").fit(X)
     c2 = PLSCAN(metric="mahalanobis", metric_kws={"VI": VI}).fit(X)
     assert np.allclose(c1.core_distances_, c2.core_distances_)
-

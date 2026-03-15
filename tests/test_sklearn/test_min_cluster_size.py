@@ -45,4 +45,3 @@ def test_bad_min_cluster_size_string(knn):
 def test_bad_min_cluster_size_list(knn):
     with pytest.raises(InvalidParameterError):
         PLSCAN(metric="precomputed", min_cluster_size=[0.1, 0.2]).fit(knn)
-

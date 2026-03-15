@@ -48,4 +48,3 @@ def test_bad_persistence_measure_list(knn):
 def test_bad_persistence_measure_none(knn):
     with pytest.raises(InvalidParameterError):
         PLSCAN(metric="precomputed", persistence_measure=None).fit(knn)
-

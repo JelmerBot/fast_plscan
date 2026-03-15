@@ -146,4 +146,3 @@ def test_feature_vector_spanning_tree(X):
     assert c._minimum_spanning_tree.parent.size == X.shape[0] - 1
     valid_spanning_forest(c._minimum_spanning_tree, X)
     valid_labels(c.labels_, X)
-

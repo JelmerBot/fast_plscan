@@ -18,6 +18,7 @@ from .._api import (
     compute_density_icicles,
 )
 
+
 class LeafTree(object):
     """
     A tree describing which clusters exist and how they split along increasing

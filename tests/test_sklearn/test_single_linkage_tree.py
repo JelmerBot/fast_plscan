@@ -18,4 +18,3 @@ def test_not_fitted_single_linkage_tree_attribute():
     c = PLSCAN()
     with pytest.raises(NotFittedError):
         c.single_linkage_tree_
-

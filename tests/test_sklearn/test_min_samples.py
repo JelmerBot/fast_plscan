@@ -64,4 +64,3 @@ def test_bad_min_samples_list(knn):
 def test_bad_min_samples_none(knn):
     with pytest.raises(InvalidParameterError):
         PLSCAN(metric="precomputed", min_samples=None).fit(knn)
-

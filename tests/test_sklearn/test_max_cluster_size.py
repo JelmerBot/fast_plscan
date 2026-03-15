@@ -45,4 +45,3 @@ def test_bad_max_cluster_size_list(knn):
 def test_bad_max_cluster_size_none(knn):
     with pytest.raises(InvalidParameterError):
         PLSCAN(metric="precomputed", max_cluster_size=None).fit(knn)
-
