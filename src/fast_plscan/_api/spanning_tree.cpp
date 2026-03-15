@@ -17,6 +17,14 @@ struct Edge {
   int32_t parent = -1;
   int32_t child = -1;
   float distance = std::numeric_limits<float>::infinity();
+
+  // Strict weak order: lower distance wins; ties broken by (parent, child) so
+  // the OMP reduction result is independent of thread count and scheduling.
+  NB_INLINE bool is_better_than(Edge const &other) const noexcept {
+    return distance < other.distance ||
+           (distance == other.distance &&
+            std::tie(parent, child) < std::tie(other.parent, other.child));
+  }
 };
 
 struct SpanningState {
@@ -98,7 +106,7 @@ struct SpanningState {
 // OpenMP reduction function to keep smallest edge distances across threads.
 void combine_vectors(std::vector<Edge> &dest, std::vector<Edge> const &src) {
   for (size_t idx = 0; idx < src.size(); ++idx)
-    if (src[idx].distance < dest[idx].distance)
+    if (src[idx].is_better_than(dest[idx]))
       dest[idx] = src[idx];
 }
 
@@ -118,9 +126,9 @@ void find_candidates(SpanningState &state, SparseGraphWriteView const graph) {
   for (int32_t row = 0; row < graph.size(); ++row) {
     int64_t const comp = component[row];
     int32_t const start = graph.indptr[row];
-    if (float const distance = graph.data[start];
-        distance < candidates[comp].distance)
-      candidates[comp] = Edge{row, graph.indices[start], distance};
+    Edge const e{row, graph.indices[start], graph.data[start]};
+    if (e.is_better_than(candidates[comp]))
+      candidates[comp] = e;
   }
 }
 
@@ -383,9 +391,9 @@ void find_candidates(
   #pragma omp parallel for default(none) shared(edge_dist, edge_idx, component) reduction(merge_edges : candidates)  // clang-format on
   for (int32_t row = 0; row < edge_dist.size(); ++row) {
     int64_t const comp = component[row];
-    if (float const distance = edge_dist[row];
-        distance < candidates[comp].distance)
-      candidates[comp] = Edge{row, edge_idx[row], distance};
+    Edge const e{row, edge_idx[row], edge_dist[row]};
+    if (e.is_better_than(candidates[comp]))
+      candidates[comp] = e;
   }
 }
 
