@@ -94,26 +94,12 @@ Run `check_estimator(PLSCAN(...))` in `test_sklearn.py` to verify the estimator 
 
 ## Plot Regression Tests (`test_plots.py`)
 
-Use `@image_comparison` from `matplotlib.testing.decorators`. Baseline images live in `tests/baseline_images/test_plots/`. When setting a high `tol` (> 4), include a comment explaining why:
-
-```python
-@image_comparison(
-    baseline_images=["condensed_tree_dist"],
-    extensions=["png"],
-    style="mpl20",
-    tol=12.71,  # branches can switch places without changing meaning
-)
-def test_condensed_tree_dist(knn):
-    plt.figure()
-    PLSCAN(...).fit(knn).condensed_tree_.plot(...)
-```
-
-Plot tests do not call any `valid_*` helpers — visual output is validated by the image comparison alone.
+Use `@image_comparison` from `matplotlib.testing.decorators`. Baseline images live in `tests/test_plots/baseline_images/`. Plot tests do not call any `valid_*` helpers — visual output is validated by the image comparison alone.
 
 ## C++ Extension Access in Tests
 
 Never import from `fast_plscan._api` directly in `test_api.py` or `test_sklearn.py`. Use the public Python API. Direct `_api` access is limited to:
 
-- `test_space_tree.py` — testing the low-level `kdtree_query`/`balltree_query`/`check_node_data` functions.
+- `test_internals.py` — testing the low-level `kdtree_query`/`balltree_query`/`check_node_data` functions.
 - `checks.py` — importing C++ types for `isinstance` checks.
 - `conftest.py` — `set_num_threads` / `get_max_threads` for thread control.
