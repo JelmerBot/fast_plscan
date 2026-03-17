@@ -2,7 +2,6 @@
 persistence traces."""
 
 import numpy as np
-from typing import Any
 import matplotlib.pyplot as plt
 
 from scipy.stats import rankdata
