@@ -103,16 +103,12 @@ struct SpanningState {
   return num_edges - start_count;
 }
 
-// OpenMP reduction function to keep smallest edge distances across threads.
+// Merges per-thread candidate buffers, keeping the better edge per component.
 void combine_vectors(std::vector<Edge> &dest, std::vector<Edge> const &src) {
   for (size_t idx = 0; idx < src.size(); ++idx)
     if (src[idx].is_better_than(dest[idx]))
       dest[idx] = src[idx];
 }
-
-#pragma omp declare reduction(                                             \
-        merge_edges : std::vector<Edge> : combine_vectors(omp_out, omp_in) \
-) initializer(omp_priv = omp_orig)
 
 // ---- Extract spanning forest from sparse graph
 
@@ -122,13 +118,21 @@ void find_candidates(SpanningState &state, SparseGraphWriteView const graph) {
   std::span<int64_t const> const component = state.component;
 
   // clang-format off
-  #pragma omp parallel for default(none) shared(graph, component) reduction(merge_edges : candidates)  // clang-format on
-  for (int32_t row = 0; row < graph.size(); ++row) {
-    int64_t const comp = component[row];
-    int32_t const start = graph.indptr[row];
-    Edge const e{row, graph.indices[start], graph.data[start]};
-    if (e.is_better_than(candidates[comp]))
-      candidates[comp] = e;
+  #pragma omp parallel default(none) shared(graph, component, candidates)  // clang-format on
+  {
+    std::vector<Edge> local_candidates(candidates.size(), Edge{});
+    // clang-format off
+    #pragma omp for nowait  // clang-format on
+    for (int32_t row = 0; row < graph.size(); ++row) {
+      int64_t const comp = component[row];
+      int32_t const start = graph.indptr[row];
+      Edge const e{row, graph.indices[start], graph.data[start]};
+      if (e.is_better_than(local_candidates[comp]))
+        local_candidates[comp] = e;
+    }
+    // clang-format off
+    #pragma omp critical  // clang-format on
+    combine_vectors(candidates, local_candidates);
   }
 }
 
@@ -388,12 +392,20 @@ void find_candidates(
   std::span const edge_idx = traversal_state.candidate_idx;
 
   // clang-format off
-  #pragma omp parallel for default(none) shared(edge_dist, edge_idx, component) reduction(merge_edges : candidates)  // clang-format on
-  for (int32_t row = 0; row < edge_dist.size(); ++row) {
-    int64_t const comp = component[row];
-    Edge const e{row, edge_idx[row], edge_dist[row]};
-    if (e.is_better_than(candidates[comp]))
-      candidates[comp] = e;
+  #pragma omp parallel default(none) shared(edge_dist, edge_idx, component, candidates)  // clang-format on
+  {
+    std::vector<Edge> local_candidates(candidates.size(), Edge{});
+    // clang-format off
+    #pragma omp for nowait  // clang-format on
+    for (int32_t row = 0; row < static_cast<int32_t>(edge_dist.size()); ++row) {
+      int64_t const comp = component[row];
+      Edge const e{row, edge_idx[row], edge_dist[row]};
+      if (e.is_better_than(local_candidates[comp]))
+        local_candidates[comp] = e;
+    }
+    // clang-format off
+    #pragma omp critical  // clang-format on
+    combine_vectors(candidates, local_candidates);
   }
 }
 

@@ -9,16 +9,18 @@ The development workflow works best by pre-installing python dependencies with
   pip install numpy scipy matplotlib scikit-learn scikit-build-core nanobind setuptools_scm
 
 Building the package requires cmake and a C++ 23 compiler with OpenMP support.
-The OpenMP version must support user-defined reductions. Selecting the proper
-OpenMP version requires some additional configuration, see below. Assuming the
-compiler and OpenMP are present, the package can be compiled and installed with:
+Selecting the proper OpenMP version requires some additional configuration, see
+below. Assuming the compiler and OpenMP are present, the package can be compiled
+and installed with:
 
 .. code-block:: bash
 
   pip install --no-deps --no-build-isolation -ve .
 
-To change the build type, add ``-C cmake.build-type=Debug`` or
-``-C cmake.build-type=Release`` to the command.
+To change the build type, add ``-C cmake.build-type=Debug`` or ``-C
+cmake.build-type=Release`` to the command. Building without isolation allows for
+faster iterative development. For one-time installs, the command can be
+simplified to ``pip install -v .``.
 
 ``scikit-build-core`` also experimentally supports editable installs (see
 `their documentation <https://scikit-build-core.readthedocs.io/en/latest/configuration/index.html#editable-installs>`_):
@@ -61,11 +63,10 @@ or pass `OpenMP_ROOT` as cmake argument:
 Windows
 -------
 
-The default MSVC C++ compiler on windows does not support a recent enough
-OpenMP. In addition, the default powershell terminal on windows is not
-configured for cmake to find the correct OpenMP version. Instead, use a
-developer powershell configured for a 64-bit target architecture. To open such a
-terminal, run the following code in a normal Powershell terminal:
+The default powershell terminal on windows is not configured for cmake to find
+the correct OpenMP version. Instead, use a developer powershell configured for a
+64-bit target architecture. To open such a terminal, run the following code in a
+normal Powershell terminal:
 
 .. code-block:: powershell
 
@@ -74,15 +75,5 @@ terminal, run the following code in a normal Powershell terminal:
   $devddl = "$iloc/Common7/Tools/Microsoft.VisualStudio.DevShell.dll"
   Import-Module $devddl; Enter-VsDevShell -Arch amd64 -VsInstallPath $iloc -SkipAutomaticLocation
 
-In addition, select the MSVC Clang compiler using ``-C cmake.args="-T ClangCL"``
-the first time the package is installed:
-
-.. code-block:: powershell
-
-  pip install --no-deps --no-build-isolation -C cmake.args="-T ClangCL" -ve .
-
-The ``-C cmake.args=...`` option does not have to be repeated on rebuilds.
-
-You may need to install the `visual studio build tools
-<https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022>`_
-with the optional Clang compiler support enabled.
+You may also need to install the `visual studio build tools
+<https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022>`_.

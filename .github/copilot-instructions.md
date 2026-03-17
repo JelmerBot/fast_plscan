@@ -193,20 +193,19 @@ PLSCAN also exposes additional functionality beyond the core clustering pipeline
 
 ### Build and Test
 
-**Install for development** (requires CMake ≥ 3.18, a C++23 compiler, and the clang-cl toolchain on Windows):
+**Install for development** (requires CMake ≥ 3.18, a C++23 compiler with OpenMP support):
 ```sh
 pip install nanobind scikit-build-core[pyproject]
 pip install --no-build-isolation -ve .
 ```
-Add `--config-settings editable.rebuild=true` to auto-rebuild C++ on import.
+
+Only the python files are installed in editable mode; C++ changes require a re-compile through re-installing.
 
 **Run tests:**
 ```sh
 pytest .
 ```
 Test dependencies: `pytest`, `networkx`, `pandas`.
-
-**Windows notes:** The build uses `-T ClangCL`; wheels are repaired with `delvewheel`.
 
 ### Key Dependencies
 
