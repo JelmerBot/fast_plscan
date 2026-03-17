@@ -442,7 +442,6 @@ class CondensedTree(object):
         size_trace = size_trace[select]
         return dist_trace, size_trace
 
-    @classmethod
     def _x_coords(self, parents: np.ndarray[tuple[int], np.dtype[np.uint32]]):
         """Get the x-coordinates of the segments in the condensed tree."""
         children = dict()
@@ -450,7 +449,11 @@ class CondensedTree(object):
             if parent_idx not in children:
                 children[parent_idx] = []
             children[parent_idx].append(child_idx)
-
+        min_pts = LeafTree._min_point_per_segment(
+            self._tree, self._leaf_tree.parent, self._num_points
+        )
+        for segments in children.values():
+            segments.sort(key=lambda i: min_pts[i])
         x_coords = np.zeros(parents.shape[0])
         LeafTree._df_leaf_order(x_coords, children, 0, 0)
         return x_coords
@@ -876,6 +879,24 @@ class LeafTree(object):
         sizes = [s[:i] for s, i in zip(sizes, upper_idx)]
         return sizes, stabilities
 
+    @staticmethod
+    def _min_point_per_segment(
+        condensed_tree: CondensedTreeTuple,
+        leaf_parent: np.ndarray,
+        num_points: int,
+    ) -> np.ndarray:
+        """For each leaf-tree segment, the minimum data-point index in its subtree."""
+        n_segments = len(leaf_parent)
+        min_pts = np.full(n_segments, num_points, dtype=np.intp)
+        mask = condensed_tree.child < num_points
+        leaf_indices = condensed_tree.parent[mask].astype(np.intp) - num_points
+        np.minimum.at(min_pts, leaf_indices, condensed_tree.child[mask])
+        for segment_idx in range(n_segments - 1, 0, -1):
+            parent_idx = int(leaf_parent[segment_idx])
+            if min_pts[segment_idx] < min_pts[parent_idx]:
+                min_pts[parent_idx] = min_pts[segment_idx]
+        return min_pts
+
     def _x_coords(self, parents: np.ndarray[tuple[int], np.dtype[np.uint32]]):
         """Get the x-coordinates of the segments in the condensed tree."""
         children = dict()
@@ -888,6 +909,11 @@ class LeafTree(object):
             if parent_idx not in children:
                 children[parent_idx] = []
             children[parent_idx].append(child_idx)
+        min_pts = LeafTree._min_point_per_segment(
+            self._condensed_tree, self._tree.parent, self._num_points
+        )
+        for segments in children.values():
+            segments.sort(key=lambda i: min_pts[i])
         x_coords = np.zeros(parents.shape[0])
         self._df_leaf_order(x_coords, children, 0, 0)
         return x_coords

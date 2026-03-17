@@ -2,13 +2,8 @@ import pytest
 import numpy as np
 from scipy import sparse as sp
 from scipy.spatial.distance import pdist, squareform
-from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors._kd_tree import KDTree32
 from sklearn.neighbors._ball_tree import BallTree32
-
-from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import make_blobs
-from sklearn.utils import shuffle
 
 from fast_plscan import PLSCAN
 from fast_plscan._helpers import distance_matrix_to_csr, knn_to_csr
@@ -39,16 +34,14 @@ def pytest_sessionfinish(session, exitstatus):
 
 @pytest.fixture(scope="session")
 def X():
-    X, y = make_blobs(n_samples=200, random_state=10)
-    X, y = shuffle(X, y, random_state=7)
-    return StandardScaler().fit_transform(X).astype(np.float32)
+    # See tests/generate_fixture.py for how this was generated.
+    return np.load("tests/data/X.npy")
 
 
 @pytest.fixture(scope="session")
 def X_bool():
-    p = 0.25
-    rng = np.random.Generator(np.random.PCG64(10))
-    return rng.choice(a=[True, False], size=(200, 100), p=[p, 1 - p]).astype(np.float32)
+    # See tests/generate_fixture.py for how this was generated.
+    return np.load("tests/data/X_bool.npy")
 
 
 @pytest.fixture(scope="session")
@@ -62,19 +55,17 @@ def dists(con_dists):
 
 
 @pytest.fixture(scope="session")
-def knn(X):
-    knn = NearestNeighbors(n_neighbors=10).fit(X).kneighbors(X, return_distance=True)
-    knn[0][0:5, -1] = np.inf
-    knn[1][0:5, -1] = -1
-    return knn
+def knn():
+    # See generate_fixture.py for how this was generated.
+    data = np.load("tests/data/fixture_knn.npz")
+    return data["distances"], data["indices"]
 
 
 @pytest.fixture(scope="session")
-def knn_no_loops(X):
-    knn = NearestNeighbors(n_neighbors=8).fit(X).kneighbors()
-    knn[0][0:5, -1] = np.inf
-    knn[1][0:5, -1] = -1
-    return knn
+def knn_no_loops():
+    # See tests/generate_fixture.py for how this was generated.
+    data = np.load("tests/data/knn_no_loops.npz")
+    return data["distances"], data["indices"]
 
 
 @pytest.fixture(scope="session")

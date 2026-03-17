@@ -7,6 +7,14 @@ applyTo: "src/fast_plscan/_api/**"
 
 For documentation and docstring updates, also follow `documentation.instructions.md`.
 
+General function-structure conventions are defined in `../copilot-instructions.md`.
+
+## Internal API and ABI Policy
+
+- The C++ bindings, C++ ABI, and `_api` internal C++ interfaces are implementation details under project control.
+- They may be changed, refactored, split, merged, renamed, or reordered when those changes are approved.
+- Backward compatibility is not required at the internal C++ API/ABI layer, changes are allowed as long as the calling Python code is updated accordingly.
+
 ## Array Type Aliases
 
 All array arguments use the type aliases defined in `array.h`. Use these consistently:
@@ -170,11 +178,9 @@ m.def("my_func", &my_func, nb::arg("x"), nb::arg("y") = 0,
 
 ## Metric Dispatch
 
-Metrics are represented by the `Metric` enum in `distances.h`. **The enum order is fixed** — it is used as an index into lookup arrays throughout `bindings.cpp` and `space_tree.cpp`. Do not reorder or insert values without updating every lookup site. Add a comment where order is relied upon:
+Treat metric dispatch as a single, explicit contract shared by bindings, tree query, and distance kernels.
 
-```cpp
-// Must match Metric enumeration order!
-constexpr static std::array lookup{ wrap_dist<Metric::Euclidean>, ... };
-```
-
-KDTree-compatible metrics satisfy `KDTreeMetric<metric>` (`<= Minkowski`). BallTree metrics satisfy `BallTreeMetric<metric>` (`<= Sokalsneath`). Use C++20 concepts to constrain template specialisations.
+- Keep one canonical mapping from Python metric names to internal metric identifiers.
+- If dispatch logic depends on enum order or lookup-table position, document that dependency at the declaration site and update all dependent tables together.
+- Constrain template specializations with concepts or equivalent compile-time checks so KDTree/BallTree compatibility is enforced at compile time.
+- When adding a metric, update all dispatch layers in one cohesive change: Python exposure, internal identifier mapping, compatibility guards, and tests.

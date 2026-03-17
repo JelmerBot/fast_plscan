@@ -30,6 +30,7 @@ class LinkageState {
       );
   }
 
+  // Finds the current component representative with path compression.
   NB_INLINE uint32_t find(uint32_t node) {
     uint32_t relabel = node;
     while (parent[node] != 0u && parent[node] != node)
@@ -44,6 +45,7 @@ class LinkageState {
     return node;
   }
 
+  // Merges two components under the next merge node and updates subtree stats.
   NB_INLINE auto link(
       uint32_t const next, uint32_t const left, uint32_t const right
   ) {
@@ -55,6 +57,7 @@ class LinkageState {
   }
 };
 
+// Converts sorted spanning-tree edges into linkage rows in merge order.
 size_t process_spanning_tree(
     LinkageTreeWriteView tree, SpanningTreeView const mst,
     size_t const num_points,

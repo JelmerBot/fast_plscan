@@ -7,6 +7,7 @@
 
 namespace {
 
+// Enables C-string key comparison for metric-name lookup maps.
 struct strless {
   bool operator()(char const *const a, char const *const b) const {
     return std::strcmp(a, b) < 0;
@@ -17,6 +18,7 @@ struct strless {
 
 // --- Function API
 
+// Maps user-facing metric aliases to the internal Metric enum value.
 std::underlying_type_t<Metric> parse_metric(char const *const metric) {
   static std::map<char const *const, Metric, strless> const metric_map = {
       {"l2", Metric::Euclidean},
