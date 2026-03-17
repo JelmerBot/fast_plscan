@@ -138,8 +138,8 @@ Read-only array fields exposed to Python use `nb::rv_policy::reference` to avoid
 
 ## OpenMP Parallelism
 
-- Use `#pragma omp parallel for default(none) shared(...) [reduction(...)]` for all parallel loops. List every variable explicitly — never rely on implicit sharing.
-- Custom OpenMP reductions (e.g., merging edge vectors) are declared with `#pragma omp declare reduction` near the top of the `.cpp` file.
+- Use `#pragma omp parallel for default(none) shared(...)` for all parallel loops. List every variable explicitly — never rely on implicit sharing.
+- Make sure the loops build with MSVC's OpenMP implementation, which is limited to older OpenMP standards.
 - `clang-format` is suppressed on pragma lines using the `// clang-format off … // clang-format on` pair on the same line:
 
 ```cpp
