@@ -8,8 +8,13 @@ from fast_plscan import (
     compute_mutual_spanning_tree,
     extract_mutual_spanning_forest,
 )
-from fast_plscan._api import SpanningTree
-from ..checks import *
+from ..checks import (
+    valid_cluster_outputs,
+    valid_core_distances,
+    valid_mutual_graph,
+    valid_neighbor_indices,
+    valid_spanning_forest,
+)
 
 
 @pytest.mark.parametrize("space_tree", ["kd_tree", "ball_tree"])

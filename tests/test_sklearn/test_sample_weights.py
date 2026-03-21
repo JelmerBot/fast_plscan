@@ -5,7 +5,7 @@ import pytest
 
 from fast_plscan import PLSCAN
 
-from ..checks import *
+from ..checks import valid_fitted_clustering_state
 
 
 def test_sample_weights(X, knn):

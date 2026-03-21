@@ -7,7 +7,7 @@ from sklearn.exceptions import NotFittedError
 from fast_plscan import PLSCAN
 from fast_plscan.prediction import approximate_predict
 
-from ..checks import *
+from ..checks import valid_labels, valid_probabilities
 
 
 # --- Positive Input Modes
@@ -62,3 +62,10 @@ def test_bad_approximate_predict_wrong_num_features(X):
     c = PLSCAN().fit(X)
     with pytest.raises(ValueError):
         approximate_predict(c, np.zeros((5, X.shape[1] + 1), dtype=np.float32))
+
+
+def test_approximate_predict_all_noise(X):
+    c = PLSCAN(min_cluster_size=X.shape[0]).fit(X)
+    labels, probabilities = approximate_predict(c, X[:5])
+    assert np.all(labels == -1)
+    assert np.all(probabilities == 0.0)
