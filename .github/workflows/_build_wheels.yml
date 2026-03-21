@@ -38,6 +38,8 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.4.0
+        with:
+          extras: "uv"
         env:
           CIBW_ARCHS: "native"
           CIBW_BUILD: "*${{ matrix.platform }}*"

@@ -6,7 +6,7 @@ from sklearn.exceptions import NotFittedError
 
 from fast_plscan import PLSCAN
 
-from ..checks import *
+from ..checks import valid_centroids
 
 
 def test_centroids(X):

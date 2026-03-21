@@ -6,11 +6,17 @@ from sklearn.neighbors._kd_tree import KDTree32
 from sklearn.neighbors._ball_tree import BallTree32
 
 from fast_plscan import PLSCAN
-from fast_plscan._api import SpaceTree, kdtree_query, balltree_query, check_node_data
+from fast_plscan._api import (
+    Labelling,
+    SpanningTree,
+    SpaceTree,
+    kdtree_query,
+    balltree_query,
+    check_node_data,
+)
 from fast_plscan.api import clusters_from_spanning_forest
 
 from ..conftest import numerical_balltree_metrics, duplicate_metrics, boolean_metrics
-from ..checks import *
 
 
 def test_clusters_from_empty_mst():
@@ -27,12 +33,70 @@ def test_node_data_conversion(kdtree):
     _, _, node_data, _ = kdtree.get_arrays()
     converted_copy = check_node_data(node_data.view(np.float64))
     for (idx_start, idx_end, is_leaf, radius), n2 in zip(node_data, converted_copy):
-        assert idx_start == n2.idx_start
-        assert idx_end == n2.idx_end
-        assert is_leaf == n2.is_leaf
-        assert radius == n2.radius
+        n2_start, n2_end, n2_leaf, n2_radius = n2  # covers NodeData.__iter__
+        assert idx_start == n2_start
+        assert idx_end == n2_end
+        assert is_leaf == n2_leaf
+        assert radius == n2_radius
     node_data["idx_start"][0] = -1
     assert converted_copy[0].idx_start != -1
+
+
+def test_space_tree_iter(kdtree):
+    data, idx_array, node_data, node_bounds = kdtree.get_arrays()
+    tree = SpaceTree(data, idx_array, node_data.view(np.float64), node_bounds)
+    d, idx, nd, nb = tree  # covers SpaceTree.__iter__
+    assert np.array_equal(d, data)
+    assert np.array_equal(idx, idx_array)
+    assert np.array_equal(nd, node_data.view(np.float64), equal_nan=True)
+    assert np.array_equal(nb, node_bounds)
+
+
+def test_c_type_pickles(kdtree):
+    import pickle
+
+    # Labelling: Python-side constructor (covers Labelling.__init__ asarray path)
+    # and pickle round-trip (covers Labelling.__reduce__)
+    lab = Labelling(
+        np.array([0, 1, -1], dtype=np.int32),
+        np.array([0.9, 0.5, 0.0], dtype=np.float32),
+    )
+    lab2 = pickle.loads(pickle.dumps(lab))
+    assert np.array_equal(lab.label, lab2.label)
+    assert np.array_equal(lab.probability, lab2.probability)
+
+    # NodeData: pickle round-trip (covers NodeData.__reduce__)
+    _, _, raw_node_data, _ = kdtree.get_arrays()
+    node_list = check_node_data(raw_node_data.view(np.float64))
+    nd = node_list[0]
+    nd2 = pickle.loads(pickle.dumps(nd))
+    assert nd.idx_start == nd2.idx_start
+    assert nd.idx_end == nd2.idx_end
+    assert nd.is_leaf == nd2.is_leaf
+    assert nd.radius == nd2.radius
+
+    # SpaceTree: pickle round-trip (covers SpaceTree.__reduce__)
+    data, idx_array, raw_node_data, node_bounds = kdtree.get_arrays()
+    tree = SpaceTree(data, idx_array, raw_node_data.view(np.float64), node_bounds)
+    tree2 = pickle.loads(pickle.dumps(tree))
+    d2, idx2, nd2, nb2 = tree2
+    assert np.array_equal(d2, data)
+    assert np.array_equal(idx2, idx_array)
+    assert np.array_equal(nd2, raw_node_data.view(np.float64), equal_nan=True)
+
+
+@pytest.mark.parametrize(
+    "metric,expected_message",
+    [
+        ("hamming", "Missing KDTree query"),  # valid metric, not in KDTree lookup
+        ("bogus_metric", "Unsupported metric"),  # invalid metric name entirely
+    ],
+)
+def test_kdtree_query_invalid_metrics(kdtree, metric, expected_message):
+    data, idx_array, node_data, node_bounds = kdtree.get_arrays()
+    tree = SpaceTree(data, idx_array, node_data.view(np.float64), node_bounds)
+    with pytest.raises(ValueError, match=expected_message):
+        kdtree_query(tree, 5, metric, {})
 
 
 @pytest.mark.parametrize(

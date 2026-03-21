@@ -8,7 +8,13 @@ from fast_plscan import (
     compute_mutual_spanning_tree,
     extract_mutual_spanning_forest,
 )
-from ..checks import *
+from ..checks import (
+    valid_cluster_outputs,
+    valid_core_distances,
+    valid_mutual_graph,
+    valid_neighbor_indices,
+    valid_spanning_forest,
+)
 
 
 @pytest.mark.parametrize(
@@ -102,3 +108,14 @@ def test_clusters_from_forest_max_cluster_size(X):
         linkage_tree,
         X,
     )
+
+
+def test_compute_mst_invalid_space_tree(X):
+    with pytest.raises(ValueError):
+        compute_mutual_spanning_tree(X, space_tree="invalid")
+
+
+def test_clusters_from_forest_invalid_persistence_measure(X):
+    _, mst, _, _ = compute_mutual_spanning_tree(X)
+    with pytest.raises(ValueError):
+        clusters_from_spanning_forest(mst, X.shape[0], persistence_measure="invalid")

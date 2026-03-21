@@ -6,7 +6,7 @@ from sklearn.exceptions import NotFittedError
 
 from fast_plscan import PLSCAN
 
-from ..checks import *
+from ..checks import valid_exemplar_indices
 
 
 def test_compute_exemplar_indices_basic(X):

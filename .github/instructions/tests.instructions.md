@@ -94,7 +94,7 @@ Run `check_estimator(PLSCAN(...))` in `test_sklearn.py` to verify the estimator 
 
 ## Plot Regression Tests (`test_plots.py`)
 
-Use `@image_comparison` from `matplotlib.testing.decorators`. Baseline images live in `tests/test_plots/baseline_images/`. Plot tests do not call any `valid_*` helpers — visual output is validated by the image comparison alone.
+Use `@image_comparison` from `matplotlib.testing.decorators`. Baseline images live in `tests/test_plots/baseline_images/`. Output images are generated in `result_images/`. If a baseline does not exist, copy the generated result image to the baseline directory. If the test fails, the generated image is left in place for inspection. Plot tests do not call any `valid_*` helpers — visual output is validated by the image comparison alone.
 
 ## C++ Extension Access in Tests
 
