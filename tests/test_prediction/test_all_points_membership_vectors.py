@@ -10,7 +10,6 @@ from fast_plscan.prediction import all_points_membership_vectors
 from ..checks import valid_membership_vectors, assert_zero_membership_across_components
 from ..conftest import numerical_balltree_metrics, boolean_metrics, duplicate_metrics
 
-
 # --- Positive Input Modes
 
 

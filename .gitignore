@@ -11,6 +11,7 @@ cmake-build*/
 
 __pycache__/
 **/_version.py
+**/_version.pyi
 result_images/
 
 .coverage

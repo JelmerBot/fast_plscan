@@ -57,7 +57,7 @@ def test_not_fitted_leaf_tree_attribute():
 
 def test_leaf_tree_iter(knn):
     c = PLSCAN(metric="precomputed").fit(knn)
-    parent, min_dist, max_dist, min_size, max_size = c._leaf_tree  # covers LeafTree.__iter__
+    parent, min_dist, max_dist, min_size, max_size = c._leaf_tree
     assert np.array_equal(parent, c._leaf_tree.parent)
     assert np.array_equal(min_dist, c._leaf_tree.min_distance)
     assert np.array_equal(max_dist, c._leaf_tree.max_distance)

@@ -43,7 +43,7 @@ def test_one_component_space_tree(X, space_tree):
         linkage_tree,
         X,
     )
-    lt_parent, lt_child, lt_child_count, lt_child_size = linkage_tree  # covers LinkageTree.__iter__
+    lt_parent, lt_child, lt_child_count, lt_child_size = linkage_tree
     assert np.array_equal(lt_parent, linkage_tree.parent)
     assert np.array_equal(lt_child, linkage_tree.child)
     assert np.array_equal(lt_child_count, linkage_tree.child_count)

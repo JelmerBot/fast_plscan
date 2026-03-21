@@ -2,16 +2,16 @@
 # Run pytest and report combined Python + C++ coverage.
 #
 # Usage:
-#   ./scripts/collect_coverage.sh [--rebuild] [--html-report]
+#   bash scripts/collect_coverage.sh [--rebuild] [--html-report]
 #
 # Options:
-#   --rebuild      Reinstall the package with -DPLSCAN_COVERAGE=ON before running tests.
+#   --rebuild      Reinstall the package with -DPLSCAN_COVERAGE=ON using uv sync.
 #   --html-report  Generate an HTML C++ coverage report in coverage_html/.
 #
 # The package must have been installed with coverage instrumentation before
 # running this script (use --rebuild to do that automatically):
 #
-#   pip install --no-build-isolation -v . \
+#   uv sync --reinstall-package fast_plscan \
 #       --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
 
 set -euo pipefail
@@ -27,39 +27,29 @@ for arg in "$@"; do
     esac
 done
 
-# --- Prerequisites ---
-python -c "import pytest_cov" 2>/dev/null || {
-    echo "ERROR: pytest-cov not found. Install with: pip install pytest-cov" >&2
-    exit 1
-}
-command -v gcovr &>/dev/null || {
-    echo "ERROR: gcovr not found. Install with: pip install gcovr" >&2
-    exit 1
-}
-
 # --- Optionally rebuild ---
 if [[ $REBUILD -eq 1 ]]; then
     echo ""
     echo "=== Rebuilding with coverage instrumentation ==="
-    pip install --no-build-isolation -v . \
+    uv sync --reinstall-package fast_plscan \
         --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
 fi
 
 # --- Run pytest (Python + C++ instrumentation) ---
 echo ""
 echo "=== Running pytest ==="
-SCIPY_ARRAY_API=1 pytest . -q --cov=fast_plscan --cov-report=term-missing
-PYTEST_EXIT=$?
+PYTEST_EXIT=0
+uv run --no-project pytest . --cov=fast_plscan --cov-report=term-missing || PYTEST_EXIT=$?
 
 # --- C++ summary via gcovr ---
 echo ""
 echo "=== C++ Coverage Summary ==="
-gcovr --root . --filter src/fast_plscan/_api --print-summary
+uv run --no-project gcovr --root . --filter src/fast_plscan/_api --print-summary
 
 # --- C++ uncovered lines ---
 echo ""
 echo "=== C++ Uncovered Lines ==="
-gcovr --root . --filter src/fast_plscan/_api --txt - 2>/dev/null | \
+uv run --no-project gcovr --root . --filter src/fast_plscan/_api --txt - 2>/dev/null | \
     awk '
         /\.cpp$|\.h$/ { file = $0; printed = 0; next }
         /\*\*\*\*\*/ {
@@ -73,9 +63,36 @@ if [[ $HTML_REPORT -eq 1 ]]; then
     echo ""
     echo "Generating C++ HTML report..."
     mkdir -p coverage_html
-    gcovr --root . --filter src/fast_plscan/_api --html-details coverage_html/index.html
+    uv run --no-project gcovr --root . --filter src/fast_plscan/_api --html-details coverage_html/index.html
     echo "C++ HTML report: coverage_html/index.html"
 fi
+
+# --- Combined coverage summary ---
+echo ""
+echo "=== Combined Coverage ==="
+
+# Python: parse TOTAL line from coverage report
+PY_REPORT=$(uv run --no-project python -m coverage report 2>/dev/null || true)
+PY_TOTAL_LINE=$(echo "$PY_REPORT" | grep -E '^\s*TOTAL\s' || true)
+if [[ -n "$PY_TOTAL_LINE" ]]; then
+    read -r _ PY_STMTS PY_MISS PY_PCT_STR <<< "$PY_TOTAL_LINE"
+    PY_PCT=${PY_PCT_STR//%/}
+    PY_HIT=$((PY_STMTS - PY_MISS))
+else
+    PY_STMTS=0; PY_HIT=0; PY_PCT=0
+fi
+
+# C++: parse from gcovr JSON summary
+CPP_JSON=$(uv run --no-project gcovr --root . --filter src/fast_plscan/_api --json-summary 2>/dev/null)
+CPP_TOTAL=$(echo "$CPP_JSON" | uv run --no-project python -c "import sys,json; d=json.load(sys.stdin); print(d['line_total'])")
+CPP_HIT=$(echo "$CPP_JSON"   | uv run --no-project python -c "import sys,json; d=json.load(sys.stdin); print(d['line_covered'])")
+CPP_PCT=$(echo "$CPP_JSON"   | uv run --no-project python -c "import sys,json; d=json.load(sys.stdin); print(str(round(d['line_percent'],1))+'%')")
+
+COMB_TOTAL=$((PY_STMTS + CPP_TOTAL))
+COMB_HIT=$((PY_HIT + CPP_HIT))
+COMB_PCT=$(uv run --no-project python -c "print(str(round(100.0 * $COMB_HIT / $COMB_TOTAL, 1))+'%')")
+
+echo "Python ${PY_PCT}% (${PY_HIT}/${PY_STMTS} stmts)  |  C++ ${CPP_PCT} (${CPP_HIT}/${CPP_TOTAL} lines)  |  Combined ${COMB_PCT}"
 
 # --- Clean up coverage data files ---
 echo ""

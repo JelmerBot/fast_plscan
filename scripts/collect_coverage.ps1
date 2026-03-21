@@ -10,11 +10,11 @@
     The package must have been installed with coverage instrumentation before
     running this script (use -Rebuild to do that automatically):
 
-        pip install --no-build-isolation -v . `
-            --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-DCMAKE_CXX_COMPILER=clang-cl"
+        uv sync --reinstall-package fast_plscan `
+            --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
 
 .PARAMETER Rebuild
-    Reinstall the package with -DPLSCAN_COVERAGE=ON before running tests.
+    Reinstall the package with -DPLSCAN_COVERAGE=ON using uv sync.
 
 .PARAMETER HtmlReport
     Generate an HTML C++ coverage report in coverage_html/.
@@ -28,11 +28,6 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 # --- Prerequisites ---
-python -c "import pytest_cov" 2>$null
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "pytest-cov not found. Install with: pip install pytest-cov"
-    exit 1
-}
 if (-not (Get-Command llvm-profdata -ErrorAction SilentlyContinue)) {
     Write-Error "llvm-profdata not found. Ensure LLVM is installed and on PATH."
     exit 1
@@ -41,28 +36,38 @@ if (-not (Get-Command llvm-profdata -ErrorAction SilentlyContinue)) {
 # --- Optionally rebuild ---
 if ($Rebuild) {
     Write-Host "`nRebuilding with coverage instrumentation..." -ForegroundColor Cyan
-    pip install --no-build-isolation -v . `
-        --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-DCMAKE_CXX_COMPILER=clang-cl"
+    # Clear the CMake cache so a toolset change (e.g. -T ClangCL) is accepted.
+    $buildDir = Join-Path $PSScriptRoot "..\build\cp312-abi3-win_amd64"
+    if (Test-Path $buildDir) {
+        Write-Host "Clearing CMake cache in $buildDir..." -ForegroundColor DarkGray
+        Remove-Item -Recurse -Force $buildDir
+    }
+    uv sync --reinstall-package fast_plscan `
+        --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
 # --- Run pytest (Python + C++ instrumentation) ---
 Write-Host "`n=== Running pytest ===" -ForegroundColor Cyan
-$env:LLVM_PROFILE_FILE = "$PWD\coverage.profraw"
-pytest . -q --cov=fast_plscan --cov-report=term-missing
+# %m is substituted with a per-binary hash so the .pyd DLL writes its own profraw file.
+$env:LLVM_PROFILE_FILE = "$PWD\coverage-%m.profraw"
+$ErrorActionPreference = "Continue"
+uv run --no-project pytest . --cov=fast_plscan --cov-report=term-missing
 $pytestExit = $LASTEXITCODE
+$ErrorActionPreference = "Stop"
 Remove-Item Env:\LLVM_PROFILE_FILE
 
 # --- Merge C++ profile ---
-if (-not (Test-Path coverage.profraw)) {
-    Write-Warning "No coverage.profraw was written. Ensure the package was built with -DPLSCAN_COVERAGE=ON."
+$profrawFiles = Get-Item coverage-*.profraw -ErrorAction SilentlyContinue
+if (-not $profrawFiles) {
+    Write-Warning "No coverage-*.profraw files were written. Ensure the package was built with -DPLSCAN_COVERAGE=ON."
     exit 1
 }
 Write-Host "`nMerging C++ profile data..." -ForegroundColor DarkGray
-llvm-profdata merge -sparse coverage.profraw -o coverage.profdata
+llvm-profdata merge -sparse $profrawFiles -o coverage.profdata
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-$pyd = python -c "import fast_plscan._api as m; print(m.__file__)"
+$pyd = uv run --no-project python -c "import fast_plscan._api as m; print(m.__file__)"
 $sources = "src/fast_plscan/_api"
 
 # --- C++ summary ---
@@ -95,8 +100,36 @@ if ($HtmlReport) {
     Write-Host "C++ HTML report: coverage_html\index.html" -ForegroundColor Green
 }
 
+# --- Combined coverage summary ---
+Write-Host "`n=== Combined Coverage ===" -ForegroundColor Cyan
+
+# Python: parse TOTAL line from coverage report
+$pyReport = uv run --no-project python -m coverage report 2>$null
+$pyTotal  = $pyReport | Where-Object { $_ -match '^\s*TOTAL\s' }
+if ($pyTotal -match '(\d+)\s+(\d+)\s+(\d+)%') {
+    $pyStmts = [int]$Matches[1]
+    $pyMiss  = [int]$Matches[2]
+    $pyHit   = $pyStmts - $pyMiss
+    $pyPct   = [int]$Matches[3]
+} else {
+    $pyStmts = 0; $pyHit = 0; $pyPct = 0
+}
+
+# C++ via llvm-cov export
+$cppJson  = llvm-cov export $pyd -instr-profile coverage.profdata -sources $sources `
+    -format=text -summary-only | ConvertFrom-Json
+$cppTotal = $cppJson.data[0].totals.lines.count
+$cppHit   = $cppJson.data[0].totals.lines.covered
+$cppPct   = [math]::Round(100.0 * $cppHit / $cppTotal, 1)
+
+$combinedTotal = $pyStmts + $cppTotal
+$combinedHit   = $pyHit + $cppHit
+$combinedPct   = [math]::Round(100.0 * $combinedHit / $combinedTotal, 1)
+Write-Host ("Python {0}% ({1}/{2} stmts)  |  C++ {3}% ({4}/{5} lines)  |  Combined {6}%" -f `
+    $pyPct, $pyHit, $pyStmts, $cppPct, $cppHit, $cppTotal, $combinedPct) -ForegroundColor Green
+
 # --- Clean up coverage data files ---
 Write-Host "`nCleaning up coverage data files..." -ForegroundColor DarkGray
-Remove-Item -ErrorAction SilentlyContinue default.profraw, coverage.profraw, coverage.profdata, .coverage
+Remove-Item -ErrorAction SilentlyContinue coverage-*.profraw, coverage.profdata, coverage.profraw, default.profraw, .coverage
 
 exit $pytestExit

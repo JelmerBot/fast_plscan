@@ -1,5 +1,8 @@
 import pytest
 import numpy as np
+import matplotlib
+
+matplotlib.use("Agg")
 from scipy import sparse as sp
 from scipy.spatial.distance import pdist, squareform
 from sklearn.neighbors._kd_tree import KDTree32

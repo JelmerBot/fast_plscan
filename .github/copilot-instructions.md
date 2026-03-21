@@ -193,17 +193,28 @@ PLSCAN also exposes additional functionality beyond the core clustering pipeline
 
 ### Build and Test
 
-**Install for development** (requires CMake ≥ 3.18, a C++23 compiler with OpenMP support):
+**Install for development** (requires CMake ≥ 3.18, a C++23 compiler with OpenMP support, and `uv`):
 ```sh
-pip install nanobind scikit-build-core[pyproject]
-pip install --no-build-isolation -ve .
+uv sync --only-dev
+uv sync --no-build-isolation --reinstall-package fast_plscan -v
 ```
 
-Only the python files are installed in editable mode; C++ changes require a re-compile through re-installing.
+This installs all build-time dependencies, compiles the C++ extension, and installs all dev tooling (tests, coverage, notebooks, docs) into a single managed environment. Repeat only the second command whenever C++ files change. Python-only changes are reflected immediately via the editable install.
+
+**For a coverage build** (Windows requires the LLVM toolset via `-T ClangCL`; non-Windows uses gcov-compatible flags):
+```sh
+# Linux / macOS
+uv sync --no-build-isolation --reinstall-package fast_plscan -v \
+  --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
+
+# Windows (PowerShell)
+uv sync --no-build-isolation --reinstall-package fast_plscan -v `
+  --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
+```
 
 **Run tests:**
 ```sh
-pytest .
+uv run pytest .
 ```
 Test dependencies: `pytest`, `networkx`, `pandas`.
 

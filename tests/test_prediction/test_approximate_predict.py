@@ -9,7 +9,6 @@ from fast_plscan.prediction import approximate_predict
 
 from ..checks import valid_labels, valid_probabilities
 
-
 # --- Positive Input Modes
 
 

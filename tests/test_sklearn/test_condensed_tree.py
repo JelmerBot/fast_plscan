@@ -53,7 +53,7 @@ def test_not_fitted_condensed_tree_attribute():
 
 def test_condensed_tree_iter(knn):
     c = PLSCAN(metric="precomputed").fit(knn)
-    parent, child, distance, child_size, cluster_rows = c._condensed_tree  # covers CondensedTree.__iter__
+    parent, child, distance, child_size, cluster_rows = c._condensed_tree
     assert np.array_equal(parent, c._condensed_tree.parent)
     assert np.array_equal(child, c._condensed_tree.child)
     assert np.array_equal(distance, c._condensed_tree.distance)

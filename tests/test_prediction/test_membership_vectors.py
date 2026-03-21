@@ -9,7 +9,6 @@ from fast_plscan.prediction import approximate_predict, membership_vectors
 
 from ..checks import valid_membership_vectors
 
-
 # --- Positive Input Modes
 
 
