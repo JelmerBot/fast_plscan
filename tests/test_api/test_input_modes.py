@@ -43,6 +43,11 @@ def test_one_component_space_tree(X, space_tree):
         linkage_tree,
         X,
     )
+    lt_parent, lt_child, lt_child_count, lt_child_size = linkage_tree  # covers LinkageTree.__iter__
+    assert np.array_equal(lt_parent, linkage_tree.parent)
+    assert np.array_equal(lt_child, linkage_tree.child)
+    assert np.array_equal(lt_child_count, linkage_tree.child_count)
+    assert np.array_equal(lt_child_size, linkage_tree.child_size)
 
 
 @pytest.mark.parametrize(
@@ -131,3 +136,20 @@ def test_compute_msf_partial_and_missing(X, g_knn):
         linkage_tree,
         X,
     )
+
+
+def test_min_samples_exceeds_unsorted_graph_neighbors(g_knn):
+    # g_knn has ~9 entries per row; min_samples=11 means C++ min_samples-1=10,
+    # so every row triggers infinity core distances via fill_distances_unsorted.
+    _, _, core_distances = extract_mutual_spanning_forest(
+        g_knn, min_samples=11, is_sorted=False
+    )
+    assert np.all(np.isinf(core_distances))
+
+
+def test_min_samples_exceeds_sorted_graph_neighbors(g_knn):
+    # Same but exercises fill_distances_sorted (is_sorted=True path).
+    _, _, core_distances = extract_mutual_spanning_forest(
+        g_knn, min_samples=11, is_sorted=True
+    )
+    assert np.all(np.isinf(core_distances))
