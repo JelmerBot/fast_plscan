@@ -314,7 +314,9 @@ class PLSCAN(ClusterMixin, BaseEstimator):
                         f"Invalid metric '{self.metric}' for {space_tree}"
                     )
 
+        _prev_threads = None
         if self.num_threads is not None:
+            _prev_threads = get_max_threads()
             set_num_threads(self.num_threads)
 
         # Validate inputs
@@ -397,9 +399,9 @@ class PLSCAN(ClusterMixin, BaseEstimator):
             persistence_measure=self.persistence_measure,
         )
 
-        # Reset the number of threads back to the default
-        if self.num_threads is not None:
-            set_num_threads(get_max_threads())
+        # Reset the number of threads back to the previous value
+        if _prev_threads is not None:
+            set_num_threads(_prev_threads)
         return self
 
     @property

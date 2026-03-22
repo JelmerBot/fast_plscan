@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core", "nanobind", "setuptools_scm"]
+requires = ["scikit-build-core", "nanobind", "setuptools_scm", "cmake"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -35,8 +35,22 @@ classifiers = [
     "Natural Language :: English",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
+build = ["scikit-build-core", "nanobind", "setuptools_scm", "cmake"]
 tests = ["pytest", "networkx", "pandas"]
+coverage = ["pytest-cov", "gcovr; sys_platform != 'win32'"]
+lint = ["black[jupyter]==25.1", "ruff"]
+notebooks = [
+    "pandas",
+    "seaborn",
+    "tqdm",
+    "pynndescent",
+    "hdbscan",
+    "fast-hdbscan",
+    "umap-learn",
+    "lensed-umap",
+    "statsmodels",
+]
 docs = [
     "furo",
     "sphinx",
@@ -44,6 +58,14 @@ docs = [
     "nbsphinx",
     "sphinx-copybutton",
     "sphinx_autodoc_typehints",
+]
+dev = [
+    { include-group = "build" },
+    { include-group = "tests" },
+    { include-group = "coverage" },
+    { include-group = "lint" },
+    { include-group = "notebooks" },
+    { include-group = "docs" },
 ]
 
 [project.urls]
@@ -56,17 +78,21 @@ minimum-version = "0.4"
 build-dir = "build/{wheel_tag}"
 wheel.py-api = "cp312"
 wheel.exclude = ["**.h", "**.cpp", "**/CMakeLists.txt"]
-sdist.exclude = [".*", ".*/", "docs/"]
+sdist.exclude = ["uv.lock", ".*", ".*/", "docs/"]
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 
 [tool.setuptools_scm]
-write_to = "src/fast_plscan/_version.py"
+version_file = "src/fast_plscan/_version.py"
+
+[tool.coverage.run]
+omit = ["src/fast_plscan/_version.py", "src/fast_plscan/_version.pyi"]
 
 [tool.cibuildwheel]
-test-extras = ["tests"]
-test-sources = ["tests"]
+build-frontend = "uv"
+test-groups = ["tests"]
+test-sources = "tests"
 test-command = ["pytest ."]
 
 [tool.cibuildwheel.windows]
-before-build = "pip install delvewheel"
+before-build = ["uv pip install delvewheel"]
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"

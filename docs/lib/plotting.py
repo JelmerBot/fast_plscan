@@ -4,7 +4,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from textwrap import dedent
 
-
 # LaTeX font sizes on 10pt document:
 # https://latex-tutorial.com/changing-font-size/
 # for the pre-print template!

@@ -6,7 +6,7 @@ from sklearn.utils._param_validation import InvalidParameterError
 
 from fast_plscan import PLSCAN
 
-from ..checks import *
+from ..checks import valid_fitted_clustering_state
 
 
 def test_max_cluster_size(X, knn):

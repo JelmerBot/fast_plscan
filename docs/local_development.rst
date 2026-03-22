@@ -1,41 +1,70 @@
 Local development
 =================
 
-The development workflow works best by pre-installing python dependencies with
-``pip`` (or alternatives):
+Building the package requires `uv <https://docs.astral.sh/uv/>`_ and a C++23
+compiler with OpenMP support. Platform-specific setup is described below.
+
+Once the prerequisites are in place, set up the environment for the first time
+with:
 
 .. code-block:: bash
 
-  pip install numpy scipy matplotlib scikit-learn scikit-build-core nanobind setuptools_scm
+  uv sync --only-dev
+  uv pip install --no-build-isolation -ve . \
+    --config-settings cmake.build-type=Debug
 
-Building the package requires cmake and a C++ 23 compiler with OpenMP support.
-Selecting the proper OpenMP version requires some additional configuration, see
-below. Assuming the compiler and OpenMP are present, the package can be compiled
-and installed with:
+The first command creates the ``.venv`` and installs all dependencies. The
+second compiles and installs the ``fast_plscan`` package without build
+isolation. Running `uv sync` or `uv run` will revert the ``fast_plscan`` package
+to the default state (isolated build, Release mode).
 
-.. code-block:: bash
+Repeat only the second command whenever C++ source files change. Python-only
+changes are reflected immediately without any reinstall.
 
-  pip install --no-deps --no-build-isolation -ve .
-
-To change the build type, add ``-C cmake.build-type=Debug`` or ``-C
-cmake.build-type=Release`` to the command. Building without isolation allows for
-faster iterative development. For one-time installs, the command can be
-simplified to ``pip install -v .``.
-
-``scikit-build-core`` also experimentally supports editable installs (see
-`their documentation <https://scikit-build-core.readthedocs.io/en/latest/configuration/index.html#editable-installs>`_):
+To enable C++ coverage instrumentation:
 
 .. code-block:: bash
 
-  pip install --no-deps --no-build-isolation -C editable.rebuild=true -ve .
+  # Linux / macOS
+  uv pip install --no-build-isolation -ve . \
+    --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
+
+  # Windows — -T ClangCL selects the LLVM toolset in the Visual Studio generator
+  uv pip install --no-build-isolation -ve . \
+    --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
+
+Then collect coverage with:
+
+.. code-block:: bash
+
+  # Linux / macOS
+  bash scripts/collect_coverage.sh
+
+  # Windows (PowerShell)
+  pwsh scripts\\collect_coverage.ps1
+
+Pass ``--rebuild`` (bash) or ``-Rebuild`` (PowerShell) to rebuild with coverage
+instrumentation and run tests in one step. When the project's ``.venv`` is not
+active, run with ``uv run --no-sync``. The ``--no-sync`` flag prevents ``uv``
+from reverting ``fast_plscan`` to the last synced state, which would undo the
+coverage instrumentation.
+
+Run the tests with:
+
+.. code-block:: bash
+
+  pytest .
 
 Linux
 -----
 
 It may be necessary to tell cmake which compiler it should use. For example,
-using ``g++-14`` when that is not the system default can be done by adding a
-``-C cmake.args="-DCMAKE_CXX_COMPILER=g++-14"`` option. The ``-C cmake.args=...``
-option does not have to be repeated on rebuilds.
+using ``g++-14`` when that is not the system default:
+
+.. code-block:: bash
+
+  uv pip install --no-build-isolation -ve . \
+    --config-settings cmake.args="-DCMAKE_CXX_COMPILER=g++-14"
 
 MacOS
 -----
@@ -46,19 +75,18 @@ MacOS requires installing OpenMP using homebrew:
 
   brew install libomp
 
-Also update the ``~/.zshrc`` config file with:
+Then either export ``OpenMP_ROOT`` in your shell profile:
 
 .. code-block:: bash
 
   export OpenMP_ROOT=$(brew --prefix)/opt/libomp
 
-or pass `OpenMP_ROOT` as cmake argument:
+or pass it as a cmake argument:
 
 .. code-block:: bash
 
-  pip install --no-deps --no-build-isolation \
-    -C cmake.args="-DOpenMP_ROOT=$(brew --prefix)/opt/libomp" \
-    -ve .
+  uv pip install --no-build-isolation -ve . \
+    --config-settings cmake.args="-DOpenMP_ROOT=$(brew --prefix)/opt/libomp"
 
 Windows
 -------

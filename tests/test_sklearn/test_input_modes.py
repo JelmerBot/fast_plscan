@@ -5,7 +5,7 @@ import pytest
 
 from fast_plscan import PLSCAN
 
-from ..checks import *
+from ..checks import valid_fitted_clustering_state, valid_spanning_forest, valid_labels
 
 
 def test_mst(X, mst):
@@ -125,6 +125,13 @@ def test_bad_mst_edge_shape(X):
 def test_bad_knn_input(knn):
     with pytest.raises(ValueError):
         PLSCAN(metric="precomputed").fit((knn[0],))
+
+
+def test_bad_knn_tuple_length(knn):
+    # Three-element tuple with a numpy second element routes to _check_knn,
+    # which rejects tuples with length != 2.
+    with pytest.raises(ValueError):
+        PLSCAN(metric="precomputed").fit((knn[0], knn[1], knn[0]))
 
 
 def test_bad_knn_shape_mismatch(X):

@@ -22,13 +22,51 @@ jobs:
       cache-key: ${{ steps.cache.outputs.cache-primary-key }}
     steps:
       - uses: actions/checkout@v6
-      - name: Install linters
-        run: pip install black[jupyter]==25.1
-      - uses: wearerequired/lint-action@v2
+      - uses: astral-sh/setup-uv@v5
+      - uses: reviewdog/action-setup@v1
         with:
-          black: true
-          black_extensions: py, ipynb
-          continue_on_error: false
+          reviewdog_version: latest
+
+      - name: Install linters
+        run: |
+          uv sync --frozen --only-group lint
+
+      - name: Black (reviewdog)
+        id: black
+        continue-on-error: true
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          uv run --no-sync black --check --diff . \
+            | reviewdog -f=diff \
+                        -name=Black \
+                        -reporter=github-pr-check \
+                        -filter-mode=nofilter \
+                        -fail-level=warning
+
+      - name: Ruff (reviewdog)
+        id: ruff
+        continue-on-error: true
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          uv run --no-sync ruff check --output-format=rdjson src tests \
+            | reviewdog -f=rdjson \
+                        -name=Ruff \
+                        -reporter=github-pr-check \
+                        -filter-mode=nofilter \
+                        -fail-level=warning
+
+      - name: Check linter results
+        if: always()
+        run: |
+          if [[ "${{ steps.black.outcome }}" != "success" || \
+                "${{ steps.ruff.outcome }}" != "success" ]]; then
+            echo "One or more linters failed or did not complete."
+            exit 1
+          fi
+
+      # Skip build_wheels if no relevant files were changed
       - uses: actions/cache/restore@v5
         id: cache
         with:

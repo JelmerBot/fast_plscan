@@ -7,8 +7,7 @@ from sklearn.exceptions import NotFittedError
 from fast_plscan import PLSCAN
 from fast_plscan.prediction import approximate_predict, membership_vectors
 
-from ..checks import *
-
+from ..checks import valid_membership_vectors
 
 # --- Positive Input Modes
 

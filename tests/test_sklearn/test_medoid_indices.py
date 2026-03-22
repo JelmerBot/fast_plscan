@@ -5,7 +5,7 @@ from sklearn.exceptions import NotFittedError
 
 from fast_plscan import PLSCAN
 
-from ..checks import *
+from ..checks import valid_medoid_indices
 
 
 def test_medoid_indices(X):

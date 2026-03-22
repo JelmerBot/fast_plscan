@@ -6,7 +6,7 @@ from sklearn.exceptions import NotFittedError
 
 from fast_plscan import PLSCAN
 
-from ..checks import *
+from ..checks import valid_labels, valid_probabilities
 
 
 def test_cluster_layers(X, knn):

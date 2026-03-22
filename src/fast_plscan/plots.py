@@ -99,7 +99,7 @@ class CondensedTree(object):
         """
         try:
             from pandas import DataFrame
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError(
                 "You must have pandas installed to export pandas DataFrames"
             )
@@ -130,7 +130,7 @@ class CondensedTree(object):
         """
         try:
             import networkx as nx
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError(
                 "You must have networkx installed to export networkx graphs"
             )
@@ -547,7 +547,7 @@ class LeafTree(object):
         """
         try:
             from pandas import DataFrame
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError(
                 "You must have pandas installed to export pandas DataFrames"
             )
@@ -581,7 +581,7 @@ class LeafTree(object):
         """
         try:
             import networkx as nx
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError(
                 "You must have networkx installed to export networkx graphs"
             )
@@ -837,7 +837,7 @@ class LeafTree(object):
                     ax_width * colorbar_kws["fraction"]
                 )
 
-            plt.colorbar(bar, label=f"Cut rank", **colorbar_kws)
+            plt.colorbar(bar, label="Cut rank", **colorbar_kws)
 
         for side in ("right", "top", "bottom"):
             plt.gca().spines[side].set_visible(False)
@@ -989,7 +989,7 @@ class PersistenceTrace(object):
         """
         try:
             from pandas import DataFrame
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError(
                 "You must have pandas installed to export pandas DataFrames"
             )

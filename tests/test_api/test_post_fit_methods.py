@@ -9,7 +9,7 @@ from fast_plscan import (
     compute_medoid_indices_from_features,
     compute_medoid_indices_from_graph,
 )
-from ..checks import *
+from ..checks import valid_medoid_indices, valid_centroids, valid_exemplar_indices
 
 
 def test_compute_medoid_indices_from_features(X):
@@ -55,3 +55,12 @@ def test_compute_exemplar_indices_from_trees(X):
     valid_exemplar_indices(exemplars_per_cluster, X, c.labels_)
     for e1, e2 in zip(exemplars_per_cluster, c.compute_exemplar_indices(), strict=True):
         np.testing.assert_array_equal(e1, e2)
+
+
+def test_compute_exemplar_indices_from_trees_all_noise(X):
+    c = PLSCAN().fit(X)
+    noise_labels = np.full(c._num_points, -1, dtype=np.int64)
+    result = compute_exemplar_indices_from_trees(
+        c._leaf_tree, c._condensed_tree, noise_labels, c._num_points
+    )
+    assert result == []

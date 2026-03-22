@@ -1,11 +1,11 @@
 """Sklearn estimator compatibility tests."""
 
 import pickle
-
+import numpy as np
 from sklearn.utils.estimator_checks import check_estimator
 
 from fast_plscan import PLSCAN
-from ..checks import *
+from ..checks import valid_labels, valid_probabilities, valid_fitted_clustering_state
 
 
 def test_pickle_fitted(X, knn):

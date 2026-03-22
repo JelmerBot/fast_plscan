@@ -5,11 +5,13 @@ get_filename_component(EXT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 file(GLOB_RECURSE EXT_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./*.cpp)
 message(STATUS "Found extension ${EXT_NAME}: ${EXT_SOURCES}")
 
+set(_NB_ARGS NOMINSIZE STABLE_ABI FREE_THREADED)
+if(NOT PLSCAN_COVERAGE)
+  list(APPEND _NB_ARGS LTO)
+endif()
+
 nanobind_add_module(${EXT_NAME}
-        NOMINSIZE
-        STABLE_ABI
-        FREE_THREADED
-        LTO
+        ${_NB_ARGS}
         NB_DOMAIN ${SKBUILD_PROJECT_NAME}
         ${EXT_SOURCES}
 )
