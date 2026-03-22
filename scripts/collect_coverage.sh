@@ -39,17 +39,17 @@ fi
 echo ""
 echo "=== Running pytest ==="
 PYTEST_EXIT=0
-uv run --no-project pytest . --cov=fast_plscan --cov-report=term-missing || PYTEST_EXIT=$?
+pytest . --cov=fast_plscan --cov-report=term-missing || PYTEST_EXIT=$?
 
 # --- C++ summary via gcovr ---
 echo ""
 echo "=== C++ Coverage Summary ==="
-uv run --no-project gcovr --root . --filter src/fast_plscan/_api --print-summary
+gcovr --root . --filter src/fast_plscan/_api --print-summary
 
 # --- C++ uncovered lines ---
 echo ""
 echo "=== C++ Uncovered Lines ==="
-uv run --no-project gcovr --root . --filter src/fast_plscan/_api --txt - 2>/dev/null | \
+gcovr --root . --filter src/fast_plscan/_api --txt - 2>/dev/null | \
     awk '
         /\.cpp$|\.h$/ { file = $0; printed = 0; next }
         /\*\*\*\*\*/ {
@@ -63,7 +63,7 @@ if [[ $HTML_REPORT -eq 1 ]]; then
     echo ""
     echo "Generating C++ HTML report..."
     mkdir -p coverage_html
-    uv run --no-project gcovr --root . --filter src/fast_plscan/_api --html-details coverage_html/index.html
+    gcovr --root . --filter src/fast_plscan/_api --html-details coverage_html/index.html
     echo "C++ HTML report: coverage_html/index.html"
 fi
 
@@ -72,7 +72,7 @@ echo ""
 echo "=== Combined Coverage ==="
 
 # Python: parse TOTAL line from coverage report
-PY_REPORT=$(uv run --no-project python -m coverage report 2>/dev/null || true)
+PY_REPORT=$(python -m coverage report 2>/dev/null || true)
 PY_TOTAL_LINE=$(echo "$PY_REPORT" | grep -E '^\s*TOTAL\s' || true)
 if [[ -n "$PY_TOTAL_LINE" ]]; then
     read -r _ PY_STMTS PY_MISS PY_PCT_STR <<< "$PY_TOTAL_LINE"
@@ -83,14 +83,14 @@ else
 fi
 
 # C++: parse from gcovr JSON summary
-CPP_JSON=$(uv run --no-project gcovr --root . --filter src/fast_plscan/_api --json-summary 2>/dev/null)
-CPP_TOTAL=$(echo "$CPP_JSON" | uv run --no-project python -c "import sys,json; d=json.load(sys.stdin); print(d['line_total'])")
-CPP_HIT=$(echo "$CPP_JSON"   | uv run --no-project python -c "import sys,json; d=json.load(sys.stdin); print(d['line_covered'])")
-CPP_PCT=$(echo "$CPP_JSON"   | uv run --no-project python -c "import sys,json; d=json.load(sys.stdin); print(str(round(d['line_percent'],1))+'%')")
+CPP_JSON=$(gcovr --root . --filter src/fast_plscan/_api --json-summary 2>/dev/null)
+CPP_TOTAL=$(echo "$CPP_JSON" | python -c "import sys,json; d=json.load(sys.stdin); print(d['line_total'])")
+CPP_HIT=$(echo "$CPP_JSON"   | python -c "import sys,json; d=json.load(sys.stdin); print(d['line_covered'])")
+CPP_PCT=$(echo "$CPP_JSON"   | python -c "import sys,json; d=json.load(sys.stdin); print(str(round(d['line_percent'],1))+'%')")
 
 COMB_TOTAL=$((PY_STMTS + CPP_TOTAL))
 COMB_HIT=$((PY_HIT + CPP_HIT))
-COMB_PCT=$(uv run --no-project python -c "print(str(round(100.0 * $COMB_HIT / $COMB_TOTAL, 1))+'%')")
+COMB_PCT=$(python -c "print(str(round(100.0 * $COMB_HIT / $COMB_TOTAL, 1))+'%')")
 
 echo "Python ${PY_PCT}% (${PY_HIT}/${PY_STMTS} stmts)  |  C++ ${CPP_PCT} (${CPP_HIT}/${CPP_TOTAL} lines)  |  Combined ${COMB_PCT}"
 

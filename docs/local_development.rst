@@ -9,13 +9,13 @@ with:
 
 .. code-block:: bash
 
-  uv sync --only-dev
-  uv sync --no-build-isolation --reinstall-package fast_plscan -v
+  uv sync --no-install-project
+  uv sync --no-build-isolation --reinstall-package fast_plscan -v \
+    --config-settings cmake.build-type=Debug
 
-The first command creates the ``.venv`` and installs only the C++ build tools
-(``scikit-build-core``, ``nanobind``, ``setuptools_scm``). The second compiles
-and installs the extension without build isolation — using those build tools —
-and then installs all remaining development dependencies.
+The first command creates the ``.venv`` and installs all dependencies. The
+second compiles and installs the ``fast_plscan`` package without build
+isolation.
 
 Repeat only the second command whenever C++ source files change. Python-only
 changes are reflected immediately without any reinstall.
@@ -25,7 +25,7 @@ To change the build type:
 .. code-block:: bash
 
   uv sync --reinstall-package fast_plscan -v \
-    --config-settings cmake.build-type=Debug
+    --config-settings cmake.build-type=Release
 
 To enable C++ coverage instrumentation:
 
@@ -47,16 +47,19 @@ Then collect coverage with:
   bash scripts/collect_coverage.sh
 
   # Windows (PowerShell)
-  pwsh scripts/collect_coverage.ps1
+  pwsh scripts\\collect_coverage.ps1
 
-Pass ``--rebuild`` (bash) or ``-Rebuild`` (PowerShell) to rebuild with
-coverage instrumentation and run tests in one step.
+Pass ``--rebuild`` (bash) or ``-Rebuild`` (PowerShell) to rebuild with coverage
+instrumentation and run tests in one step. When the project's ``.venv`` is not
+active, run with ``uv run --no-sync``. The ``--no-sync`` flag prevents ``uv``
+from reverting ``fast_plscan`` to the last synced state, which would undo the
+coverage instrumentation.
 
 Run the tests with:
 
 .. code-block:: bash
 
-  uv run pytest .
+  pytest .
 
 Linux
 -----

@@ -195,11 +195,12 @@ PLSCAN also exposes additional functionality beyond the core clustering pipeline
 
 **Install for development** (requires CMake ≥ 3.18, a C++23 compiler with OpenMP support, and `uv`):
 ```sh
-uv sync --only-dev
-uv sync --no-build-isolation --reinstall-package fast_plscan -v
+uv sync --no-install-project
+uv sync --no-build-isolation --reinstall-package fast_plscan -v \
+    --config-settings cmake.build-type=Debug
 ```
 
-This installs all build-time dependencies, compiles the C++ extension, and installs all dev tooling (tests, coverage, notebooks, docs) into a single managed environment. Repeat only the second command whenever C++ files change. Python-only changes are reflected immediately via the editable install.
+This installs all dependencies and dev-tooling and compiles the C++ extension into a single managed environment. Repeat only the second command whenever C++ files change. Python-only changes are reflected immediately via the editable install.
 
 **For a coverage build** (Windows requires the LLVM toolset via `-T ClangCL`; non-Windows uses gcov-compatible flags):
 ```sh
@@ -214,9 +215,9 @@ uv sync --no-build-isolation --reinstall-package fast_plscan -v `
 
 **Run tests:**
 ```sh
-uv run pytest .
+pytest .
 ```
-Test dependencies: `pytest`, `networkx`, `pandas`.
+Prefix with ``uv run --no-sync`` if the ``.venv`` is not already active. Test dependencies: `pytest`, `networkx`, `pandas`.
 
 ### Key Dependencies
 

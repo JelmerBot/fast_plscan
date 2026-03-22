@@ -29,7 +29,8 @@ jobs:
 
       - name: Install linters
         run: |
-          uv sync --frozen --only-dev --only-group lint
+          uv sync --frozen --only-group lint --no-install-project
+          echo "source $(uv env --bin)/activate" >> $GITHUB_ENV
 
       - name: Black (reviewdog)
         id: black
@@ -37,12 +38,12 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          uv run --no-project black --check --diff . \
+          black --check --diff . \
             | reviewdog -f=diff \
                         -name=Black \
                         -reporter=github-pr-check \
                         -filter-mode=nofilter \
-                        -fail-level=error
+                        -fail-level=warning
 
       - name: Ruff (reviewdog)
         id: ruff
@@ -50,12 +51,12 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          uv run --no-project ruff check --output-format=rdjson src tests \
+          ruff check --output-format=rdjson src tests \
             | reviewdog -f=rdjson \
                         -name=Ruff \
                         -reporter=github-pr-check \
                         -filter-mode=nofilter \
-                        -fail-level=error || true
+                        -fail-level=warning
 
       - name: Check linter results
         if: always()

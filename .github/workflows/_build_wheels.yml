@@ -45,8 +45,8 @@ jobs:
           CIBW_BUILD: "*${{ matrix.platform }}*"
           CIBW_SKIP: "*t-${{ matrix.platform }}*"          # skip free-threading builds
           CIBW_BUILD_VERBOSITY : "1"                       # show build output for debugging
-          PIP_ONLY_BINARY: ":all:"                         # avoid compiling dependencies
-          CIBW_ENVIRONMENT_PASS_LINUX: "PIP_ONLY_BINARY"   # also in the manylinux container
+          UV_ONLY_BINARY : ":all:"                         # avoid compiling dependencies
+          CIBW_ENVIRONMENT_PASS_LINUX: "UV_ONLY_BINARY"    # also in the manylinux container
 
       - uses: actions/upload-artifact@v7
         with:

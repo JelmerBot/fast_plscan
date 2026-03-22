@@ -22,8 +22,8 @@ modules use a leading underscore (e.g., `_helpers.py`) and are not re-exported i
 |---|---|
 | `sklearn.py` | `PLSCAN` class. All user-facing parameter validation, input dispatch, thread management, and property accessors. |
 | `api.py` | Free functional implementing the core algorithms. Each accepts already-validated inputs and delegates to helpers in `_api`. |
-| `prediction/` | Public functions for computing cross-cluster memberships and  labels of unseen points. |
-| `plots/` | Thin wrappers around `_api` tree objects implementing visualization logic. Returned by `PLSCAN` properties. |
+| `prediction.py` | Public functions for computing cross-cluster memberships and  labels of unseen points. |
+| `plots.py` | Thin wrappers around `_api` tree objects implementing visualization logic. Returned by `PLSCAN` properties. |
 | `_helpers.py` | Internal converters and re-used helpers. |
 | `_api/` | C++ extension implementing the algorithm. No Python logic. |
 

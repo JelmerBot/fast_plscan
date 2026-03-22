@@ -52,7 +52,7 @@ Write-Host "`n=== Running pytest ===" -ForegroundColor Cyan
 # %m is substituted with a per-binary hash so the .pyd DLL writes its own profraw file.
 $env:LLVM_PROFILE_FILE = "$PWD\coverage-%m.profraw"
 $ErrorActionPreference = "Continue"
-uv run --no-project pytest . --cov=fast_plscan --cov-report=term-missing
+pytest . --cov=fast_plscan --cov-report=term-missing
 $pytestExit = $LASTEXITCODE
 $ErrorActionPreference = "Stop"
 Remove-Item Env:\LLVM_PROFILE_FILE
@@ -67,7 +67,7 @@ Write-Host "`nMerging C++ profile data..." -ForegroundColor DarkGray
 llvm-profdata merge -sparse $profrawFiles -o coverage.profdata
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-$pyd = uv run --no-project python -c "import fast_plscan._api as m; print(m.__file__)"
+$pyd = python -c "import fast_plscan._api as m; print(m.__file__)"
 $sources = "src/fast_plscan/_api"
 
 # --- C++ summary ---
@@ -104,7 +104,7 @@ if ($HtmlReport) {
 Write-Host "`n=== Combined Coverage ===" -ForegroundColor Cyan
 
 # Python: parse TOTAL line from coverage report
-$pyReport = uv run --no-project python -m coverage report 2>$null
+$pyReport = python -m coverage report 2>$null
 $pyTotal  = $pyReport | Where-Object { $_ -match '^\s*TOTAL\s' }
 if ($pyTotal -match '(\d+)\s+(\d+)\s+(\d+)%') {
     $pyStmts = [int]$Matches[1]
@@ -130,6 +130,6 @@ Write-Host ("Python {0}% ({1}/{2} stmts)  |  C++ {3}% ({4}/{5} lines)  |  Combin
 
 # --- Clean up coverage data files ---
 Write-Host "`nCleaning up coverage data files..." -ForegroundColor DarkGray
-Remove-Item -ErrorAction SilentlyContinue coverage-*.profraw, coverage.profdata, coverage.profraw, default.profraw, .coverage
+Remove-Item -ErrorAction SilentlyContinue *.profraw, *.profdata, .coverage
 
 exit $pytestExit
