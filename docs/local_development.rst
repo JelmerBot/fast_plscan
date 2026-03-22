@@ -9,7 +9,7 @@ with:
 
 .. code-block:: bash
 
-  uv sync --no-install-project
+  uv sync --only-dev
   uv pip install --no-build-isolation -ve . \
     --config-settings cmake.build-type=Debug
 

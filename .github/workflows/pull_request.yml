@@ -29,8 +29,7 @@ jobs:
 
       - name: Install linters
         run: |
-          uv sync --frozen --only-group lint --no-install-project
-          echo "source .venv/Scripts/activate" >> $GITHUB_ENV
+          uv sync --frozen --only-group lint
 
       - name: Black (reviewdog)
         id: black
@@ -38,7 +37,7 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          black --check --diff . \
+          uv run --no-sync black --check --diff . \
             | reviewdog -f=diff \
                         -name=Black \
                         -reporter=github-pr-check \
@@ -51,7 +50,7 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ruff check --output-format=rdjson src tests \
+          uv run --no-sync ruff check --output-format=rdjson src tests \
             | reviewdog -f=rdjson \
                         -name=Ruff \
                         -reporter=github-pr-check \

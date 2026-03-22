@@ -195,7 +195,7 @@ PLSCAN also exposes additional functionality beyond the core clustering pipeline
 
 **Install for development** (requires CMake ≥ 3.18, a C++23 compiler with OpenMP support, and `uv`):
 ```sh
-uv sync --no-install-project
+uv sync --only-dev
 uv pip install --no-build-isolation -ve . \
     --config-settings cmake.build-type=Debug
 ```

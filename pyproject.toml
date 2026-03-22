@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core", "nanobind", "setuptools_scm"]
+requires = ["scikit-build-core", "nanobind", "setuptools_scm", "cmake"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -36,7 +36,7 @@ classifiers = [
 ]
 
 [dependency-groups]
-dev = ["scikit-build-core", "nanobind", "setuptools_scm", "cmake"]
+build = ["scikit-build-core", "nanobind", "setuptools_scm", "cmake"]
 tests = ["pytest", "networkx", "pandas"]
 coverage = ["pytest-cov", "gcovr; sys_platform != 'win32'"]
 lint = ["black[jupyter]==25.1", "ruff"]
@@ -59,9 +59,14 @@ docs = [
     "sphinx-copybutton",
     "sphinx_autodoc_typehints",
 ]
-
-[tool.uv]
-default-groups = ["dev", "tests", "coverage", "notebooks", "docs", "lint"]
+dev = [
+    { include-group = "build" },
+    { include-group = "tests" },
+    { include-group = "coverage" },
+    { include-group = "lint" },
+    { include-group = "notebooks" },
+    { include-group = "docs" },
+]
 
 [project.urls]
 Documentation = "https://fast-plscan.readthedocs.io"

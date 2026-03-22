@@ -780,15 +780,48 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+build = [
+    { name = "cmake" },
+    { name = "nanobind" },
+    { name = "scikit-build-core" },
+    { name = "setuptools-scm" },
+]
 coverage = [
     { name = "gcovr", marker = "sys_platform != 'win32'" },
     { name = "pytest-cov" },
 ]
 dev = [
+    { name = "black", extra = ["jupyter"] },
     { name = "cmake" },
+    { name = "fast-hdbscan" },
+    { name = "furo" },
+    { name = "gcovr", marker = "sys_platform != 'win32'" },
+    { name = "hdbscan" },
+    { name = "lensed-umap" },
     { name = "nanobind" },
+    { name = "nbsphinx" },
+    { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "pandas", version = "3.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pandoc" },
+    { name = "pynndescent" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
     { name = "scikit-build-core" },
+    { name = "seaborn" },
     { name = "setuptools-scm" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "sphinx-autodoc-typehints", version = "3.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "sphinx-autodoc-typehints", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "sphinx-autodoc-typehints", version = "3.9.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "sphinx-copybutton" },
+    { name = "statsmodels" },
+    { name = "tqdm" },
+    { name = "umap-learn" },
 ]
 docs = [
     { name = "furo" },
@@ -835,15 +868,42 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+build = [
+    { name = "cmake" },
+    { name = "nanobind" },
+    { name = "scikit-build-core" },
+    { name = "setuptools-scm" },
+]
 coverage = [
     { name = "gcovr", marker = "sys_platform != 'win32'" },
     { name = "pytest-cov" },
 ]
 dev = [
+    { name = "black", extras = ["jupyter"], specifier = "==25.1" },
     { name = "cmake" },
+    { name = "fast-hdbscan" },
+    { name = "furo" },
+    { name = "gcovr", marker = "sys_platform != 'win32'" },
+    { name = "hdbscan" },
+    { name = "lensed-umap" },
     { name = "nanobind" },
+    { name = "nbsphinx" },
+    { name = "networkx" },
+    { name = "pandas" },
+    { name = "pandoc" },
+    { name = "pynndescent" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
     { name = "scikit-build-core" },
+    { name = "seaborn" },
     { name = "setuptools-scm" },
+    { name = "sphinx" },
+    { name = "sphinx-autodoc-typehints" },
+    { name = "sphinx-copybutton" },
+    { name = "statsmodels" },
+    { name = "tqdm" },
+    { name = "umap-learn" },
 ]
 docs = [
     { name = "furo" },
