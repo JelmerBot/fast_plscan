@@ -10,11 +10,11 @@
     The package must have been installed with coverage instrumentation before
     running this script (use -Rebuild to do that automatically):
 
-        uv sync --reinstall-package fast_plscan `
+        uv pip install -ve . `
             --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
 
 .PARAMETER Rebuild
-    Reinstall the package with -DPLSCAN_COVERAGE=ON using uv sync.
+    Reinstall the package with -DPLSCAN_COVERAGE=ON using uv pip install.
 
 .PARAMETER HtmlReport
     Generate an HTML C++ coverage report in coverage_html/.
@@ -36,14 +36,7 @@ if (-not (Get-Command llvm-profdata -ErrorAction SilentlyContinue)) {
 # --- Optionally rebuild ---
 if ($Rebuild) {
     Write-Host "`nRebuilding with coverage instrumentation..." -ForegroundColor Cyan
-    # Clear the CMake cache so a toolset change (e.g. -T ClangCL) is accepted.
-    $buildDir = Join-Path $PSScriptRoot "..\build\cp312-abi3-win_amd64"
-    if (Test-Path $buildDir) {
-        Write-Host "Clearing CMake cache in $buildDir..." -ForegroundColor DarkGray
-        Remove-Item -Recurse -Force $buildDir
-    }
-    uv sync --reinstall-package fast_plscan `
-        --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
+    uv pip install -ve . --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 

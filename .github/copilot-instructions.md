@@ -196,7 +196,7 @@ PLSCAN also exposes additional functionality beyond the core clustering pipeline
 **Install for development** (requires CMake ≥ 3.18, a C++23 compiler with OpenMP support, and `uv`):
 ```sh
 uv sync --no-install-project
-uv sync --no-build-isolation --reinstall-package fast_plscan -v \
+uv pip install --no-build-isolation -ve . \
     --config-settings cmake.build-type=Debug
 ```
 
@@ -205,11 +205,11 @@ This installs all dependencies and dev-tooling and compiles the C++ extension in
 **For a coverage build** (Windows requires the LLVM toolset via `-T ClangCL`; non-Windows uses gcov-compatible flags):
 ```sh
 # Linux / macOS
-uv sync --no-build-isolation --reinstall-package fast_plscan -v \
+uv pip install --no-build-isolation -ve . \
   --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
 
 # Windows (PowerShell)
-uv sync --no-build-isolation --reinstall-package fast_plscan -v `
+uv pip install --no-build-isolation -ve . \
   --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
 ```
 

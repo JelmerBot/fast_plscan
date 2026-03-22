@@ -30,7 +30,7 @@ jobs:
       - name: Install linters
         run: |
           uv sync --frozen --only-group lint --no-install-project
-          echo "source $(uv env --bin)/activate" >> $GITHUB_ENV
+          echo "source .venv/Scripts/activate" >> $GITHUB_ENV
 
       - name: Black (reviewdog)
         id: black

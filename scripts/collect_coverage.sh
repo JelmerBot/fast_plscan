@@ -11,7 +11,7 @@
 # The package must have been installed with coverage instrumentation before
 # running this script (use --rebuild to do that automatically):
 #
-#   uv sync --reinstall-package fast_plscan \
+#   uv pip install -ve . \
 #       --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
 
 set -euo pipefail
@@ -31,8 +31,7 @@ done
 if [[ $REBUILD -eq 1 ]]; then
     echo ""
     echo "=== Rebuilding with coverage instrumentation ==="
-    uv sync --reinstall-package fast_plscan \
-        --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
+    uv pip install -ve . --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
 fi
 
 # --- Run pytest (Python + C++ instrumentation) ---

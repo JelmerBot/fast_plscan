@@ -10,33 +10,27 @@ with:
 .. code-block:: bash
 
   uv sync --no-install-project
-  uv sync --no-build-isolation --reinstall-package fast_plscan -v \
+  uv pip install --no-build-isolation -ve . \
     --config-settings cmake.build-type=Debug
 
 The first command creates the ``.venv`` and installs all dependencies. The
 second compiles and installs the ``fast_plscan`` package without build
-isolation.
+isolation. Running `uv sync` or `uv run` will revert the ``fast_plscan`` package
+to the default state (isolated build, Release mode).
 
 Repeat only the second command whenever C++ source files change. Python-only
 changes are reflected immediately without any reinstall.
-
-To change the build type:
-
-.. code-block:: bash
-
-  uv sync --reinstall-package fast_plscan -v \
-    --config-settings cmake.build-type=Release
 
 To enable C++ coverage instrumentation:
 
 .. code-block:: bash
 
   # Linux / macOS
-  uv sync --reinstall-package fast_plscan -v \
+  uv pip install --no-build-isolation -ve . \
     --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
 
   # Windows — -T ClangCL selects the LLVM toolset in the Visual Studio generator
-  uv sync --reinstall-package fast_plscan -v `
+  uv pip install --no-build-isolation -ve . \
     --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
 
 Then collect coverage with:
@@ -69,7 +63,7 @@ using ``g++-14`` when that is not the system default:
 
 .. code-block:: bash
 
-  uv sync --reinstall-package fast_plscan -v \
+  uv pip install --no-build-isolation -ve . \
     --config-settings cmake.args="-DCMAKE_CXX_COMPILER=g++-14"
 
 MacOS
@@ -91,7 +85,7 @@ or pass it as a cmake argument:
 
 .. code-block:: bash
 
-  uv sync --reinstall-package fast_plscan -v \
+  uv pip install --no-build-isolation -ve . \
     --config-settings cmake.args="-DOpenMP_ROOT=$(brew --prefix)/opt/libomp"
 
 Windows
