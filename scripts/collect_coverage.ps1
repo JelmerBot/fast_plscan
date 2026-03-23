@@ -6,23 +6,7 @@
 .DESCRIPTION
     Runs the test suite with Python coverage (pytest-cov) and LLVM source-based
     C++ coverage instrumentation, then reports uncovered lines for both layers.
-
-    The package must have been installed with coverage instrumentation before
-    running this script (use -Rebuild to do that automatically):
-
-        uv pip install -ve . `
-            --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
-
-.PARAMETER Rebuild
-    Reinstall the package with -DPLSCAN_COVERAGE=ON using uv pip install.
-
-.PARAMETER HtmlReport
-    Generate an HTML C++ coverage report in coverage_html/.
 #>
-param(
-    [switch]$Rebuild,
-    [switch]$HtmlReport
-)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
@@ -33,12 +17,10 @@ if (-not (Get-Command llvm-profdata -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-# --- Optionally rebuild ---
-if ($Rebuild) {
-    Write-Host "`nRebuilding with coverage instrumentation..." -ForegroundColor Cyan
-    uv pip install -ve . --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-}
+# --- Create coverage build ---
+Write-Host "`nBuilding with coverage instrumentation..." -ForegroundColor Cyan
+uv pip install -ve . --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # --- Run pytest (Python + C++ instrumentation) ---
 Write-Host "`n=== Running pytest ===" -ForegroundColor Cyan
@@ -83,15 +65,6 @@ llvm-cov show $pyd -instr-profile coverage.profdata -sources $sources -format=te
             Write-Host $_
         }
     }
-
-# --- Optional HTML report ---
-if ($HtmlReport) {
-    Write-Host "`nGenerating C++ HTML report..." -ForegroundColor DarkGray
-    New-Item -ItemType Directory -Force coverage_html | Out-Null
-    llvm-cov show $pyd -instr-profile coverage.profdata -sources $sources `
-        -format=html -output-dir=coverage_html
-    Write-Host "C++ HTML report: coverage_html\index.html" -ForegroundColor Green
-}
 
 # --- Combined coverage summary ---
 Write-Host "`n=== Combined Coverage ===" -ForegroundColor Cyan

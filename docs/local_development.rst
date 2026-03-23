@@ -1,11 +1,12 @@
 Local development
 =================
 
-Building the package requires `uv <https://docs.astral.sh/uv/>`_ and a C++23
-compiler with OpenMP support. Platform-specific setup is described below.
+We recommend `uv <https://docs.astral.sh/uv/>`_ for building the project. A
+C++23 compiler with OpenMP support is required on your system. Platform-specific
+setup is described below.
 
-Once the prerequisites are in place, set up the environment for the first time
-with:
+Once the prerequisites are in place, set up the development environment for the
+first time with:
 
 .. code-block:: bash
 
@@ -20,40 +21,6 @@ to the default state (isolated build, Release mode).
 
 Repeat only the second command whenever C++ source files change. Python-only
 changes are reflected immediately without any reinstall.
-
-To enable C++ coverage instrumentation:
-
-.. code-block:: bash
-
-  # Linux / macOS
-  uv pip install --no-build-isolation -ve . \
-    --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
-
-  # Windows — -T ClangCL selects the LLVM toolset in the Visual Studio generator
-  uv pip install --no-build-isolation -ve . \
-    --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
-
-Then collect coverage with:
-
-.. code-block:: bash
-
-  # Linux / macOS
-  bash scripts/collect_coverage.sh
-
-  # Windows (PowerShell)
-  pwsh scripts\\collect_coverage.ps1
-
-Pass ``--rebuild`` (bash) or ``-Rebuild`` (PowerShell) to rebuild with coverage
-instrumentation and run tests in one step. When the project's ``.venv`` is not
-active, run with ``uv run --no-sync``. The ``--no-sync`` flag prevents ``uv``
-from reverting ``fast_plscan`` to the last synced state, which would undo the
-coverage instrumentation.
-
-Run the tests with:
-
-.. code-block:: bash
-
-  pytest .
 
 Linux
 -----
@@ -105,3 +72,34 @@ normal Powershell terminal:
 
 You may also need to install the `visual studio build tools
 <https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022>`_.
+
+Testing
+-------
+
+To enable C++ coverage instrumentation, build with:
+
+.. code-block:: bash
+
+  # Linux / macOS
+  uv pip install --no-build-isolation -ve . \
+    --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
+
+  # Windows — -T ClangCL selects the LLVM toolset in the Visual Studio generator
+  uv pip install --no-build-isolation -ve . \
+    --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
+
+Then collect coverage with:
+
+.. code-block:: bash
+
+  # Linux / macOS
+  bash scripts/collect_coverage.sh
+
+  # Windows (PowerShell)
+  pwsh scripts\\collect_coverage.ps1
+
+Run the normal tests with:
+
+.. code-block:: bash
+
+  pytest .
