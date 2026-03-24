@@ -41,23 +41,28 @@ tests = ["pytest", "networkx", "pandas"]
 coverage = ["pytest-cov", "gcovr; sys_platform != 'win32'"]
 lint = ["black[jupyter]==25.1", "ruff"]
 notebooks = [
-    "pandas",
-    "seaborn",
-    "tqdm",
-    "pynndescent",
-    "hdbscan",
     "fast-hdbscan",
-    "umap-learn",
+    "hdbscan",
+    "ipykernel",
+    "ipywidgets",
+    "jupyter",
     "lensed-umap",
+    "pandas",
+    "pyarrow",
+    "pynndescent",
+    "ripser",
+    "seaborn",
     "statsmodels",
+    "tqdm",
+    "umap-learn",
 ]
 docs = [
     "furo",
-    "sphinx",
-    "pandoc",
     "nbsphinx",
-    "sphinx-copybutton",
+    "pandoc",
     "sphinx_autodoc_typehints",
+    "sphinx-copybutton",
+    "sphinx",
 ]
 dev = [
     { include-group = "build" },
