@@ -205,13 +205,14 @@ This installs all dependencies and dev-tooling and compiles the C++ extension in
 **For a coverage build** (Windows requires the LLVM toolset via `-T ClangCL`; non-Windows uses gcov-compatible flags):
 ```sh
 # Linux / macOS
-uv pip install --no-build-isolation -ve . \
-  --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
+uv pip install -ve . --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
 
 # Windows (PowerShell)
-uv pip install --no-build-isolation -ve . \
-  --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
+uv pip install -ve . --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug;-T ClangCL"
 ```
+
+This leaves the non-isolated build intact and installs a separate coverage-instrumented build.
+
 
 **Run tests:**
 ```sh

@@ -2,37 +2,14 @@
 # Run pytest and report combined Python + C++ coverage.
 #
 # Usage:
-#   bash scripts/collect_coverage.sh [--rebuild] [--html-report]
-#
-# Options:
-#   --rebuild      Reinstall the package with -DPLSCAN_COVERAGE=ON using uv sync.
-#   --html-report  Generate an HTML C++ coverage report in coverage_html/.
-#
-# The package must have been installed with coverage instrumentation before
-# running this script (use --rebuild to do that automatically):
-#
-#   uv pip install -ve . \
-#       --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
+#   bash scripts/collect_coverage.sh
 
 set -euo pipefail
 
-REBUILD=0
-HTML_REPORT=0
-
-for arg in "$@"; do
-    case $arg in
-        --rebuild)     REBUILD=1 ;;
-        --html-report) HTML_REPORT=1 ;;
-        *) echo "Unknown argument: $arg" >&2; exit 1 ;;
-    esac
-done
-
-# --- Optionally rebuild ---
-if [[ $REBUILD -eq 1 ]]; then
-    echo ""
-    echo "=== Rebuilding with coverage instrumentation ==="
-    uv pip install -ve . --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
-fi
+# --- Creating coverage build ---
+echo ""
+echo "=== Building with coverage instrumentation ==="
+uv pip install -ve . --config-settings cmake.args="-DPLSCAN_COVERAGE=ON;-DCMAKE_BUILD_TYPE=Debug"
 
 # --- Run pytest (Python + C++ instrumentation) ---
 echo ""
@@ -56,15 +33,6 @@ gcovr --root . --filter src/fast_plscan/_api --txt - 2>/dev/null | \
             print
         }
     '
-
-# --- Optional HTML report ---
-if [[ $HTML_REPORT -eq 1 ]]; then
-    echo ""
-    echo "Generating C++ HTML report..."
-    mkdir -p coverage_html
-    gcovr --root . --filter src/fast_plscan/_api --html-details coverage_html/index.html
-    echo "C++ HTML report: coverage_html/index.html"
-fi
 
 # --- Combined coverage summary ---
 echo ""
