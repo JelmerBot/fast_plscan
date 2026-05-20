@@ -78,3 +78,9 @@ def test_bad_membership_vectors_wrong_labels_shape(X):
     c = PLSCAN().fit(X)
     with pytest.raises(ValueError):
         membership_vectors(c, X[:5], np.zeros(5, dtype=np.int64))
+
+
+def test_bad_membership_vectors_wrong_labels_dtype(X):
+    c = PLSCAN().fit(X)
+    with pytest.raises(ValueError):
+        membership_vectors(c, X[:5], c.labels_.astype(np.float64))

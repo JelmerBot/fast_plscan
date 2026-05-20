@@ -36,6 +36,8 @@ def test_bad_compute_exemplar(X):
         c.compute_exemplar_indices(np.zeros(5, dtype=np.int64))
     with pytest.raises(ValueError):
         c.compute_exemplar_indices(labels)
+    with pytest.raises(ValueError):
+        c.compute_exemplar_indices(c.labels_.astype(np.float64))
 
 
 def test_not_fitted_compute_exemplar_indices_method():

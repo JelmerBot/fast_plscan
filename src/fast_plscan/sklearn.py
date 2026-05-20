@@ -18,7 +18,6 @@ from ._api import (
     SpanningTree,
     apply_distance_cut,
     apply_size_cut,
-    Labelling,
     compute_cluster_labels,
     get_max_threads,
     set_num_threads,
@@ -61,13 +60,13 @@ class PLSCAN(ClusterMixin, BaseEstimator):
 
     """
 
-    labels_: np.ndarray[tuple[int], np.dtype[np.int64]] = None
+    labels_: np.ndarray[tuple[int], np.dtype[np.int64]] = None  # type: ignore
     """Cluster label for each point, shape ``(n_samples,)``.
 
     Points that do not belong to any cluster are assigned label ``-1``
     (noise). Cluster labels are zero-indexed non-negative integers.
     """
-    probabilities_: np.ndarray[tuple[int], np.dtype[np.float32]] = None
+    probabilities_: np.ndarray[tuple[int], np.dtype[np.float32]] = None  # type: ignore
     """Cluster membership probability for each point, shape ``(n_samples,)``.
 
     Values are in ``[0, 1]``. A value of ``1.0`` indicates full membership;
@@ -75,14 +74,14 @@ class PLSCAN(ClusterMixin, BaseEstimator):
     cluster and was assigned to it by the falling-out rule. Noise points
     (``labels_ == -1``) have probability ``0.0``.
     """
-    selected_clusters_: np.ndarray[tuple[int], np.dtype[np.intp]] = None
+    selected_clusters_: np.ndarray[tuple[int], np.dtype[np.uint32]] = None  # type: ignore
     """Leaf-tree node indices of the selected clusters, shape ``(n_clusters,)``.
 
     Each entry is the index into the internal leaf tree that corresponds to one
     of the chosen leaf-clusters. The length equals ``labels_.max() + 1`` unless
     all points are noise, in which case the array may be empty.
     """
-    core_distances_: np.ndarray[tuple[int], np.dtype[np.float32]] = None
+    core_distances_: np.ndarray[tuple[int], np.dtype[np.float32]] | None = None
     """Core distance for each point, shape ``(n_samples,)``.
 
     The core distance of a point is its distance to its
@@ -211,7 +210,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         X: np.ndarray[tuple[int, ...]] | tuple | csr_array,
         y: None = None,
         *,
-        sample_weights: np.ndarray[tuple[int], np.dtype[np.float32]] | None = None,
+        sample_weights: np.ndarray | None = None,
         **fit_params,
     ):
         """
@@ -524,8 +523,7 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         return np.column_stack(tuple(self._minimum_spanning_tree))
 
     def compute_centroids(
-        self,
-        labels: np.ndarray[tuple[int], np.dtype[np.int64]] | None = None,
+        self, labels: np.ndarray | None = None
     ) -> np.ndarray[tuple[int, int], np.dtype[np.float32]]:
         """Return the probability-weighted centroid of each cluster.
 
@@ -557,11 +555,14 @@ class PLSCAN(ClusterMixin, BaseEstimator):
             )
         if labels is None:
             labels = self.labels_
+        if not np.issubdtype(labels.dtype, np.integer):
+            raise ValueError(
+                f"labels must be an integer array, got dtype {labels.dtype!r}."
+            )
         return compute_centroids_from_features(self._X, self.probabilities_, labels)
 
     def compute_medoid_indices(
-        self,
-        labels: np.ndarray[tuple[int], np.dtype[np.int64]] | None = None,
+        self, labels: np.ndarray | None = None
     ) -> np.ndarray[tuple[int], np.dtype[np.intp]]:
         """Return the index of the medoid point for each cluster.
 
@@ -609,6 +610,10 @@ class PLSCAN(ClusterMixin, BaseEstimator):
             )
         if labels is None:
             labels = self.labels_
+        if not np.issubdtype(labels.dtype, np.integer):
+            raise ValueError(
+                f"labels must be an integer array, got dtype {labels.dtype!r}."
+            )
 
         if self._X is not None:
             medoid_indices = compute_medoid_indices_from_features(
@@ -629,9 +634,8 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         return medoid_indices
 
     def compute_exemplar_indices(
-        self,
-        labels: np.ndarray[tuple[int], np.dtype[np.int64]] | None = None,
-    ) -> list[np.ndarray]:
+        self, labels: np.ndarray | None = None
+    ) -> list[np.ndarray[tuple[int], np.dtype[np.intp]]]:
         """Return the exemplar point indices for each cluster.
 
         For each leaf-cluster segment, exemplars are the points whose dropout
@@ -664,6 +668,10 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         check_is_fitted(self, "_leaf_tree")
         if labels is None:
             labels = self.labels_
+        if not np.issubdtype(labels.dtype, np.integer):
+            raise ValueError(
+                f"labels must be an integer array, got dtype {labels.dtype!r}."
+            )
         if len(labels) != self._num_points:
             raise ValueError("labels must match the number of samples")
 
@@ -762,7 +770,10 @@ class PLSCAN(ClusterMixin, BaseEstimator):
             peaks = peaks[y[peaks] >= limit]
         return [(x[peak], *self.min_cluster_size_cut(x[peak])) for peak in peaks]
 
-    def distance_cut(self, epsilon: float) -> Labelling:
+    def distance_cut(self, epsilon: float) -> tuple[
+        np.ndarray[tuple[int], np.dtype[np.int64]],
+        np.ndarray[tuple[int], np.dtype[np.float32]],
+    ]:
         """Return a DBSCAN*-style clustering at a fixed distance threshold.
 
         Selects all leaf-clusters whose birth distance is at most ``epsilon``
@@ -794,7 +805,10 @@ class PLSCAN(ClusterMixin, BaseEstimator):
             self._leaf_tree, self._condensed_tree, selected_clusters, self._num_points
         )
 
-    def min_cluster_size_cut(self, cut_size: float) -> Labelling:
+    def min_cluster_size_cut(self, cut_size: float) -> tuple[
+        np.ndarray[tuple[int], np.dtype[np.int64]],
+        np.ndarray[tuple[int], np.dtype[np.float32]],
+    ]:
         """Return the clustering produced by a specific minimum cluster size.
 
         Selects all leaf-clusters that are alive at ``cut_size`` in the
@@ -827,7 +841,9 @@ class PLSCAN(ClusterMixin, BaseEstimator):
             self._leaf_tree, self._condensed_tree, selected_clusters, self._num_points
         )
 
-    def _check_input(self, X):
+    def _check_input(
+        self, X: tuple | np.ndarray | csr_array
+    ) -> tuple[csr_array, int, bool, bool]:
         """Checks and converts the input to a CSR sparse matrix."""
         # Check kNN / MST inputs
         if isinstance(X, tuple):
