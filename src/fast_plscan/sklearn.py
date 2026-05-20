@@ -690,7 +690,13 @@ class PLSCAN(ClusterMixin, BaseEstimator):
         height: float = 0.0,
         threshold: float = 0.0,
         **kwargs,
-    ) -> list[tuple[np.float32, Labelling]]:
+    ) -> list[
+        tuple[
+            np.float32,
+            np.ndarray[tuple[int], np.dtype[np.int64]],
+            np.ndarray[tuple[int], np.dtype[np.float32]],
+        ]
+    ]:
         """Return cluster labels and probabilities at each persistence peak.
 
         The persistence trace (:py:attr:`persistence_trace_`) may have multiple

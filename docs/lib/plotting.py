@@ -7,9 +7,9 @@ from textwrap import dedent
 # LaTeX font sizes on 10pt document:
 # https://latex-tutorial.com/changing-font-size/
 # for the pre-print template!
-# fontsize = dict(tiny=5, script=7, footnote=8, small=9, normal=10)
-# for the journal template!
 fontsize = dict(tiny=5, script=7, footnote=8, small=9, normal=10)
+# for the journal template!
+# fontsize = dict(tiny=5, script=7, footnote=8, small=9, normal=10)
 
 
 def configure_matplotlib():
@@ -41,30 +41,30 @@ def configure_matplotlib():
             "font.family": "serif",
             "text.usetex": True,
             # For the pre-print template:
-            # "text.latex.preamble": dedent(
-            #     r"""
-            #     \usepackage[english]{babel}
-            #     \usepackage[T1]{fontenc}
-            #     \usepackage[varqu,varl]{inconsolata}
-            #     \usepackage[
-            #         theoremfont,trueslanted,largesc,p,
-            #         amsthm,smallerops
-            #     ]{newpx}
-            #     \usepackage[scr=rsfso]{mathalpha}
-            #     \usepackage[stretch=10,shrink=10,tracking,spacing,kerning,babel]{microtype}
-            #     """
-            # ),
-            # For the journal template:
             "text.latex.preamble": dedent(
                 r"""
                 \usepackage[english]{babel}
+                \usepackage[T1]{fontenc}
+                \usepackage[varqu,varl]{inconsolata}
+                \usepackage[
+                    theoremfont,trueslanted,largesc,p,
+                    amsthm,smallerops
+                ]{newpx}
+                \usepackage[scr=rsfso]{mathalpha}
                 \usepackage[stretch=10,shrink=10,tracking,spacing,kerning,babel]{microtype}
-                \renewcommand{\sfdefault}{phv}
-                \renewcommand{\rmdefault}{ppl}
-                \renewcommand{\ttdefault}{pcr}
-                \normalfont\selectfont
                 """
             ),
+            # For the journal template:
+            # "text.latex.preamble": dedent(
+            #     r"""
+            #     \usepackage[english]{babel}
+            #     \usepackage[stretch=10,shrink=10,tracking,spacing,kerning,babel]{microtype}
+            #     \renewcommand{\sfdefault}{phv}
+            #     \renewcommand{\rmdefault}{ppl}
+            #     \renewcommand{\ttdefault}{pcr}
+            #     \normalfont\selectfont
+            #     """
+            # ),
         }
     )
 
