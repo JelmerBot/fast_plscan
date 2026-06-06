@@ -20,6 +20,7 @@
 
    demo_selection_strategies
    demo_parameter_sensitivity
+   demo_clustering_stability
    demo_computational_performance
 
 .. toctree::
