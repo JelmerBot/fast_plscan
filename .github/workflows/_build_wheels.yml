@@ -22,7 +22,7 @@ jobs:
             arch: arm64
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ilammy/msvc-dev-cmd@v1                       # enter Visual Studio dev-shell
         if: matrix.platform == 'win'
