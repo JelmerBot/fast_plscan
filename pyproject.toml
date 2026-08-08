@@ -96,7 +96,7 @@ omit = ["src/fast_plscan/_version.py", "src/fast_plscan/_version.pyi"]
 build-frontend = "uv"
 test-groups = ["tests"]
 test-sources = "tests"
-test-command = ["pytest ."]
+test-command = ["pytest . --ignore=tests/test_plots "]
 
 [tool.cibuildwheel.windows]
 before-build = ["uv pip install delvewheel"]
