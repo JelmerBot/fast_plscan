@@ -52,6 +52,12 @@ def test_bad_membership_vectors_precomputed_mst(X, mst):
         all_points_membership_vectors(c)
 
 
+def test_bad_membership_vectors_wrong_labels_dtype(X):
+    c = PLSCAN().fit(X)
+    with pytest.raises(ValueError):
+        all_points_membership_vectors(c, c.labels_.astype(np.float64))
+
+
 def test_bad_membership_vectors_unfitted():
     c = PLSCAN()
     with pytest.raises(NotFittedError):

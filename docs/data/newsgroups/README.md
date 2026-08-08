@@ -7,6 +7,6 @@ description and data at http://qwone.com/~jason/20Newsgroups/.
 Run these scripts to reproduce the data files used in the documentation notebooks:
 - `load_data.py` to convert text into a numeric feature matrix
   `./generated/X_20newsgroups.npy` and target vector
-  `./generated/y_20newsgroups.npy` using the sklearn `TfidfVectorizer`.
+  `./generated/y_20newsgroups.npy` using Sentence transformers.
 
   

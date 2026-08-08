@@ -1,5 +1,6 @@
 """Tests for medoid-index post-fit methods."""
 
+import numpy as np
 import pytest
 from sklearn.exceptions import NotFittedError
 
@@ -24,6 +25,12 @@ def test_medoid_indices_mst_raises(X, mst):
     c = PLSCAN(metric="precomputed").fit((mst, X.shape[0]))
     with pytest.raises(ValueError):
         c.compute_medoid_indices()
+
+
+def test_medoid_indices_wrong_labels_dtype(X):
+    c = PLSCAN().fit(X)
+    with pytest.raises(ValueError):
+        c.compute_medoid_indices(c.labels_.astype(np.float64))
 
 
 def test_not_fitted_compute_medoid_indices_method():

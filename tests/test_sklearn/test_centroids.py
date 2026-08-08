@@ -26,6 +26,12 @@ def test_centroids_precomputed_raises(knn):
         c.compute_centroids()
 
 
+def test_centroids_wrong_labels_dtype(X):
+    c = PLSCAN().fit(X)
+    with pytest.raises(ValueError):
+        c.compute_centroids(c.labels_.astype(np.float64))
+
+
 def test_not_fitted_compute_centroids_method():
     c = PLSCAN()
     with pytest.raises(NotFittedError):

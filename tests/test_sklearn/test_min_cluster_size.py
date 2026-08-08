@@ -18,7 +18,7 @@ def test_min_cluster_size(X, dists):
         expect_mutual_graph=True,
         expect_neighbors=False,
     )
-    assert c.labels_.max() == 2
+    assert c.labels_ is not None and c.labels_.max() == 2
     assert np.all(c.labels_ > -1)
 
 

@@ -12,7 +12,7 @@ from ._helpers import resolve_metric, resolve_metric_kws, to_scipy_csr
 
 
 def all_points_membership_vectors(
-    clusterer: PLSCAN, labels: np.ndarray[tuple[int], np.dtype[np.int64]] | None = None
+    clusterer: PLSCAN, labels: np.ndarray | None = None
 ) -> np.ndarray[tuple[int, int], np.dtype[np.float32]]:
     """Compute soft cluster membership vectors for all points.
 
@@ -62,6 +62,10 @@ def all_points_membership_vectors(
     # Validate labels shape
     if len(labels) != clusterer._num_points:
         raise ValueError("labels must match the number of samples")
+    if not np.issubdtype(labels.dtype, np.integer):
+        raise ValueError(
+            f"labels must be an integer array, got dtype {labels.dtype!r}."
+        )
 
     # Short-circuit if no clusters
     n_clusters = max(0, labels.max() + 1)
@@ -83,14 +87,12 @@ def all_points_membership_vectors(
     weights = distance_weights * outlier_weights
     totals = weights.sum(axis=1, keepdims=True)
     with np.errstate(invalid="ignore", divide="ignore"):
-        normalized = np.nan_to_num(weights / totals, 0.0)
+        normalized = np.nan_to_num(weights / totals, nan=0.0)
     return normalized * probability_in_some_cluster[:, np.newaxis]
 
 
 def membership_vectors(
-    clusterer: PLSCAN,
-    X: np.ndarray[tuple[int, int], np.dtype[np.float32]],
-    labels: np.ndarray[tuple[int], np.dtype[np.int64]] | None = None,
+    clusterer: PLSCAN, X: np.ndarray, labels: np.ndarray | None = None
 ) -> np.ndarray[tuple[int, int], np.dtype[np.float32]]:
     """Approximate soft cluster membership vectors for unseen points.
 
@@ -150,6 +152,11 @@ def membership_vectors(
     elif len(labels) != clusterer._num_points:
         raise ValueError("labels must match the number of samples")
 
+    if not np.issubdtype(labels.dtype, np.integer):
+        raise ValueError(
+            f"labels must be an integer array, got dtype {labels.dtype!r}."
+        )
+
     n_clusters = int(labels.max()) + 1
     if n_clusters <= 0:
         return np.zeros((X.shape[0], 0), dtype=np.float32)
@@ -186,10 +193,7 @@ def membership_vectors(
     return normalized * probability_in_some_cluster[:, np.newaxis]
 
 
-def approximate_predict(
-    clusterer: PLSCAN,
-    X: np.ndarray[tuple[int, int], np.dtype[np.float32]],
-) -> tuple[
+def approximate_predict(clusterer: PLSCAN, X: np.ndarray) -> tuple[
     np.ndarray[tuple[int], np.dtype[np.int64]],
     np.ndarray[tuple[int], np.dtype[np.float32]],
 ]:
@@ -361,7 +365,7 @@ def _compute_topological_weights(
     clusterer: PLSCAN,
     labels: np.ndarray[tuple[int], np.dtype[np.int64]],
     n_clusters: int,
-    selected_clusters: np.ndarray[tuple[int], np.dtype[np.intp]] | None,
+    selected_clusters: np.ndarray[tuple[int], np.dtype[np.uint32]] | None,
     *,
     best_neighbors: np.ndarray[tuple[int], np.dtype[np.intp]] | None = None,
     new_core_dists: np.ndarray[tuple[int], np.dtype[np.float32]] | None = None,
@@ -406,9 +410,9 @@ def _derive_selected_clusters(
     point_cluster: np.ndarray[tuple[int], np.dtype[np.int64]],
     labels: np.ndarray[tuple[int], np.dtype[np.int64]],
     n_clusters: int,
-) -> np.ndarray[tuple[int], np.dtype[np.int64]]:
+) -> np.ndarray[tuple[int], np.dtype[np.uint32]]:
     """Recover the leaf-tree segment index for each cluster label."""
-    selected = np.empty(n_clusters, dtype=np.intp)
+    selected = np.empty(n_clusters, dtype=np.uint32)
     for c in range(n_clusters):
         selected[c] = point_cluster[labels == c].min()
     return selected
@@ -418,7 +422,7 @@ def _compute_merge_distances(
     leaf_tree,
     child_to_leaf_tree: np.ndarray[tuple[int], np.dtype[np.int64]],
     child_to_dist: np.ndarray[tuple[int], np.dtype[np.float32]],
-    selected_clusters: np.ndarray[tuple[int], np.dtype[np.int64]],
+    selected_clusters: np.ndarray[tuple[int], np.dtype[np.uint32]],
 ) -> np.ndarray[tuple[int, int], np.dtype[np.float32]]:
     """Merge distance matrix, shape (n_points, n_clusters).
 
@@ -503,7 +507,7 @@ def _all_points_prob_in_some_cluster(
     leaf_tree,
     d_merge: np.ndarray[tuple[int, int], np.dtype[np.float32]],
     child_to_dist: np.ndarray[tuple[int], np.dtype[np.float32]],
-    selected_clusters: np.ndarray[tuple[int], np.dtype[np.intp]],
+    selected_clusters: np.ndarray[tuple[int], np.dtype[np.uint32]],
 ) -> np.ndarray[tuple[int], np.dtype[np.float32]]:
     """Probability of each point belonging to any cluster, shape (n_points,).
 
